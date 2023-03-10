@@ -18,7 +18,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "d7f69c68-ce40-47c2-822a-7f27eafacc41"
+				"spark.autotune.trackingId": "c3ba404c-2460-41ce-b387-cf9cc99040ba"
 			}
 		},
 		"metadata": {
@@ -100,7 +100,7 @@
 					}
 				},
 				"source": [
-					"**COPY CERTAIN COLUMNS TO A NEW DATAFRAME and SHOW**"
+					"**COPY REQUIRED COLUMNS TO A NEW DATAFRAME and SHOW (ANALOG DATA)**"
 				]
 			},
 			{
@@ -171,7 +171,7 @@
 					}
 				},
 				"source": [
-					"**COPY CERTAIN COLUMNS TO A NEW DATAFRAME and SHOW**"
+					"**COPY REQUIRED COLUMNS TO A NEW DATAFRAME and SHOW (Digital Meter)**"
 				]
 			},
 			{
@@ -193,7 +193,7 @@
 					"#dmr.show()\r\n",
 					"display(dm.limit(10))"
 				],
-				"execution_count": 11
+				"execution_count": 12
 			},
 			{
 				"cell_type": "markdown",
@@ -222,10 +222,24 @@
 					}
 				},
 				"source": [
-					"dm_data.write.csv(output, mode='overwrite')\r\n",
-					"amr_data.write.csv(output2, mode='overwrite')"
+					"container = 'data'\r\n",
+					"dlstorage = 'wendydlstorage'\r\n",
+					"folder = 'Silver'\r\n",
+					"#month = '2022_08'\r\n",
+					"#filename= 'amr.csv'\r\n",
+					"#AMRraw = spark.read.load('abfss://' + container + '@' + dlstorage + '.dfs.core.windows.net/' + filename,\r\n",
+					"\r\n",
+					"amroutput = 'abfss://' + container + '@' + dlstorage + '.dfs.core.windows.net/' + folder\r\n",
+					"amr.write.csv(amroutput, mode='overwrite')\r\n",
+					"print ('AM data saved as amr_data to ' + folder + ' folder')\r\n",
+					"\r\n",
+					"\r\n",
+					"dmoutput = 'abfss://' + container + '@' + dlstorage + '.dfs.core.windows.net/' + folder\r\n",
+					"dm.write.csv(dmoutput, mode='overwrite')\r\n",
+					"print (' DM data saved as dm_data to ' + folder + ' folder')\r\n",
+					""
 				],
-				"execution_count": null
+				"execution_count": 18
 			}
 		]
 	}
