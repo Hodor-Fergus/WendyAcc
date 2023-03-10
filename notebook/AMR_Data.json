@@ -18,7 +18,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "759cb1c1-7aba-4789-9e49-0fefb5be5426"
+				"spark.autotune.trackingId": "7dac4e77-bbc7-43a4-b926-2093f89242fa"
 			}
 		},
 		"metadata": {
@@ -81,12 +81,12 @@
 				},
 				"source": [
 					"%%pyspark\r\n",
-					"df = spark.read.load('abfss://data@wendydlstorage.dfs.core.windows.net/P6523_Verbruiken_AMR_GEMEENTE_202208.csv', format='csv'\r\n",
+					"AMRaw = spark.read.load('abfss://data@wendydlstorage.dfs.core.windows.net/P6523_Verbruiken_AMR_GEMEENTE_202208.csv', format='csv'\r\n",
 					"## If header exists uncomment line below\r\n",
 					",delimiter= ';'\r\n",
 					"#, header=True\r\n",
 					")\r\n",
-					"display(df.limit(10))"
+					"display(AMRaw.limit(10))"
 				],
 				"execution_count": 8
 			},

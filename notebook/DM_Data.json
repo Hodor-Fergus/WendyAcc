@@ -1,0 +1,71 @@
+{
+	"name": "DM_Data",
+	"properties": {
+		"nbformat": 4,
+		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "synapsepool",
+			"type": "BigDataPoolReference"
+		},
+		"sessionProperties": {
+			"driverMemory": "28g",
+			"driverCores": 4,
+			"executorMemory": "28g",
+			"executorCores": 4,
+			"numExecutors": 2,
+			"conf": {
+				"spark.dynamicAllocation.enabled": "false",
+				"spark.dynamicAllocation.minExecutors": "2",
+				"spark.dynamicAllocation.maxExecutors": "2",
+				"spark.autotune.trackingId": "b10557b9-1501-45a5-8d55-3d33f6d95375"
+			}
+		},
+		"metadata": {
+			"saveOutput": true,
+			"enableDebugMode": false,
+			"kernelspec": {
+				"name": "synapse_pyspark",
+				"display_name": "Synapse PySpark"
+			},
+			"language_info": {
+				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/dc9f858b-e539-432b-b37a-caca3e7f683b/resourceGroups/PracticeResourceGroup/providers/Microsoft.Synapse/workspaces/wendysynapse/bigDataPools/synapsepool",
+				"name": "synapsepool",
+				"type": "Spark",
+				"endpoint": "https://wendysynapse.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/synapsepool",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net"
+				},
+				"sparkVersion": "3.3",
+				"nodeCount": 10,
+				"cores": 4,
+				"memory": 28,
+				"automaticScaleJobs": false
+			},
+			"sessionKeepAliveTimeout": 30
+		},
+		"cells": [
+			{
+				"cell_type": "code",
+				"metadata": {
+					"microsoft": {
+						"language": "python"
+					}
+				},
+				"source": [
+					"%%pyspark\r\n",
+					"DMRaw = spark.read.load('abfss://data@wendydlstorage.dfs.core.windows.net/P6523_Verbruiken_DM_GEMEENTE_202208.csv', format='csv'\r\n",
+					"## If header exists uncomment line below\r\n",
+					",delimiter= ';'\r\n",
+					"#, header=True\r\n",
+					")\r\n",
+					"display(DMRaw.limit(10))"
+				],
+				"execution_count": null
+			}
+		]
+	}
+}

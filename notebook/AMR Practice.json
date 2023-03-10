@@ -1,0 +1,105 @@
+{
+	"name": "AMR Practice",
+	"properties": {
+		"nbformat": 4,
+		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "synapsepool",
+			"type": "BigDataPoolReference"
+		},
+		"sessionProperties": {
+			"driverMemory": "28g",
+			"driverCores": 4,
+			"executorMemory": "28g",
+			"executorCores": 4,
+			"numExecutors": 2,
+			"conf": {
+				"spark.dynamicAllocation.enabled": "false",
+				"spark.dynamicAllocation.minExecutors": "2",
+				"spark.dynamicAllocation.maxExecutors": "2",
+				"spark.autotune.trackingId": "be4afad6-6ef6-4738-a3a2-7219f561a26e"
+			}
+		},
+		"metadata": {
+			"saveOutput": true,
+			"enableDebugMode": false,
+			"kernelspec": {
+				"name": "synapse_pyspark",
+				"display_name": "Synapse PySpark"
+			},
+			"language_info": {
+				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/dc9f858b-e539-432b-b37a-caca3e7f683b/resourceGroups/PracticeResourceGroup/providers/Microsoft.Synapse/workspaces/wendysynapse/bigDataPools/synapsepool",
+				"name": "synapsepool",
+				"type": "Spark",
+				"endpoint": "https://wendysynapse.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/synapsepool",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net"
+				},
+				"sparkVersion": "3.3",
+				"nodeCount": 10,
+				"cores": 4,
+				"memory": 28,
+				"automaticScaleJobs": false
+			},
+			"sessionKeepAliveTimeout": 30
+		},
+		"cells": [
+			{
+				"cell_type": "code",
+				"metadata": {
+					"microsoft": {
+						"language": "python"
+					},
+					"collapsed": false
+				},
+				"source": [
+					"%%pyspark\r\n",
+					"df = spark.read.load('abfss://data@wendydlstorage.dfs.core.windows.net/P6523_Verbruiken_AMR_GEMEENTE_202208.csv', format='csv'\r\n",
+					"## If header exists uncomment line below\r\n",
+					"##, header=True\r\n",
+					")\r\n",
+					"display(df.limit(10))"
+				],
+				"execution_count": 1
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"microsoft": {
+						"language": "python"
+					},
+					"collapsed": false
+				},
+				"source": [
+					"%%pyspark\r\n",
+					"container = 'data'\r\n",
+					"dlstorage = 'wendydlstorage'\r\n",
+					"#folder = 'Bronze'\r\n",
+					"#month = '2022_08'\r\n",
+					"filename= 'P6523_Verbruiken_AMR_GEMEENTE_202208.csv'\r\n",
+					"AMRraw = spark.read.load('abfss://' + container + '@' + dlstorage + '.dfs.core.windows.net/' + filename,\r\n",
+					"format='csv',\r\n",
+					"delimiter = ';',\r\n",
+					"header = True )\r\n",
+					"#.option(delimiter = ';')\r\n",
+					"display(AMRraw.limit(10))\r\n",
+					""
+				],
+				"execution_count": 6
+			}
+		]
+	}
+}
