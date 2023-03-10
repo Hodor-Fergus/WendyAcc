@@ -18,7 +18,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "7dac4e77-bbc7-43a4-b926-2093f89242fa"
+				"spark.autotune.trackingId": "077d6468-e53e-413e-985c-3b6df6839632"
 			}
 		},
 		"metadata": {
@@ -59,7 +59,7 @@
 					}
 				},
 				"source": [
-					"**Load The Data**"
+					"**Load The AMR Data**"
 				]
 			},
 			{
@@ -84,9 +84,80 @@
 					"AMRaw = spark.read.load('abfss://data@wendydlstorage.dfs.core.windows.net/P6523_Verbruiken_AMR_GEMEENTE_202208.csv', format='csv'\r\n",
 					"## If header exists uncomment line below\r\n",
 					",delimiter= ';'\r\n",
-					"#, header=True\r\n",
+					", header=True\r\n",
 					")\r\n",
 					"display(AMRaw.limit(10))"
+				],
+				"execution_count": 3
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**COPY CERTAIN COLUMNS TO A NEW DATAFRAME and SHOW**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"amr = AMRaw.select(AMRaw.Trekkingsdatum,AMRaw.Peildatum,AMRaw.Markt, \"Leveringsadres_Postcode\",\"Leveringsadres_Gemeente\",\"WerkelijkVerbruik_RM_2017\",\"BenaderendVerbruik_VM_2017\",\"Perc_Delta_VM_2017vsRM\",\"WerkelijkVerbruik_RM_2018\",\"BenaderendVerbruik_VM_2018\",\"Perc_Delta_VM_2018vsRM\",\"WerkelijkVerbruik_RM_2019\",\"BenaderendVerbruik_VM_2019\",\"Perc_Delta_VM_2019vsRM\",\"WerkelijkVerbruik_RM_2020\",\"BenaderendVerbruik_VM_2020\",\"Perc_Delta_VM_2020vsRM\",\"WerkelijkVerbruik_RM_2021\",\"BenaderendVerbruik_VM_2021\",\"Perc_Delta_VM_2021vsRM\")\r\n",
+					"#amr.show()\r\n",
+					"display(amr.limit(10))"
+				],
+				"execution_count": 7
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**Load The DM Data**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"DMRaw = spark.read.load('abfss://data@wendydlstorage.dfs.core.windows.net/P6523_Verbruiken_DM_GEMEENTE_202208.csv', format='csv'\r\n",
+					"## If header exists uncomment line below\r\n",
+					",delimiter= ';'\r\n",
+					", header=True\r\n",
+					")\r\n",
+					"display(DMRaw.limit(10))"
 				],
 				"execution_count": 8
 			},
@@ -114,31 +185,15 @@
 						"transient": {
 							"deleting": false
 						}
-					}
-				},
-				"source": [
-					"df_revised = df.select(df.Name,df.Founded,df.Country,df.Industry, \"Number of employees\")\r\n",
-					"df_revised.show()"
-				],
-				"execution_count": null
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
 					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
+					"collapsed": false
 				},
 				"source": [
-					""
+					"dm = DMRaw.select(DMRaw.Trekkingsdatum,DMRaw.Peildatum,DMRaw.Markt, \"Leveringsadres_Postcode\",\"Leveringsadres_Gemeente\",\"WerkelijkVerbruik_RM_2017\",\"BenaderendVerbruik_VM_2017\",\"BenaderendVerbruik_VM_2017_Norm\",\"Perc_Delta_VM_2017vsRM\",\"WerkelijkVerbruik_RM_2018\",\"BenaderendVerbruik_VM_2018\",\"BenaderendVerbruik_VM_2018_Norm\",\"Perc_Delta_VM_2018vsRM\",\"WerkelijkVerbruik_RM_2019\",\"BenaderendVerbruik_VM_2019\",\"BenaderendVerbruik_VM_2019_Norm\",\"Perc_Delta_VM_2019vsRM\",\"WerkelijkVerbruik_RM_2020\",\"BenaderendVerbruik_VM_2020\",\"BenaderendVerbruik_VM_2020_Norm\",\"Perc_Delta_VM_2020vsRM\",\"WerkelijkVerbruik_RM_2021\",\"BenaderendVerbruik_VM_2021\",\"BenaderendVerbruik_VM_2021_Norm\",\"Perc_Delta_VM_2021vsRM\")\r\n",
+					"#dmr.show()\r\n",
+					"display(dm.limit(10))"
 				],
-				"execution_count": null
+				"execution_count": 11
 			},
 			{
 				"cell_type": "markdown",
