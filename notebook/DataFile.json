@@ -18,7 +18,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "c3ba404c-2460-41ce-b387-cf9cc99040ba"
+				"spark.autotune.trackingId": "ac95ee69-880d-465d-a209-978f6f3c0b00"
 			}
 		},
 		"metadata": {
@@ -88,7 +88,7 @@
 					")\r\n",
 					"display(AMRaw.limit(10))"
 				],
-				"execution_count": 3
+				"execution_count": 11
 			},
 			{
 				"cell_type": "markdown",
@@ -122,7 +122,7 @@
 					"#amr.show()\r\n",
 					"display(amr.limit(10))"
 				],
-				"execution_count": 7
+				"execution_count": 12
 			},
 			{
 				"cell_type": "markdown",
@@ -159,7 +159,7 @@
 					")\r\n",
 					"display(DMRaw.limit(10))"
 				],
-				"execution_count": 8
+				"execution_count": 13
 			},
 			{
 				"cell_type": "markdown",
@@ -193,7 +193,7 @@
 					"#dmr.show()\r\n",
 					"display(dm.limit(10))"
 				],
-				"execution_count": 12
+				"execution_count": 14
 			},
 			{
 				"cell_type": "markdown",
@@ -222,24 +222,104 @@
 					}
 				},
 				"source": [
+					"#Create Save Folder Path\r\n",
 					"container = 'data'\r\n",
 					"dlstorage = 'wendydlstorage'\r\n",
 					"folder = 'Silver'\r\n",
 					"#month = '2022_08'\r\n",
-					"#filename= 'amr.csv'\r\n",
+					"amrfile= 'amr'\r\n",
+					"dmfile= 'dm'\r\n",
 					"#AMRraw = spark.read.load('abfss://' + container + '@' + dlstorage + '.dfs.core.windows.net/' + filename,\r\n",
 					"\r\n",
-					"amroutput = 'abfss://' + container + '@' + dlstorage + '.dfs.core.windows.net/' + folder\r\n",
-					"amr.write.csv(amroutput, mode='overwrite')\r\n",
+					"#Analog Data\r\n",
+					"amroutput = 'abfss://' + container + '@' + dlstorage + '.dfs.core.windows.net/' + folder + '/' + amrfile\r\n",
+					"amr.write.csv(amroutput, mode='overwrite',header=True,)\r\n",
 					"print ('AM data saved as amr_data to ' + folder + ' folder')\r\n",
 					"\r\n",
+					"#Digital Data\r\n",
+					"dmoutput = 'abfss://' + container + '@' + dlstorage + '.dfs.core.windows.net/' + folder + '/' + dmfile\r\n",
+					"dm.write.csv(dmoutput, mode='overwrite',header=True)\r\n",
+					"print (' DM data saved as dm_data to ' + folder + ' folder')"
+				],
+				"execution_count": 20
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"amr.write.csv(amroutput, mode='overwrite').saveAsTable('amrtable1')\r\n",
+					"from pyspark.sql import SparkSession \r\n",
+					"from pyspark.sql.types import * \r\n",
 					"\r\n",
-					"dmoutput = 'abfss://' + container + '@' + dlstorage + '.dfs.core.windows.net/' + folder\r\n",
-					"dm.write.csv(dmoutput, mode='overwrite')\r\n",
-					"print (' DM data saved as dm_data to ' + folder + ' folder')\r\n",
+					"# Primary storage info \r\n",
+					"account_name = 'Your primary storage account name' # fill in your primary account name \r\n",
+					"container_name = 'Your container name' # fill in your container name \r\n",
+					"relative_path = 'Your relative path' # fill in your relative folder path \r\n",
+					"\r\n",
+					"adls_path = 'abfss://%s@%s.dfs.core.windows.net/%s' % (container_name, account_name, relative_path) \r\n",
+					"print('Primary storage account path: ' + adls_path) \r\n",
+					"\r\n",
+					"data = spark.range(5,10) \r\n",
+					"\r\n",
+					"# Write spark dataframe as a csv file \r\n",
+					"csv_path = adls_path + 'Your file name ' \r\n",
+					"data.write.csv(csv_path, mode = 'overwrite', header = 'true') \r\n",
+					"\r\n",
+					"# Write spark dataframe as a parquet file \r\n",
+					"parquet_path = adls_path + ' Your file name ' \r\n",
+					"data.write.parquet(parquet_path, mode = 'overwrite') \r\n",
+					"\r\n",
+					"# Write spark dataframe as a json file \r\n",
+					"json_path = adls_path + 'Your file name ' \r\n",
+					"data.write.json(json_path, mode = 'overwrite')"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"help(spark.write)"
+				],
+				"execution_count": 16
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
 					""
 				],
-				"execution_count": 18
+				"execution_count": null
 			}
 		]
 	}
