@@ -703,7 +703,7 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "bb7687d0-f2b9-4352-a6ed-65c4b96946b1"
+						"spark.autotune.trackingId": "774a011f-b63e-4da0-a480-491d654f9eb2"
 					}
 				},
 				"metadata": {
@@ -752,10 +752,10 @@
 						},
 						"source": [
 							"# Getiing the parameter value from the pipeline \r\n",
-							"FolderName = \"2022_09\""
+							"FolderName = \"2023_02\""
 						],
 						"outputs": [],
-						"execution_count": 36
+						"execution_count": 5
 					},
 					{
 						"cell_type": "code",
@@ -777,7 +777,7 @@
 							"month = FolderName.split('_')[1]"
 						],
 						"outputs": [],
-						"execution_count": 37
+						"execution_count": 6
 					},
 					{
 						"cell_type": "code",
@@ -795,7 +795,7 @@
 							"spark.conf.set('fs.azure.sas.%s.%s.blob.core.windows.net' % (blob_container_name, blob_account_name),blob_sas_token)"
 						],
 						"outputs": [],
-						"execution_count": 38
+						"execution_count": 7
 					},
 					{
 						"cell_type": "code",
@@ -826,7 +826,7 @@
 							"amr_delimiter_type = (f_get_delimiter(amr_Filename))"
 						],
 						"outputs": [],
-						"execution_count": 39
+						"execution_count": 8
 					},
 					{
 						"cell_type": "code",
@@ -877,7 +877,10 @@
 							"    try:\r\n",
 							"        selected_df1['Peildatum'] = pd.to_datetime(selected_df1['Peildatum'], format='%m/%d/%y')\r\n",
 							"    except:\r\n",
-							"        selected_df1['Peildatum'] = pd.to_datetime(selected_df1['Peildatum'], format='%d/%b/%Y')\r\n",
+							"        try:\r\n",
+							"            selected_df1['Peildatum'] = pd.to_datetime(selected_df1['Peildatum'], format='%d/%b/%Y')\r\n",
+							"        except:\r\n",
+							"            selected_df1['Peildatum'] = pd.to_datetime(selected_df1['Peildatum'], format='%d-%b-%y')\r\n",
 							"\r\n",
 							"# convert the datetime object to the desired format\r\n",
 							"selected_df1['Peildatum'] = selected_df1['Peildatum'].dt.strftime('%d-%m-%Y')\r\n",
@@ -888,29 +891,29 @@
 							"selected_df1['BenaderendVerbruik_VM_2020_Norm'] = selected_df1[\"BenaderendVerbruik_VM_2020\"]\r\n",
 							"selected_df1['BenaderendVerbruik_VM_2021_Norm'] = selected_df1[\"BenaderendVerbruik_VM_2021\"]\r\n",
 							"\r\n",
-							"selected_df1['WerkelijkVerbruik_RM_2017'] = selected_df1['WerkelijkVerbruik_RM_2017'].str.replace(',','.')\r\n",
-							"selected_df1['WerkelijkVerbruik_RM_2018'] = selected_df1['WerkelijkVerbruik_RM_2018'].str.replace(',','.')\r\n",
-							"selected_df1['WerkelijkVerbruik_RM_2019'] = selected_df1['WerkelijkVerbruik_RM_2019'].str.replace(',','.')\r\n",
-							"selected_df1['WerkelijkVerbruik_RM_2020'] = selected_df1['WerkelijkVerbruik_RM_2020'].str.replace(',','.')\r\n",
-							"selected_df1['WerkelijkVerbruik_RM_2021'] = selected_df1['WerkelijkVerbruik_RM_2021'].str.replace(',','.')\r\n",
+							"selected_df1['WerkelijkVerbruik_RM_2017'] = selected_df1['WerkelijkVerbruik_RM_2017'].astype(str).str.replace(',','.')\r\n",
+							"selected_df1['WerkelijkVerbruik_RM_2018'] = selected_df1['WerkelijkVerbruik_RM_2018'].astype(str).str.replace(',','.')\r\n",
+							"selected_df1['WerkelijkVerbruik_RM_2019'] = selected_df1['WerkelijkVerbruik_RM_2019'].astype(str).str.replace(',','.')\r\n",
+							"selected_df1['WerkelijkVerbruik_RM_2020'] = selected_df1['WerkelijkVerbruik_RM_2020'].astype(str).str.replace(',','.')\r\n",
+							"selected_df1['WerkelijkVerbruik_RM_2021'] = selected_df1['WerkelijkVerbruik_RM_2021'].astype(str).str.replace(',','.')\r\n",
 							"selected_df1['Gemiddeld_WerkelijkVerbruik'] = ((selected_df1['WerkelijkVerbruik_RM_2017'].astype(float)\\\r\n",
 							"+ selected_df1['WerkelijkVerbruik_RM_2018'].astype(float) + selected_df1['WerkelijkVerbruik_RM_2019'].astype(float) + selected_df1['WerkelijkVerbruik_RM_2020'].astype(float)\\\r\n",
 							"+ selected_df1['WerkelijkVerbruik_RM_2021'].astype(float))/5)\r\n",
 							"\r\n",
-							"selected_df1['BenaderendVerbruik_VM_2017'] = selected_df1['BenaderendVerbruik_VM_2017'].str.replace(',','.')\r\n",
-							"selected_df1['BenaderendVerbruik_VM_2018'] = selected_df1['BenaderendVerbruik_VM_2018'].str.replace(',','.')\r\n",
-							"selected_df1['BenaderendVerbruik_VM_2019'] = selected_df1['BenaderendVerbruik_VM_2019'].str.replace(',','.')\r\n",
-							"selected_df1['BenaderendVerbruik_VM_2020'] = selected_df1['BenaderendVerbruik_VM_2020'].str.replace(',','.')\r\n",
-							"selected_df1['BenaderendVerbruik_VM_2021'] = selected_df1['BenaderendVerbruik_VM_2021'].str.replace(',','.')\r\n",
+							"selected_df1['BenaderendVerbruik_VM_2017'] = selected_df1['BenaderendVerbruik_VM_2017'].astype(str).str.replace(',','.')\r\n",
+							"selected_df1['BenaderendVerbruik_VM_2018'] = selected_df1['BenaderendVerbruik_VM_2018'].astype(str).str.replace(',','.')\r\n",
+							"selected_df1['BenaderendVerbruik_VM_2019'] = selected_df1['BenaderendVerbruik_VM_2019'].astype(str).str.replace(',','.')\r\n",
+							"selected_df1['BenaderendVerbruik_VM_2020'] = selected_df1['BenaderendVerbruik_VM_2020'].astype(str).str.replace(',','.')\r\n",
+							"selected_df1['BenaderendVerbruik_VM_2021'] = selected_df1['BenaderendVerbruik_VM_2021'].astype(str).str.replace(',','.')\r\n",
 							"selected_df1['Gemiddeld_BenaderendVerbruik'] = ((selected_df1['BenaderendVerbruik_VM_2017'].astype(float)\\\r\n",
 							"+ selected_df1['BenaderendVerbruik_VM_2018'].astype(float) + selected_df1['BenaderendVerbruik_VM_2019'].astype(float) + selected_df1['BenaderendVerbruik_VM_2020'].astype(float)\\\r\n",
 							"+ selected_df1['BenaderendVerbruik_VM_2021'].astype(float))/5)\r\n",
 							"\r\n",
-							"selected_df1['BenaderendVerbruik_VM_2017_Norm'] = selected_df1['BenaderendVerbruik_VM_2017_Norm'].str.replace(',','.')\r\n",
-							"selected_df1['BenaderendVerbruik_VM_2018_Norm'] = selected_df1['BenaderendVerbruik_VM_2018_Norm'].str.replace(',','.')\r\n",
-							"selected_df1['BenaderendVerbruik_VM_2019_Norm'] = selected_df1['BenaderendVerbruik_VM_2019_Norm'].str.replace(',','.')\r\n",
-							"selected_df1['BenaderendVerbruik_VM_2020_Norm'] = selected_df1['BenaderendVerbruik_VM_2020_Norm'].str.replace(',','.')\r\n",
-							"selected_df1['BenaderendVerbruik_VM_2021_Norm'] = selected_df1['BenaderendVerbruik_VM_2021_Norm'].str.replace(',','.')\r\n",
+							"selected_df1['BenaderendVerbruik_VM_2017_Norm'] = selected_df1['BenaderendVerbruik_VM_2017_Norm'].astype(str).str.replace(',','.')\r\n",
+							"selected_df1['BenaderendVerbruik_VM_2018_Norm'] = selected_df1['BenaderendVerbruik_VM_2018_Norm'].astype(str).str.replace(',','.')\r\n",
+							"selected_df1['BenaderendVerbruik_VM_2019_Norm'] = selected_df1['BenaderendVerbruik_VM_2019_Norm'].astype(str).str.replace(',','.')\r\n",
+							"selected_df1['BenaderendVerbruik_VM_2020_Norm'] = selected_df1['BenaderendVerbruik_VM_2020_Norm'].astype(str).str.replace(',','.')\r\n",
+							"selected_df1['BenaderendVerbruik_VM_2021_Norm'] = selected_df1['BenaderendVerbruik_VM_2021_Norm'].astype(str).str.replace(',','.')\r\n",
 							"selected_df1['Gemiddeld_BenaderendVerbruik_Norm'] = ((selected_df1['BenaderendVerbruik_VM_2017_Norm'].astype(float)\\\r\n",
 							"+ selected_df1['BenaderendVerbruik_VM_2018_Norm'].astype(float) + selected_df1['BenaderendVerbruik_VM_2019_Norm'].astype(float) + selected_df1['BenaderendVerbruik_VM_2020_Norm'].astype(float)\\\r\n",
 							"+ selected_df1['BenaderendVerbruik_VM_2021_Norm'].astype(float))/5)\r\n",
@@ -929,7 +932,7 @@
 							", 'MeasurementType']] #, 'MeasurementYear', 'MeasurementMonth'"
 						],
 						"outputs": [],
-						"execution_count": 40
+						"execution_count": 14
 					},
 					{
 						"cell_type": "code",
@@ -950,7 +953,7 @@
 							"selected_df1.columns"
 						],
 						"outputs": [],
-						"execution_count": 41
+						"execution_count": 15
 					},
 					{
 						"cell_type": "code",
@@ -970,7 +973,7 @@
 							"selected_df1.head()"
 						],
 						"outputs": [],
-						"execution_count": 42
+						"execution_count": 16
 					},
 					{
 						"cell_type": "code",
@@ -1001,7 +1004,7 @@
 							"amr_delimiter_type = (f_get_delimiter(amr_Filename))"
 						],
 						"outputs": [],
-						"execution_count": 43
+						"execution_count": 17
 					},
 					{
 						"cell_type": "code",
@@ -1050,35 +1053,38 @@
 							"    try:\r\n",
 							"        selected_df2['Peildatum'] = pd.to_datetime(selected_df2['Peildatum'], format='%m/%d/%y')\r\n",
 							"    except:\r\n",
-							"        selected_df2['Peildatum'] = pd.to_datetime(selected_df2['Peildatum'], format='%d/%b/%Y')\r\n",
+							"        try:\r\n",
+							"            selected_df2['Peildatum'] = pd.to_datetime(selected_df2['Peildatum'], format='%d/%b/%Y')\r\n",
+							"        except:\r\n",
+							"            selected_df2['Peildatum'] = pd.to_datetime(selected_df2['Peildatum'], format='%d-%b-%y')\r\n",
 							"\r\n",
 							"# convert the datetime object to the desired format\r\n",
 							"selected_df2['Peildatum'] = selected_df2['Peildatum'].dt.strftime('%d-%m-%Y')\r\n",
 							"\r\n",
 							"\r\n",
-							"selected_df2['WerkelijkVerbruik_RM_2017'] = selected_df2['WerkelijkVerbruik_RM_2017'].str.replace(',','.')\r\n",
-							"selected_df2['WerkelijkVerbruik_RM_2018'] = selected_df2['WerkelijkVerbruik_RM_2018'].str.replace(',','.')\r\n",
-							"selected_df2['WerkelijkVerbruik_RM_2019'] = selected_df2['WerkelijkVerbruik_RM_2019'].str.replace(',','.')\r\n",
-							"selected_df2['WerkelijkVerbruik_RM_2020'] = selected_df2['WerkelijkVerbruik_RM_2020'].str.replace(',','.')\r\n",
-							"selected_df2['WerkelijkVerbruik_RM_2021'] = selected_df2['WerkelijkVerbruik_RM_2021'].str.replace(',','.')\r\n",
+							"selected_df2['WerkelijkVerbruik_RM_2017'] = selected_df2['WerkelijkVerbruik_RM_2017'].astype(str).str.replace(',','.')\r\n",
+							"selected_df2['WerkelijkVerbruik_RM_2018'] = selected_df2['WerkelijkVerbruik_RM_2018'].astype(str).str.replace(',','.')\r\n",
+							"selected_df2['WerkelijkVerbruik_RM_2019'] = selected_df2['WerkelijkVerbruik_RM_2019'].astype(str).str.replace(',','.')\r\n",
+							"selected_df2['WerkelijkVerbruik_RM_2020'] = selected_df2['WerkelijkVerbruik_RM_2020'].astype(str).str.replace(',','.')\r\n",
+							"selected_df2['WerkelijkVerbruik_RM_2021'] = selected_df2['WerkelijkVerbruik_RM_2021'].astype(str).str.replace(',','.')\r\n",
 							"selected_df2['Gemiddeld_WerkelijkVerbruik'] = ((selected_df2['WerkelijkVerbruik_RM_2017'].astype(float)\\\r\n",
 							"+ selected_df2['WerkelijkVerbruik_RM_2018'].astype(float) + selected_df2['WerkelijkVerbruik_RM_2019'].astype(float) + selected_df2['WerkelijkVerbruik_RM_2020'].astype(float)\\\r\n",
 							"+ selected_df2['WerkelijkVerbruik_RM_2021'].astype(float))/5)\r\n",
 							"\r\n",
-							"selected_df2['BenaderendVerbruik_VM_2017'] = selected_df2['BenaderendVerbruik_VM_2017'].str.replace(',','.')\r\n",
-							"selected_df2['BenaderendVerbruik_VM_2018'] = selected_df2['BenaderendVerbruik_VM_2018'].str.replace(',','.')\r\n",
-							"selected_df2['BenaderendVerbruik_VM_2019'] = selected_df2['BenaderendVerbruik_VM_2019'].str.replace(',','.')\r\n",
-							"selected_df2['BenaderendVerbruik_VM_2020'] = selected_df2['BenaderendVerbruik_VM_2020'].str.replace(',','.')\r\n",
-							"selected_df2['BenaderendVerbruik_VM_2021'] = selected_df2['BenaderendVerbruik_VM_2021'].str.replace(',','.')\r\n",
+							"selected_df2['BenaderendVerbruik_VM_2017'] = selected_df2['BenaderendVerbruik_VM_2017'].astype(str).str.replace(',','.')\r\n",
+							"selected_df2['BenaderendVerbruik_VM_2018'] = selected_df2['BenaderendVerbruik_VM_2018'].astype(str).str.replace(',','.')\r\n",
+							"selected_df2['BenaderendVerbruik_VM_2019'] = selected_df2['BenaderendVerbruik_VM_2019'].astype(str).str.replace(',','.')\r\n",
+							"selected_df2['BenaderendVerbruik_VM_2020'] = selected_df2['BenaderendVerbruik_VM_2020'].astype(str).str.replace(',','.')\r\n",
+							"selected_df2['BenaderendVerbruik_VM_2021'] = selected_df2['BenaderendVerbruik_VM_2021'].astype(str).str.replace(',','.')\r\n",
 							"selected_df2['Gemiddeld_BenaderendVerbruik'] = ((selected_df2['BenaderendVerbruik_VM_2017'].astype(float)\\\r\n",
 							"+ selected_df2['BenaderendVerbruik_VM_2018'].astype(float) + selected_df2['BenaderendVerbruik_VM_2019'].astype(float) + selected_df2['BenaderendVerbruik_VM_2020'].astype(float)\\\r\n",
 							"+ selected_df2['BenaderendVerbruik_VM_2021'].astype(float))/5)\r\n",
 							"\r\n",
-							"selected_df2['BenaderendVerbruik_VM_2017_Norm'] = selected_df2['BenaderendVerbruik_VM_2017_Norm'].str.replace(',','.')\r\n",
-							"selected_df2['BenaderendVerbruik_VM_2018_Norm'] = selected_df2['BenaderendVerbruik_VM_2018_Norm'].str.replace(',','.')\r\n",
-							"selected_df2['BenaderendVerbruik_VM_2019_Norm'] = selected_df2['BenaderendVerbruik_VM_2019_Norm'].str.replace(',','.')\r\n",
-							"selected_df2['BenaderendVerbruik_VM_2020_Norm'] = selected_df2['BenaderendVerbruik_VM_2020_Norm'].str.replace(',','.')\r\n",
-							"selected_df2['BenaderendVerbruik_VM_2021_Norm'] = selected_df2['BenaderendVerbruik_VM_2021_Norm'].str.replace(',','.')\r\n",
+							"selected_df2['BenaderendVerbruik_VM_2017_Norm'] = selected_df2['BenaderendVerbruik_VM_2017_Norm'].astype(str).str.replace(',','.')\r\n",
+							"selected_df2['BenaderendVerbruik_VM_2018_Norm'] = selected_df2['BenaderendVerbruik_VM_2018_Norm'].astype(str).str.replace(',','.')\r\n",
+							"selected_df2['BenaderendVerbruik_VM_2019_Norm'] = selected_df2['BenaderendVerbruik_VM_2019_Norm'].astype(str).str.replace(',','.')\r\n",
+							"selected_df2['BenaderendVerbruik_VM_2020_Norm'] = selected_df2['BenaderendVerbruik_VM_2020_Norm'].astype(str).str.replace(',','.')\r\n",
+							"selected_df2['BenaderendVerbruik_VM_2021_Norm'] = selected_df2['BenaderendVerbruik_VM_2021_Norm'].astype(str).str.replace(',','.')\r\n",
 							"selected_df2['Gemiddeld_BenaderendVerbruik_Norm'] = ((selected_df2['BenaderendVerbruik_VM_2017_Norm'].astype(float)\\\r\n",
 							"+ selected_df2['BenaderendVerbruik_VM_2018_Norm'].astype(float) + selected_df2['BenaderendVerbruik_VM_2019_Norm'].astype(float) + selected_df2['BenaderendVerbruik_VM_2020_Norm'].astype(float)\\\r\n",
 							"+ selected_df2['BenaderendVerbruik_VM_2021_Norm'].astype(float))/5)\r\n",
@@ -1097,7 +1103,7 @@
 							", 'MeasurementType']] #, 'MeasurementYear', 'MeasurementMonth'"
 						],
 						"outputs": [],
-						"execution_count": 44
+						"execution_count": 18
 					},
 					{
 						"cell_type": "code",
@@ -1118,7 +1124,7 @@
 							"selected_df2.columns"
 						],
 						"outputs": [],
-						"execution_count": 45
+						"execution_count": 19
 					},
 					{
 						"cell_type": "code",
@@ -1138,7 +1144,7 @@
 							"selected_df2.head()"
 						],
 						"outputs": [],
-						"execution_count": 46
+						"execution_count": 20
 					},
 					{
 						"cell_type": "code",
@@ -1159,7 +1165,7 @@
 							"print(selected_df2.shape[0]) #Digital Reading - 7005"
 						],
 						"outputs": [],
-						"execution_count": 47
+						"execution_count": 21
 					},
 					{
 						"cell_type": "code",
@@ -1181,7 +1187,7 @@
 							""
 						],
 						"outputs": [],
-						"execution_count": 48
+						"execution_count": 22
 					},
 					{
 						"cell_type": "code",
@@ -1204,7 +1210,7 @@
 							""
 						],
 						"outputs": [],
-						"execution_count": 49
+						"execution_count": 23
 					},
 					{
 						"cell_type": "code",
@@ -1226,7 +1232,7 @@
 							"count_group_by2.head() #Digital Reading Group By"
 						],
 						"outputs": [],
-						"execution_count": 50
+						"execution_count": 24
 					},
 					{
 						"cell_type": "code",
@@ -1246,7 +1252,7 @@
 							"df = pd.concat([selected_df2, selected_df1])"
 						],
 						"outputs": [],
-						"execution_count": 51
+						"execution_count": 25
 					},
 					{
 						"cell_type": "code",
@@ -1266,7 +1272,7 @@
 							"df.head(5)"
 						],
 						"outputs": [],
-						"execution_count": 52
+						"execution_count": 26
 					},
 					{
 						"cell_type": "code",
@@ -1285,7 +1291,7 @@
 							"df.dtypes"
 						],
 						"outputs": [],
-						"execution_count": 53
+						"execution_count": 27
 					},
 					{
 						"cell_type": "code",
@@ -1304,7 +1310,7 @@
 							"spark_df = spark.createDataFrame(df)"
 						],
 						"outputs": [],
-						"execution_count": 54
+						"execution_count": 28
 					},
 					{
 						"cell_type": "code",
@@ -1335,7 +1341,7 @@
 							".save(file_path)"
 						],
 						"outputs": [],
-						"execution_count": 55
+						"execution_count": 29
 					},
 					{
 						"cell_type": "code",
@@ -1357,7 +1363,7 @@
 							""
 						],
 						"outputs": [],
-						"execution_count": 56
+						"execution_count": 30
 					},
 					{
 						"cell_type": "code",
@@ -1394,7 +1400,7 @@
 							"# , 'DM_MeasurementType']] #, 'DM_MeasurementYear', 'DM_MeasurementMonth'"
 						],
 						"outputs": [],
-						"execution_count": 57
+						"execution_count": 31
 					},
 					{
 						"cell_type": "code",
@@ -1415,7 +1421,7 @@
 							""
 						],
 						"outputs": [],
-						"execution_count": 58
+						"execution_count": 32
 					},
 					{
 						"cell_type": "code",
@@ -1435,7 +1441,7 @@
 							"join_df.head(5)"
 						],
 						"outputs": [],
-						"execution_count": 59
+						"execution_count": 33
 					},
 					{
 						"cell_type": "code",
@@ -1454,7 +1460,7 @@
 							"spark_join_df = spark.createDataFrame(join_df)"
 						],
 						"outputs": [],
-						"execution_count": 60
+						"execution_count": 34
 					},
 					{
 						"cell_type": "code",
@@ -1485,7 +1491,7 @@
 							".save(file_path)"
 						],
 						"outputs": [],
-						"execution_count": 61
+						"execution_count": 35
 					},
 					{
 						"cell_type": "code",
