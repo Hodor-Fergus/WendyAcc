@@ -168,8 +168,15 @@
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
 				"description": "Load Data From Blob To Synapse SQL Pool",
+				"folder": {
+					"name": "Master Pipeline Notebooks"
+				},
 				"nbformat": 4,
 				"nbformat_minor": 2,
+				"bigDataPool": {
+					"referenceName": "devpool",
+					"type": "BigDataPoolReference"
+				},
 				"sessionProperties": {
 					"driverMemory": "28g",
 					"driverCores": 4,
@@ -181,14 +188,11 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "1dbda91f-e1ab-424d-ada8-cf763bd43fdf"
+						"spark.autotune.trackingId": "8f45a9d1-2480-4267-bc3d-482a9c2bfea0"
 					}
 				},
 				"metadata": {
 					"saveOutput": true,
-					"synapse_widget": {
-						"version": "0.1"
-					},
 					"enableDebugMode": false,
 					"kernelspec": {
 						"name": "synapse_pyspark",
@@ -196,6 +200,21 @@
 					},
 					"language_info": {
 						"name": "python"
+					},
+					"a365ComputeOptions": {
+						"id": "/subscriptions/87083017-2c2b-47c8-8ea7-b4d36686fc97/resourceGroups/Dev_ResourceGroup/providers/Microsoft.Synapse/workspaces/cmdevsynapse/bigDataPools/devpool",
+						"name": "devpool",
+						"type": "Spark",
+						"endpoint": "https://cmdevsynapse.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/devpool",
+						"auth": {
+							"type": "AAD",
+							"authResource": "https://dev.azuresynapse.net"
+						},
+						"sparkVersion": "3.3",
+						"nodeCount": 3,
+						"cores": 4,
+						"memory": 28,
+						"automaticScaleJobs": false
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -218,10 +237,10 @@
 						},
 						"source": [
 							"# Getiing the parameter value from the pipeline \r\n",
-							"FolderName = \"2022_10\""
+							"FolderName = \"2022_08\""
 						],
 						"outputs": [],
-						"execution_count": 1
+						"execution_count": 3
 					},
 					{
 						"cell_type": "code",
@@ -243,24 +262,25 @@
 							"month = FolderName.split('_')[1]"
 						],
 						"outputs": [],
-						"execution_count": 2
+						"execution_count": 4
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"from pyspark.sql import SparkSession\r\n",
 							"from pyspark.sql.functions import lit,col\r\n",
 							"\r\n",
 							"# Creating a spark session and connection to blob storage account\r\n",
-							"blob_account_name = \"wendydlstorage\"\r\n",
-							"blob_container_name = \"data\"\r\n",
+							"blob_account_name = \"rawdevstorage\"\r\n",
+							"blob_container_name = \"rawdata\"\r\n",
 							"sc = SparkSession.builder.getOrCreate()\r\n",
 							"token_library = sc._jvm.com.microsoft.azure.synapse.tokenlibrary.TokenLibrary\r\n",
-							"blob_sas_token = token_library.getConnectionString(\"AzureBlobStorage1\")\r\n",
+							"blob_sas_token = token_library.getConnectionString(\"cmdevsynapse-WorkspaceDefaultStorage\")\r\n",
 							"spark.conf.set('fs.azure.sas.%s.%s.blob.core.windows.net' % (blob_container_name, blob_account_name),blob_sas_token)"
 						],
 						"outputs": [],
-						"execution_count": 3
+						"execution_count": 5
 					},
 					{
 						"cell_type": "code",
@@ -277,7 +297,7 @@
 						},
 						"source": [
 							"# Reading the first File (Analogue Reading File)\r\n",
-							"FileName = 'wasbs://data@wendydlstorage.blob.core.windows.net/Bronze Layer/%s/P6523_Verbruiken_AMR_GEMEENTE_%s.csv' % (FolderName,FolderName_Without_Separator)\r\n",
+							"FileName = 'abfss://rawdata@rawdevstorage.dfs.core.windows.net/%s/P6523_Verbruiken_AMR_GEMEENTE_%s.csv' % (FolderName,FolderName_Without_Separator)\r\n",
 							"df1 = spark.read.load(FileName, format='csv', header=True,delimiter=';',inferSchema=True)\r\n",
 							"\r\n",
 							"# Convert to pandas data frame\r\n",
@@ -363,7 +383,7 @@
 							", 'MeasurementType']] #, 'MeasurementYear', 'MeasurementMonth'"
 						],
 						"outputs": [],
-						"execution_count": 7
+						"execution_count": 6
 					},
 					{
 						"cell_type": "code",
@@ -384,7 +404,7 @@
 							"selected_df1.columns"
 						],
 						"outputs": [],
-						"execution_count": 8
+						"execution_count": 7
 					},
 					{
 						"cell_type": "code",
@@ -404,7 +424,7 @@
 							"selected_df1.head()"
 						],
 						"outputs": [],
-						"execution_count": 9
+						"execution_count": 8
 					},
 					{
 						"cell_type": "code",
@@ -423,7 +443,7 @@
 						"source": [
 							"\r\n",
 							"# Reading the second File (Digital Reading File)\r\n",
-							"FileName = 'wasbs://data@wendydlstorage.blob.core.windows.net/Bronze Layer/%s/P6523_Verbruiken_DM_GEMEENTE_%s.csv' % (FolderName,FolderName_Without_Separator)\r\n",
+							"FileName = 'abfss://rawdata@rawdevstorage.dfs.core.windows.net/%s/P6523_Verbruiken_DM_GEMEENTE_%s.csv' % (FolderName,FolderName_Without_Separator)\r\n",
 							"df2 = spark.read.load(FileName, format='csv', header=True,delimiter=';',inferSchema=True)\r\n",
 							"\r\n",
 							"# Convert to pandas data frame\r\n",
@@ -500,7 +520,7 @@
 							", 'MeasurementType']] #, 'MeasurementYear', 'MeasurementMonth'"
 						],
 						"outputs": [],
-						"execution_count": 96
+						"execution_count": 9
 					},
 					{
 						"cell_type": "code",
@@ -521,7 +541,7 @@
 							"selected_df2.columns"
 						],
 						"outputs": [],
-						"execution_count": 97
+						"execution_count": 10
 					},
 					{
 						"cell_type": "code",
@@ -541,7 +561,7 @@
 							"selected_df2.head()"
 						],
 						"outputs": [],
-						"execution_count": 98
+						"execution_count": 11
 					},
 					{
 						"cell_type": "code",
@@ -562,7 +582,7 @@
 							"print(selected_df2.shape[0]) #Digital Reading - 7005"
 						],
 						"outputs": [],
-						"execution_count": 99
+						"execution_count": 12
 					},
 					{
 						"cell_type": "code",
@@ -584,7 +604,7 @@
 							""
 						],
 						"outputs": [],
-						"execution_count": 100
+						"execution_count": 13
 					},
 					{
 						"cell_type": "code",
@@ -607,7 +627,7 @@
 							""
 						],
 						"outputs": [],
-						"execution_count": 101
+						"execution_count": 14
 					},
 					{
 						"cell_type": "code",
@@ -629,7 +649,7 @@
 							"count_group_by2.head() #Digital Reading Group By"
 						],
 						"outputs": [],
-						"execution_count": 102
+						"execution_count": 15
 					},
 					{
 						"cell_type": "code",
@@ -649,7 +669,7 @@
 							"df = pd.concat([selected_df2, selected_df1])"
 						],
 						"outputs": [],
-						"execution_count": 103
+						"execution_count": 16
 					},
 					{
 						"cell_type": "code",
@@ -669,7 +689,7 @@
 							"df.head(5)"
 						],
 						"outputs": [],
-						"execution_count": 104
+						"execution_count": 17
 					},
 					{
 						"cell_type": "code",
@@ -688,7 +708,7 @@
 							"df.dtypes"
 						],
 						"outputs": [],
-						"execution_count": 105
+						"execution_count": 18
 					},
 					{
 						"cell_type": "code",
@@ -707,7 +727,7 @@
 							"spark_df = spark.createDataFrame(df)"
 						],
 						"outputs": [],
-						"execution_count": 106
+						"execution_count": 19
 					},
 					{
 						"cell_type": "code",
@@ -906,7 +926,8 @@
 						"source": [
 							""
 						],
-						"outputs": []
+						"outputs": [],
+						"execution_count": null
 					}
 				]
 			},
@@ -918,6 +939,9 @@
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
 				"description": "Load Data From Blob To Synapse SQL Pool",
+				"folder": {
+					"name": "Master Pipeline Notebooks"
+				},
 				"nbformat": 4,
 				"nbformat_minor": 2,
 				"sessionProperties": {
