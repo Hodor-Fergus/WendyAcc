@@ -299,7 +299,7 @@
 						"userProperties": [],
 						"typeProperties": {
 							"dataset": {
-								"referenceName": "Electricity_Measurement_pandas_union",
+								"referenceName": "Electricity_Measurement_pyspark_union",
 								"type": "DatasetReference",
 								"parameters": {}
 							},
@@ -312,8 +312,8 @@
 						}
 					},
 					{
-						"name": "Delete_Electricity_Measurement_pandas_join",
-						"description": "Delete_Electricity_Measurement_pandas_join",
+						"name": "Delete_Electricity_Measurement_pyspark_join",
+						"description": "Delete_Electricity_Measurement_pyspark_join",
 						"type": "Delete",
 						"dependsOn": [],
 						"policy": {
@@ -326,7 +326,7 @@
 						"userProperties": [],
 						"typeProperties": {
 							"dataset": {
-								"referenceName": "Electricity_Measurement_pandas_join",
+								"referenceName": "Electricity_Measurement_pyspark_join",
 								"type": "DatasetReference",
 								"parameters": {}
 							},
@@ -350,7 +350,7 @@
 								]
 							},
 							{
-								"activity": "Delete_Electricity_Measurement_pandas_join",
+								"activity": "Delete_Electricity_Measurement_pyspark_join",
 								"dependencyConditions": [
 									"Succeeded"
 								]
@@ -453,8 +453,8 @@
 				"annotations": []
 			},
 			"dependsOn": [
-				"[concat(variables('workspaceId'), '/datasets/Electricity_Measurement_pandas_union')]",
-				"[concat(variables('workspaceId'), '/datasets/Electricity_Measurement_pandas_join')]",
+				"[concat(variables('workspaceId'), '/datasets/Electricity_Measurement_pyspark_union')]",
+				"[concat(variables('workspaceId'), '/datasets/Electricity_Measurement_pyspark_join')]",
 				"[concat(variables('workspaceId'), '/datasets/ADLS_Container_rawdata')]",
 				"[concat(variables('workspaceId'), '/notebooks/PySpark_Load_Data_From_Blob_To_Synapse_SQL_Pool')]",
 				"[concat(variables('workspaceId'), '/bigDataPools/devpool')]"
@@ -703,7 +703,7 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "774a011f-b63e-4da0-a480-491d654f9eb2"
+						"spark.autotune.trackingId": "ea93f4b6-87ec-4307-b09e-5eb4d1fa8ccc"
 					}
 				},
 				"metadata": {
@@ -728,8 +728,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 4,
-						"memory": 28,
-						"automaticScaleJobs": false
+						"memory": 28
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -781,7 +780,6 @@
 					},
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							"from pyspark.sql import SparkSession\r\n",
 							"from pyspark.sql.functions import lit,col\r\n",
@@ -1542,7 +1540,7 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "2402ea20-13d1-4099-97e7-d7c1dea990e6"
+						"spark.autotune.trackingId": "27402296-0bc2-41c8-9843-619e8feaacf8"
 					}
 				},
 				"metadata": {
@@ -1591,10 +1589,10 @@
 						},
 						"source": [
 							"# Getiing the parameter value from the pipeline \r\n",
-							"FolderName = \"2023_02\""
+							"FolderName = \"2022_10\""
 						],
 						"outputs": [],
-						"execution_count": 55
+						"execution_count": 73
 					},
 					{
 						"cell_type": "code",
@@ -1616,7 +1614,7 @@
 							"month = FolderName.split('_')[1]"
 						],
 						"outputs": [],
-						"execution_count": 56
+						"execution_count": null
 					},
 					{
 						"cell_type": "code",
@@ -1643,6 +1641,25 @@
 						],
 						"outputs": [],
 						"execution_count": 57
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"spark.sql(\"set spark.sql.legacy.timeParserPolicy=LEGACY\")"
+						],
+						"outputs": [],
+						"execution_count": null
 					},
 					{
 						"cell_type": "code",
@@ -2725,7 +2742,7 @@
 				},
 				"autoScale": {
 					"enabled": true,
-					"maxNodeCount": 4,
+					"maxNodeCount": 3,
 					"minNodeCount": 3
 				},
 				"nodeCount": 3,
@@ -2738,6 +2755,53 @@
 			},
 			"dependsOn": [],
 			"location": "northeurope"
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/Electricity_Measurement_pyspark_join')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "cmdevsynapse-WorkspaceDefaultStorage",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "Binary",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"folderPath": "Electricity_Measurement_pyspark_join",
+						"fileSystem": "output"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/cmdevsynapse-WorkspaceDefaultStorage')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/Electricity_Measurement_pyspark_union')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"description": "Electricity_Measurement_pyspark_union",
+				"linkedServiceName": {
+					"referenceName": "cmdevsynapse-WorkspaceDefaultStorage",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "Binary",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"folderPath": "Electricity_Measurement_pyspark_union",
+						"fileSystem": "output"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/cmdevsynapse-WorkspaceDefaultStorage')]"
+			]
 		}
 	]
 }
