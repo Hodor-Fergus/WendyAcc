@@ -18,7 +18,7 @@
 				"userProperties": [],
 				"typeProperties": {
 					"dataset": {
-						"referenceName": "Electricity_Measurement_pandas_union",
+						"referenceName": "Electricity_Measurement_pyspark_union",
 						"type": "DatasetReference"
 					},
 					"enableLogging": false,
@@ -30,8 +30,8 @@
 				}
 			},
 			{
-				"name": "Delete_Electricity_Measurement_pandas_join",
-				"description": "Delete_Electricity_Measurement_pandas_join",
+				"name": "Delete_Electricity_Measurement_pyspark_join",
+				"description": "Delete_Electricity_Measurement_pyspark_join",
 				"type": "Delete",
 				"dependsOn": [],
 				"policy": {
@@ -44,7 +44,7 @@
 				"userProperties": [],
 				"typeProperties": {
 					"dataset": {
-						"referenceName": "Electricity_Measurement_pandas_join",
+						"referenceName": "Electricity_Measurement_pyspark_join",
 						"type": "DatasetReference"
 					},
 					"enableLogging": false,
@@ -67,7 +67,7 @@
 						]
 					},
 					{
-						"activity": "Delete_Electricity_Measurement_pandas_join",
+						"activity": "Delete_Electricity_Measurement_pyspark_join",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -91,6 +91,7 @@
 					],
 					"storeSettings": {
 						"type": "AzureBlobFSReadSettings",
+						"recursive": true,
 						"enablePartitionDiscovery": false
 					},
 					"formatSettings": {

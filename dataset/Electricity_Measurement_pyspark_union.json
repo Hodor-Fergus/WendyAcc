@@ -1,0 +1,19 @@
+{
+	"name": "Electricity_Measurement_pyspark_union",
+	"properties": {
+		"description": "Electricity_Measurement_pyspark_union",
+		"linkedServiceName": {
+			"referenceName": "cmdevsynapse-WorkspaceDefaultStorage",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "Binary",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"folderPath": "Electricity_Measurement_pyspark_union",
+				"fileSystem": "output"
+			}
+		}
+	}
+}

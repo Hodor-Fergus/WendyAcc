@@ -22,7 +22,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "b7f1f7ba-3355-404e-9016-b4f60155d108"
+				"spark.autotune.trackingId": "fd7627eb-13d3-4260-830d-758275a5a2d5"
 			}
 		},
 		"metadata": {
@@ -71,9 +71,9 @@
 				},
 				"source": [
 					"# Getiing the parameter value from the pipeline \r\n",
-					"FolderName = \"2023_02\""
+					"FolderName = \"2022_10\""
 				],
-				"execution_count": 55
+				"execution_count": 73
 			},
 			{
 				"cell_type": "code",
@@ -94,7 +94,7 @@
 					"year = FolderName.split('_')[0]\r\n",
 					"month = FolderName.split('_')[1]"
 				],
-				"execution_count": 56
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -120,6 +120,24 @@
 					"    blob_sas_token)"
 				],
 				"execution_count": 57
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"spark.sql(\"set spark.sql.legacy.timeParserPolicy=LEGACY\")"
+				],
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
