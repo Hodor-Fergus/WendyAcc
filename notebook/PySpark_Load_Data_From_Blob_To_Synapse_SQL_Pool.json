@@ -15,14 +15,11 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "f7804fa4-cef8-4894-956e-6228f6f809d1"
+				"spark.autotune.trackingId": "cc5c732e-b214-4bf8-8c69-1bcbb6497888"
 			}
 		},
 		"metadata": {
 			"saveOutput": true,
-			"synapse_widget": {
-				"version": "0.1"
-			},
 			"enableDebugMode": false,
 			"kernelspec": {
 				"name": "synapse_pyspark",
@@ -74,7 +71,8 @@
 					"FolderName_Without_Separator = FolderName.replace(\"_\", \"\")\r\n",
 					"year = FolderName.split('_')[0]\r\n",
 					"month = FolderName.split('_')[1]"
-				]
+				],
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -98,7 +96,8 @@
 					"spark.conf.set(\r\n",
 					"    'fs.azure.sas.%s.%s.blob.core.windows.net' % (blob_container_name, blob_account_name),\r\n",
 					"    blob_sas_token)"
-				]
+				],
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -577,7 +576,8 @@
 				},
 				"source": [
 					""
-				]
+				],
+				"execution_count": null
 			}
 		]
 	}
