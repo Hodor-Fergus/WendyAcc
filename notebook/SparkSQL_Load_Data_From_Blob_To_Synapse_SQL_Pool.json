@@ -22,7 +22,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "cf565ae3-46b2-4741-ab61-6d6151f0d0e8"
+				"spark.autotune.trackingId": "158e34db-6feb-4adf-87f6-5b86a48e1145"
 			}
 		},
 		"metadata": {
@@ -73,7 +73,7 @@
 					"# Getiing the parameter value from the pipeline \r\n",
 					"FolderName = \"2022_08\""
 				],
-				"execution_count": 2
+				"execution_count": 3
 			},
 			{
 				"cell_type": "code",
@@ -94,7 +94,7 @@
 					"year = FolderName.split('_')[0]\r\n",
 					"month = FolderName.split('_')[1]"
 				],
-				"execution_count": 6
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -110,7 +110,30 @@
 					"blob_sas_token = token_library.getConnectionString(\"cmdevsynapse-WorkspaceDefaultStorage\")\r\n",
 					"spark.conf.set('fs.azure.sas.%s.%s.blob.core.windows.net' % (blob_container_name, blob_account_name),blob_sas_token)"
 				],
-				"execution_count": 7
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Run SQL queries: Once you have created a temporary view, you can run SQL queries on it using the spark.sql method.\r\n",
+					"# Example 2: Filter the temporary view using a condition\r\n",
+					"result_df = spark.sql(\"SELECT * FROM people WHERE age > 30\")\r\n",
+					"\r\n",
+					"# Display the result: To display the result of the SQL query, you can use the show method.\r\n",
+					"result_df.show()"
+				],
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -138,7 +161,14 @@
 					"    except Exception as err:\r\n",
 					"        print(\"Error Occured \", str(err))\r\n",
 					"amr_Filename = 'abfss://rawdata@rawdevstorage.dfs.core.windows.net/%s/P6523_Verbruiken_AMR_GEMEENTE_%s.csv' % (FolderName, FolderName_Without_Separator)\r\n",
-					"amr_delimiter_type = (f_get_delimiter(amr_Filename))"
+					"amr_delimiter_type = (f_get_delimiter(amr_Filename))\r\n",
+					"\r\n",
+					"# Reading the first File (Analogue Reading File)\r\n",
+					"FileName = 'abfss://rawdata@rawdevstorage.dfs.core.windows.net/%s/P6523_Verbruiken_AMR_GEMEENTE_%s.csv' % (FolderName,FolderName_Without_Separator)\r\n",
+					"df1 = spark.read.load(FileName, format='csv', header=True,delimiter=amr_delimiter_type,inferSchema=True)\r\n",
+					"\r\n",
+					"# Create a temporary view: To run SQL queries on a PySpark DataFrame, you need to create a temporary view using the createOrReplaceTempView method.\r\n",
+					"df1.createOrReplaceTempView(\"AMR_Measurement_Reading\")"
 				],
 				"execution_count": 8
 			},
@@ -156,9 +186,7 @@
 					}
 				},
 				"source": [
-					"# Reading the first File (Analogue Reading File)\r\n",
-					"FileName = 'abfss://rawdata@rawdevstorage.dfs.core.windows.net/%s/P6523_Verbruiken_AMR_GEMEENTE_%s.csv' % (FolderName,FolderName_Without_Separator)\r\n",
-					"df1 = spark.read.load(FileName, format='csv', header=True,delimiter=amr_delimiter_type,inferSchema=True)\r\n",
+					"\r\n",
 					"\r\n",
 					"# Convert to pandas data frame\r\n",
 					"df1 = df1.select(\"*\").toPandas()\r\n",
