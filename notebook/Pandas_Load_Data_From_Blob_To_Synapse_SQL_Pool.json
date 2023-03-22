@@ -22,7 +22,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "330ebc4b-362d-4632-ba35-7d1df4ecd742"
+				"spark.autotune.trackingId": "67f0b9be-3e0a-4cb9-b51d-d626ccc4a336"
 			}
 		},
 		"metadata": {
@@ -71,9 +71,9 @@
 				},
 				"source": [
 					"# Getiing the parameter value from the pipeline \r\n",
-					"FolderName = \"2022_08\""
+					"FolderName = \"2022_09\""
 				],
-				"execution_count": 3
+				"execution_count": 36
 			},
 			{
 				"cell_type": "code",
@@ -94,7 +94,7 @@
 					"year = FolderName.split('_')[0]\r\n",
 					"month = FolderName.split('_')[1]"
 				],
-				"execution_count": 4
+				"execution_count": 37
 			},
 			{
 				"cell_type": "code",
@@ -110,7 +110,37 @@
 					"blob_sas_token = token_library.getConnectionString(\"cmdevsynapse-WorkspaceDefaultStorage\")\r\n",
 					"spark.conf.set('fs.azure.sas.%s.%s.blob.core.windows.net' % (blob_container_name, blob_account_name),blob_sas_token)"
 				],
-				"execution_count": 5
+				"execution_count": 38
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Create a dynamic column delimiter using regex for AMR\r\n",
+					"import re\r\n",
+					"def f_get_delimiter (source_path):\r\n",
+					"    try:\r\n",
+					"        headerlist = spark.sparkContext.textFile(source_path).take(1)\r\n",
+					"        header_str = ''.join(headerlist)\r\n",
+					"\r\n",
+					"        results= re.search(\"(,|;|\\\\|)\",header_str)\r\n",
+					"        return results.group()\r\n",
+					"    except Exception as err:\r\n",
+					"        print(\"Error Occured \", str(err))\r\n",
+					"amr_Filename = 'abfss://rawdata@rawdevstorage.dfs.core.windows.net/%s/P6523_Verbruiken_AMR_GEMEENTE_%s.csv' % (FolderName, FolderName_Without_Separator)\r\n",
+					"amr_delimiter_type = (f_get_delimiter(amr_Filename))"
+				],
+				"execution_count": 39
 			},
 			{
 				"cell_type": "code",
@@ -128,7 +158,7 @@
 				"source": [
 					"# Reading the first File (Analogue Reading File)\r\n",
 					"FileName = 'abfss://rawdata@rawdevstorage.dfs.core.windows.net/%s/P6523_Verbruiken_AMR_GEMEENTE_%s.csv' % (FolderName,FolderName_Without_Separator)\r\n",
-					"df1 = spark.read.load(FileName, format='csv', header=True,delimiter=';',inferSchema=True)\r\n",
+					"df1 = spark.read.load(FileName, format='csv', header=True,delimiter=amr_delimiter_type,inferSchema=True)\r\n",
 					"\r\n",
 					"# Convert to pandas data frame\r\n",
 					"df1 = df1.select(\"*\").toPandas()\r\n",
@@ -212,7 +242,7 @@
 					",'Gemiddeld_WerkelijkVerbruik','Gemiddeld_BenaderendVerbruik','Gemiddeld_BenaderendVerbruik_Norm','Total_AantalToegangspunten'\\\r\n",
 					", 'MeasurementType']] #, 'MeasurementYear', 'MeasurementMonth'"
 				],
-				"execution_count": 6
+				"execution_count": 40
 			},
 			{
 				"cell_type": "code",
@@ -232,7 +262,7 @@
 					"# Checking the column names\r\n",
 					"selected_df1.columns"
 				],
-				"execution_count": 7
+				"execution_count": 41
 			},
 			{
 				"cell_type": "code",
@@ -251,7 +281,37 @@
 					"# Selecting the top 5 rows\r\n",
 					"selected_df1.head()"
 				],
-				"execution_count": 8
+				"execution_count": 42
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Create a dynamic column delimiter using regex for DM\r\n",
+					"import re\r\n",
+					"def f_get_delimiter (source_path):\r\n",
+					"    try:\r\n",
+					"        headerlist = spark.sparkContext.textFile(source_path).take(1)\r\n",
+					"        header_str = ''.join(headerlist)\r\n",
+					"\r\n",
+					"        results= re.search(\"(,|;|\\\\|)\",header_str)\r\n",
+					"        return results.group()\r\n",
+					"    except Exception as err:\r\n",
+					"        print(\"Error Occured \", str(err))\r\n",
+					"amr_Filename = 'abfss://rawdata@rawdevstorage.dfs.core.windows.net/%s/P6523_Verbruiken_DM_GEMEENTE_%s.csv' % (FolderName, FolderName_Without_Separator)\r\n",
+					"amr_delimiter_type = (f_get_delimiter(amr_Filename))"
+				],
+				"execution_count": 43
 			},
 			{
 				"cell_type": "code",
@@ -271,7 +331,7 @@
 					"\r\n",
 					"# Reading the second File (Digital Reading File)\r\n",
 					"FileName = 'abfss://rawdata@rawdevstorage.dfs.core.windows.net/%s/P6523_Verbruiken_DM_GEMEENTE_%s.csv' % (FolderName,FolderName_Without_Separator)\r\n",
-					"df2 = spark.read.load(FileName, format='csv', header=True,delimiter=';',inferSchema=True)\r\n",
+					"df2 = spark.read.load(FileName, format='csv', header=True,delimiter=amr_delimiter_type,inferSchema=True)\r\n",
 					"\r\n",
 					"# Convert to pandas data frame\r\n",
 					"df2 = df2.select(\"*\").toPandas()\r\n",
@@ -346,7 +406,7 @@
 					",'Gemiddeld_WerkelijkVerbruik','Gemiddeld_BenaderendVerbruik','Gemiddeld_BenaderendVerbruik_Norm','Total_AantalToegangspunten'\\\r\n",
 					", 'MeasurementType']] #, 'MeasurementYear', 'MeasurementMonth'"
 				],
-				"execution_count": 9
+				"execution_count": 44
 			},
 			{
 				"cell_type": "code",
@@ -366,7 +426,7 @@
 					"# Checking the column names\r\n",
 					"selected_df2.columns"
 				],
-				"execution_count": 10
+				"execution_count": 45
 			},
 			{
 				"cell_type": "code",
@@ -385,7 +445,7 @@
 					"# Selecting the top 5 rows\r\n",
 					"selected_df2.head()"
 				],
-				"execution_count": 11
+				"execution_count": 46
 			},
 			{
 				"cell_type": "code",
@@ -405,7 +465,7 @@
 					"print(selected_df1.shape[0]) #Analogue Reading - 2660\r\n",
 					"print(selected_df2.shape[0]) #Digital Reading - 7005"
 				],
-				"execution_count": 12
+				"execution_count": 47
 			},
 			{
 				"cell_type": "code",
@@ -426,7 +486,7 @@
 					"grouped_data2 = selected_df2.groupby(['Peildatum', 'Markt', 'Leveringsadres_Postcode'])\r\n",
 					""
 				],
-				"execution_count": 13
+				"execution_count": 48
 			},
 			{
 				"cell_type": "code",
@@ -448,7 +508,7 @@
 					"count_group_by1.head() #Analogue Reading Group BY\r\n",
 					""
 				],
-				"execution_count": 14
+				"execution_count": 49
 			},
 			{
 				"cell_type": "code",
@@ -469,7 +529,7 @@
 					")\r\n",
 					"count_group_by2.head() #Digital Reading Group By"
 				],
-				"execution_count": 15
+				"execution_count": 50
 			},
 			{
 				"cell_type": "code",
@@ -488,7 +548,7 @@
 					"# Doing union operation to get a single dataframe combining Analogue and Digital measurement data\r\n",
 					"df = pd.concat([selected_df2, selected_df1])"
 				],
-				"execution_count": 16
+				"execution_count": 51
 			},
 			{
 				"cell_type": "code",
@@ -507,7 +567,7 @@
 				"source": [
 					"df.head(5)"
 				],
-				"execution_count": 17
+				"execution_count": 52
 			},
 			{
 				"cell_type": "code",
@@ -525,7 +585,7 @@
 				"source": [
 					"df.dtypes"
 				],
-				"execution_count": 18
+				"execution_count": 53
 			},
 			{
 				"cell_type": "code",
@@ -543,7 +603,7 @@
 				"source": [
 					"spark_df = spark.createDataFrame(df)"
 				],
-				"execution_count": 19
+				"execution_count": 54
 			},
 			{
 				"cell_type": "code",
@@ -559,7 +619,7 @@
 					}
 				},
 				"source": [
-					"file_path = 'wasbs://data@wendydlstorage.blob.core.windows.net/Silver/Combined/Electricity_Measurement_2'\r\n",
+					"file_path = 'abfss://output@rawdevstorage.dfs.core.windows.net/Electricity_Measurement_pandas_union'\r\n",
 					"write_format=\"delta\"\r\n",
 					"partition_by=[\"Peildatum\"]\r\n",
 					"mode_ = \"append\" #overwrite #append\r\n",
@@ -573,7 +633,7 @@
 					".mode(mode_)\\\r\n",
 					".save(file_path)"
 				],
-				"execution_count": 82
+				"execution_count": 55
 			},
 			{
 				"cell_type": "code",
@@ -594,7 +654,7 @@
 					"selected_df2 = selected_df2.add_prefix('DM_')\r\n",
 					""
 				],
-				"execution_count": 107
+				"execution_count": 56
 			},
 			{
 				"cell_type": "code",
@@ -630,7 +690,7 @@
 					"# , 'AM_Gemiddeld_WerkelijkVerbruik','AM_Gemiddeld_BenaderendVerbruik','AM_Gemiddeld_BenaderendVerbruik_Norm','AM_Total_AantalToegangspunten'\r\n",
 					"# , 'DM_MeasurementType']] #, 'DM_MeasurementYear', 'DM_MeasurementMonth'"
 				],
-				"execution_count": 109
+				"execution_count": 57
 			},
 			{
 				"cell_type": "code",
@@ -650,7 +710,7 @@
 					"join_df.shape[0]\r\n",
 					""
 				],
-				"execution_count": 110
+				"execution_count": 58
 			},
 			{
 				"cell_type": "code",
@@ -669,7 +729,7 @@
 					"# Displaying the top 5 rows\r\n",
 					"join_df.head(5)"
 				],
-				"execution_count": 111
+				"execution_count": 59
 			},
 			{
 				"cell_type": "code",
@@ -687,7 +747,7 @@
 				"source": [
 					"spark_join_df = spark.createDataFrame(join_df)"
 				],
-				"execution_count": 112
+				"execution_count": 60
 			},
 			{
 				"cell_type": "code",
@@ -703,7 +763,7 @@
 					}
 				},
 				"source": [
-					"file_path = 'wasbs://data@wendydlstorage.blob.core.windows.net/Silver/Combined/Electricity_Measurement_2_join'\r\n",
+					"file_path = 'abfss://output@rawdevstorage.dfs.core.windows.net/Electricity_Measurement_pandas_join'\r\n",
 					"write_format=\"delta\"\r\n",
 					"partition_by=[\"DM_Peildatum\"]\r\n",
 					"mode_ = \"append\" #overwrite #append\r\n",
@@ -717,7 +777,7 @@
 					".mode(mode_)\\\r\n",
 					".save(file_path)"
 				],
-				"execution_count": 113
+				"execution_count": 61
 			},
 			{
 				"cell_type": "code",
