@@ -1,6 +1,9 @@
 {
 	"name": "DeltaLakeQuery",
 	"properties": {
+		"folder": {
+			"name": "Other Queries"
+		},
 		"content": {
 			"query": "-- This is auto-generated code\nSELECT\n    Peildatum,MeasurementType, COUNT(*) as CT\nFROM\n    OPENROWSET(\n        BULK 'https://wendydlstorage.blob.core.windows.net/data/Silver/Combined/Electricity_Measurement_2/',\n        FORMAT = 'DELTA'\n    ) AS [result]\n\nGROUP BY Peildatum,MeasurementType\n\n\n\nSELECT\n    DM_Peildatum,DM_MeasurementType, COUNT(*) as CT\nFROM\n    OPENROWSET(\n        BULK 'https://wendydlstorage.blob.core.windows.net/data/Silver/Combined/Electricity_Measurement_join/',\n        FORMAT = 'DELTA'\n    ) AS [result]\n\nGROUP BY DM_Peildatum,DM_MeasurementType",
 			"metadata": {
