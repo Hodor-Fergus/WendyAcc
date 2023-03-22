@@ -1,0 +1,18 @@
+{
+	"name": "Electricity_Measurement_pandas_union",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "cmdevsynapse-WorkspaceDefaultStorage",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "Binary",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"folderPath": "Electricity_Measurement_pandas_union",
+				"fileSystem": "output"
+			}
+		}
+	}
+}
