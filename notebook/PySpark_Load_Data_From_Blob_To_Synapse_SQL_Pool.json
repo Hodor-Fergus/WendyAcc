@@ -22,7 +22,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "5c4e0068-e1f7-4130-ba41-ab94d410e757"
+				"spark.autotune.trackingId": "edd781d9-444d-42dc-a33f-0e7b936b93cc"
 			}
 		},
 		"metadata": {
@@ -73,7 +73,7 @@
 					"# Getiing the parameter value from the pipeline \r\n",
 					"FolderName = \"2022_08\""
 				],
-				"execution_count": 9
+				"execution_count": 11
 			},
 			{
 				"cell_type": "code",
@@ -94,7 +94,7 @@
 					"year = FolderName.split('_')[0]\r\n",
 					"month = FolderName.split('_')[1]"
 				],
-				"execution_count": null
+				"execution_count": 12
 			},
 			{
 				"cell_type": "code",
@@ -114,12 +114,12 @@
 					"\r\n",
 					"sc = SparkSession.builder.getOrCreate()\r\n",
 					"token_library = sc._jvm.com.microsoft.azure.synapse.tokenlibrary.TokenLibrary\r\n",
-					"blob_sas_token = token_library.getConnectionString(\"AzureBlobStorage1\")\r\n",
+					"blob_sas_token = token_library.getConnectionString(\"cmdevsynapse-WorkspaceDefaultStorage\")\r\n",
 					"spark.conf.set(\r\n",
 					"    'fs.azure.sas.%s.%s.blob.core.windows.net' % (blob_container_name, blob_account_name),\r\n",
 					"    blob_sas_token)"
 				],
-				"execution_count": null
+				"execution_count": 15
 			},
 			{
 				"cell_type": "code",
@@ -149,7 +149,7 @@
 					"amr_Filename = 'abfss://rawdata@rawdevstorage.dfs.core.windows.net/%s/P6523_Verbruiken_AMR_GEMEENTE_%s.csv' % (FolderName, FolderName_Without_Separator)\r\n",
 					"amr_delimiter_type = (f_get_delimiter(amr_Filename))"
 				],
-				"execution_count": null
+				"execution_count": 16
 			},
 			{
 				"cell_type": "code",
@@ -240,7 +240,7 @@
 					",'Gemiddeld_WerkelijkVerbruik','Gemiddeld_BenaderendVerbruik','Gemiddeld_BenaderendVerbruik_Norm','Total_AantalToegangspunten'\\\r\n",
 					", 'MeasurementType') #, 'MeasurementYear', 'MeasurementMonth'"
 				],
-				"execution_count": 103
+				"execution_count": 17
 			},
 			{
 				"cell_type": "code",
@@ -265,7 +265,7 @@
 					"# Displaying the top 5 rows\r\n",
 					"display(selected_df1.limit(5))"
 				],
-				"execution_count": 105
+				"execution_count": 18
 			},
 			{
 				"cell_type": "code",
@@ -295,7 +295,7 @@
 					"amr_Filename = 'abfss://rawdata@rawdevstorage.dfs.core.windows.net/%s/P6523_Verbruiken_DM_GEMEENTE_%s.csv' % (FolderName, FolderName_Without_Separator)\r\n",
 					"amr_delimiter_type = (f_get_delimiter(amr_Filename))"
 				],
-				"execution_count": null
+				"execution_count": 19
 			},
 			{
 				"cell_type": "code",
@@ -389,7 +389,7 @@
 					",'Gemiddeld_WerkelijkVerbruik','Gemiddeld_BenaderendVerbruik','Gemiddeld_BenaderendVerbruik_Norm','Total_AantalToegangspunten'\\\r\n",
 					", 'MeasurementType') #, 'MeasurementYear', 'MeasurementMonth'"
 				],
-				"execution_count": 83
+				"execution_count": 20
 			},
 			{
 				"cell_type": "code",
@@ -412,7 +412,7 @@
 					"# Displaying the top 5 rows\r\n",
 					"display(selected_df2.limit(5))"
 				],
-				"execution_count": 84
+				"execution_count": 21
 			},
 			{
 				"cell_type": "code",
@@ -433,7 +433,7 @@
 					"print(selected_df2.count()) #Digital Reading - 7005\r\n",
 					""
 				],
-				"execution_count": 85
+				"execution_count": 22
 			},
 			{
 				"cell_type": "code",
@@ -458,7 +458,7 @@
 					"count_group_by2 = grouped_data2.agg(count(\"WerkelijkVerbruik_RM_2017\"))\r\n",
 					"count_group_by2.show() #Digital Reading Group By"
 				],
-				"execution_count": 86
+				"execution_count": 23
 			},
 			{
 				"cell_type": "code",
@@ -477,7 +477,7 @@
 					"# Doing union operation to get a single dataframe combining Analogue and Digital measurement data\r\n",
 					"df = selected_df2.unionAll(selected_df1)"
 				],
-				"execution_count": 87
+				"execution_count": 24
 			},
 			{
 				"cell_type": "code",
@@ -500,7 +500,7 @@
 					"# Checking the datatypes of the column\r\n",
 					"df.dtypes"
 				],
-				"execution_count": 88
+				"execution_count": 25
 			},
 			{
 				"cell_type": "code",
@@ -530,7 +530,7 @@
 					".mode(mode_)\\\r\n",
 					".save(file_path)"
 				],
-				"execution_count": 177
+				"execution_count": 26
 			},
 			{
 				"cell_type": "code",
@@ -552,7 +552,7 @@
 					"new_column_names = [\"DM_\" + col_name for col_name in df.columns]\r\n",
 					"selected_df2 = selected_df2.select([col(col_name).alias(new_col_name) for col_name, new_col_name in zip(df.columns, new_column_names)])"
 				],
-				"execution_count": 89
+				"execution_count": 27
 			},
 			{
 				"cell_type": "code",
@@ -588,7 +588,7 @@
 					"# , 'AM_Gemiddeld_WerkelijkVerbruik','AM_Gemiddeld_BenaderendVerbruik','AM_Gemiddeld_BenaderendVerbruik_Norm','AM_Total_AantalToegangspunten'\r\n",
 					"# , 'DM_MeasurementType') #, 'DM_MeasurementYear', 'DM_MeasurementMonth'"
 				],
-				"execution_count": 90
+				"execution_count": 28
 			},
 			{
 				"cell_type": "code",
@@ -611,7 +611,7 @@
 					"# Displaying the top 5 rows\r\n",
 					"display(join_df.limit(5))"
 				],
-				"execution_count": 91
+				"execution_count": 29
 			},
 			{
 				"cell_type": "code",
@@ -641,7 +641,7 @@
 					".mode(mode_)\\\r\n",
 					".save(file_path)"
 				],
-				"execution_count": 183
+				"execution_count": 30
 			},
 			{
 				"cell_type": "code",
