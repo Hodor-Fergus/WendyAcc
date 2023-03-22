@@ -188,7 +188,7 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "6f6c308a-77f6-4da4-88fa-4ce7fcb90848"
+						"spark.autotune.trackingId": "3133c9a4-6554-4aa7-9249-381ae5435dd5"
 					}
 				},
 				"metadata": {
@@ -1006,6 +1006,10 @@
 				},
 				"nbformat": 4,
 				"nbformat_minor": 2,
+				"bigDataPool": {
+					"referenceName": "devpool",
+					"type": "BigDataPoolReference"
+				},
 				"sessionProperties": {
 					"driverMemory": "28g",
 					"driverCores": 4,
@@ -1017,7 +1021,7 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "cc5c732e-b214-4bf8-8c69-1bcbb6497888"
+						"spark.autotune.trackingId": "b9eae8f7-788e-413f-8c4e-8d2912599e88"
 					}
 				},
 				"metadata": {
@@ -1029,6 +1033,21 @@
 					},
 					"language_info": {
 						"name": "python"
+					},
+					"a365ComputeOptions": {
+						"id": "/subscriptions/87083017-2c2b-47c8-8ea7-b4d36686fc97/resourceGroups/Dev_ResourceGroup/providers/Microsoft.Synapse/workspaces/cmdevsynapse/bigDataPools/devpool",
+						"name": "devpool",
+						"type": "Spark",
+						"endpoint": "https://cmdevsynapse.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/devpool",
+						"auth": {
+							"type": "AAD",
+							"authResource": "https://dev.azuresynapse.net"
+						},
+						"sparkVersion": "3.3",
+						"nodeCount": 3,
+						"cores": 4,
+						"memory": 28,
+						"automaticScaleJobs": false
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -1051,7 +1070,7 @@
 						},
 						"source": [
 							"# Getiing the parameter value from the pipeline \r\n",
-							"FolderName = \"2022_10\""
+							"FolderName = \"2022_08\""
 						],
 						"outputs": [],
 						"execution_count": 1
@@ -1088,8 +1107,8 @@
 						"source": [
 							"%%pyspark\r\n",
 							"# Creating a spark session and connection to blob storage account\r\n",
-							"blob_account_name = \"wendydlstorage\"\r\n",
-							"blob_container_name = \"data\"\r\n",
+							"blob_account_name = \"rawdevstorage\"\r\n",
+							"blob_container_name = \"rawdata\"\r\n",
 							"from pyspark.sql import SparkSession\r\n",
 							"from pyspark.sql.functions import lit,col,sum,mean,regexp_replace,to_date\r\n",
 							"from pyspark.sql.types import DateType\r\n",
@@ -1118,10 +1137,41 @@
 							}
 						},
 						"source": [
+							"# Create a dynamic column delimiter using regex for AMR\r\n",
+							"import re\r\n",
+							"def f_get_delimiter (source_path):\r\n",
+							"    try:\r\n",
+							"        headerlist = spark.sparkContext.textFile(source_path).take(1)\r\n",
+							"        header_str = ''.join(headerlist)\r\n",
+							"\r\n",
+							"        results= re.search(\"(,|;|\\\\|)\",header_str)\r\n",
+							"        return results.group()\r\n",
+							"    except Exception as err:\r\n",
+							"        print(\"Error Occured \", str(err))\r\n",
+							"amr_Filename = 'abfss://rawdata@rawdevstorage.dfs.core.windows.net/%s/P6523_Verbruiken_AMR_GEMEENTE_%s.csv' % (FolderName, FolderName_Without_Separator)\r\n",
+							"amr_delimiter_type = (f_get_delimiter(amr_Filename))"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
 							"\r\n",
 							"# Reading the first File (Analogue Reading File)\r\n",
-							"FileName = 'wasbs://data@wendydlstorage.blob.core.windows.net/Bronze Layer/%s/P6523_Verbruiken_AMR_GEMEENTE_%s.csv' % (FolderName,FolderName_Without_Separator)\r\n",
-							"df1 = spark.read.load(FileName, format='csv', header=True,delimiter=';',inferSchema=True)\r\n",
+							"FileName = 'abfss://rawdata@rawdevstorage.dfs.core.windows.net/%s/P6523_Verbruiken_AMR_GEMEENTE_%s.csv' % (FolderName,FolderName_Without_Separator)\r\n",
+							"df1 = spark.read.load(FileName, format='csv', header=True,delimiter=amr_delimiter_type,inferSchema=True)\r\n",
 							"\r\n",
 							"# Remove duplicates\r\n",
 							"df1 = df1.dropDuplicates()\r\n",
@@ -1233,14 +1283,45 @@
 								"transient": {
 									"deleting": false
 								}
+							}
+						},
+						"source": [
+							"# Create a dynamic column delimiter using regex for DM\r\n",
+							"import re\r\n",
+							"def f_get_delimiter (source_path):\r\n",
+							"    try:\r\n",
+							"        headerlist = spark.sparkContext.textFile(source_path).take(1)\r\n",
+							"        header_str = ''.join(headerlist)\r\n",
+							"\r\n",
+							"        results= re.search(\"(,|;|\\\\|)\",header_str)\r\n",
+							"        return results.group()\r\n",
+							"    except Exception as err:\r\n",
+							"        print(\"Error Occured \", str(err))\r\n",
+							"amr_Filename = 'abfss://rawdata@rawdevstorage.dfs.core.windows.net/%s/P6523_Verbruiken_DM_GEMEENTE_%s.csv' % (FolderName, FolderName_Without_Separator)\r\n",
+							"amr_delimiter_type = (f_get_delimiter(amr_Filename))"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
 							},
 							"collapsed": false,
 							"tags": []
 						},
 						"source": [
 							"# Reading the second File (Digital Reading File)\r\n",
-							"FileName = 'wasbs://data@wendydlstorage.blob.core.windows.net/Bronze Layer/%s/P6523_Verbruiken_DM_GEMEENTE_%s.csv' % (FolderName,FolderName_Without_Separator)\r\n",
-							"df2 = spark.read.load(FileName, format='csv', header=True,delimiter=';',inferSchema=True)\r\n",
+							"FileName = 'abfss://rawdata@rawdevstorage.dfs.core.windows.net/%s/P6523_Verbruiken_DM_GEMEENTE_%s.csv' % (FolderName,FolderName_Without_Separator)\r\n",
+							"df2 = spark.read.load(FileName, format='csv', header=True,delimiter=amr_delimiter_type,inferSchema=True)\r\n",
 							"\r\n",
 							"# Remove duplicates\r\n",
 							"df2 = df2.dropDuplicates()\r\n",
@@ -1447,7 +1528,7 @@
 							}
 						},
 						"source": [
-							"file_path = 'wasbs://data@wendydlstorage.blob.core.windows.net/Silver/Combined/Electricity_Measurement'\r\n",
+							"file_path = 'abfss://output@rawdevstorage.dfs.core.windows.net/Electricity_Measurement_pyspark_union'\r\n",
 							"write_format=\"delta\"\r\n",
 							"partition_by=[\"Peildatum\"]\r\n",
 							"mode_ = \"append\" #overwrite #append\r\n",
@@ -1562,7 +1643,7 @@
 							}
 						},
 						"source": [
-							"file_path = 'wasbs://data@wendydlstorage.blob.core.windows.net/Silver/Combined/Electricity_Measurement_join'\r\n",
+							"file_path = 'abfss://output@rawdevstorage.dfs.core.windows.net/Electricity_Measurement_pyspark_join'\r\n",
 							"write_format=\"delta\"\r\n",
 							"partition_by=[\"DM_Peildatum\"]\r\n",
 							"mode_ = \"append\" #overwrite #append\r\n",
