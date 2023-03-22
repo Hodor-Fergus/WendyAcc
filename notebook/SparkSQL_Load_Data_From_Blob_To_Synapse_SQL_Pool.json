@@ -22,7 +22,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "2a3cfbbe-3dcc-4df2-b739-91218a9a71e1"
+				"spark.autotune.trackingId": "cf565ae3-46b2-4741-ab61-6d6151f0d0e8"
 			}
 		},
 		"metadata": {
@@ -71,9 +71,9 @@
 				},
 				"source": [
 					"# Getiing the parameter value from the pipeline \r\n",
-					"FolderName = \"2023_02\""
+					"FolderName = \"2022_08\""
 				],
-				"execution_count": 5
+				"execution_count": 2
 			},
 			{
 				"cell_type": "code",
