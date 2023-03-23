@@ -2849,7 +2849,7 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "158e34db-6feb-4adf-87f6-5b86a48e1145"
+						"spark.autotune.trackingId": "048141aa-09c0-464f-b05b-67765abbf680"
 					}
 				},
 				"metadata": {
@@ -2874,7 +2874,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 4,
-						"memory": 28
+						"memory": 28,
+						"automaticScaleJobs": false
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -2900,7 +2901,7 @@
 							"FolderName = \"2022_08\""
 						],
 						"outputs": [],
-						"execution_count": 3
+						"execution_count": 54
 					},
 					{
 						"cell_type": "code",
@@ -2922,10 +2923,11 @@
 							"month = FolderName.split('_')[1]"
 						],
 						"outputs": [],
-						"execution_count": null
+						"execution_count": 55
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"from pyspark.sql import SparkSession\r\n",
 							"from pyspark.sql.functions import lit,col\r\n",
@@ -2939,31 +2941,7 @@
 							"spark.conf.set('fs.azure.sas.%s.%s.blob.core.windows.net' % (blob_container_name, blob_account_name),blob_sas_token)"
 						],
 						"outputs": [],
-						"execution_count": null
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"# Run SQL queries: Once you have created a temporary view, you can run SQL queries on it using the spark.sql method.\r\n",
-							"# Example 2: Filter the temporary view using a condition\r\n",
-							"result_df = spark.sql(\"SELECT * FROM people WHERE age > 30\")\r\n",
-							"\r\n",
-							"# Display the result: To display the result of the SQL query, you can use the show method.\r\n",
-							"result_df.show()"
-						],
-						"outputs": [],
-						"execution_count": null
+						"execution_count": 56
 					},
 					{
 						"cell_type": "code",
@@ -3001,7 +2979,122 @@
 							"df1.createOrReplaceTempView(\"AMR_Measurement_Reading\")"
 						],
 						"outputs": [],
-						"execution_count": 8
+						"execution_count": 57
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"collapsed": false
+						},
+						"source": [
+							"# Run SQL queries: Once you have created a temporary view, you can run SQL queries on it using the spark.sql method.\r\n",
+							"# Example 2: remove duplicate from the temporarry view\r\n",
+							"selected_df1 = spark.sql(\"SELECT Distinct * FROM AMR_Measurement_Reading\")\r\n",
+							"\r\n",
+							"# Recreating the view after removing the duplicates\r\n",
+							"selected_df1.createOrReplaceTempView(\"AMR_Measurement_Reading\")\r\n",
+							"\r\n",
+							"# Selecting the required columns\r\n",
+							"selected_df1 = spark.sql(\"SELECT Trekkingsdatum,Peildatum\\\r\n",
+							",CAST(Peildatum as DATE) as Peildatum1\\\r\n",
+							", Markt, Leveringsadres_Postcode, Leveringsadres_Gemeente\\\r\n",
+							", WerkelijkVerbruik_RM_2017, BenaderendVerbruik_VM_2017, AantalToegangspunten_2017\\\r\n",
+							", WerkelijkVerbruik_RM_2018, BenaderendVerbruik_VM_2018, AantalToegangspunten_2018\\\r\n",
+							", WerkelijkVerbruik_RM_2019, BenaderendVerbruik_VM_2019, AantalToegangspunten_2019\\\r\n",
+							", WerkelijkVerbruik_RM_2020, BenaderendVerbruik_VM_2020, AantalToegangspunten_2020\\\r\n",
+							", WerkelijkVerbruik_RM_2021, BenaderendVerbruik_VM_2021, AantalToegangspunten_2021\\\r\n",
+							",'Analogue' as MeasurementType\\\r\n",
+							" FROM AMR_Measurement_Reading\")\r\n",
+							"\r\n",
+							"# Recreating the view after removing the duplicates\r\n",
+							"selected_df1.createOrReplaceTempView(\"AMR_Measurement_Reading\")\r\n",
+							"\r\n",
+							"# Display the result: To display the result of the SQL query, you can use the show method.\r\n",
+							"display(selected_df1.limit(5))"
+						],
+						"outputs": [],
+						"execution_count": 59
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							""
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"microsoft": {
+								"language": "sparksql"
+							},
+							"collapsed": false
+						},
+						"source": [
+							"%%sql\r\n",
+							"SELECT Distinct Trekkingsdatum, Peildatum\r\n",
+							",TO_DATE(Peildatum, 'MM/dd/yyyy') Peildatum1\r\n",
+							", Markt, Leveringsadres_Postcode, Leveringsadres_Gemeente\r\n",
+							", WerkelijkVerbruik_RM_2017, BenaderendVerbruik_VM_2017, AantalToegangspunten_2017\r\n",
+							", WerkelijkVerbruik_RM_2018, BenaderendVerbruik_VM_2018, AantalToegangspunten_2018\r\n",
+							", WerkelijkVerbruik_RM_2019, BenaderendVerbruik_VM_2019, AantalToegangspunten_2019\r\n",
+							", WerkelijkVerbruik_RM_2020, BenaderendVerbruik_VM_2020, AantalToegangspunten_2020\r\n",
+							", WerkelijkVerbruik_RM_2021, BenaderendVerbruik_VM_2021, AantalToegangspunten_2021 \r\n",
+							"FROM AMR_Measurement_Reading\r\n",
+							"LIMIT 5"
+						],
+						"outputs": [],
+						"execution_count": 63
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"collapsed": false
+						},
+						"source": [
+							""
+						],
+						"outputs": [],
+						"execution_count": null
 					},
 					{
 						"cell_type": "code",
@@ -3018,30 +3111,6 @@
 						},
 						"source": [
 							"\r\n",
-							"\r\n",
-							"# Convert to pandas data frame\r\n",
-							"df1 = df1.select(\"*\").toPandas()\r\n",
-							"\r\n",
-							"# Importing the libraries\r\n",
-							"import pandas as pd\r\n",
-							"import warnings\r\n",
-							"warnings.filterwarnings('ignore')\r\n",
-							"\r\n",
-							"# Dropping the duplicates\r\n",
-							"df1 = df1.drop_duplicates()\r\n",
-							"\r\n",
-							"# Selecting the required columns\r\n",
-							"selected_df1 = df1[['Trekkingsdatum', 'Peildatum', 'Markt', 'Leveringsadres_Postcode', 'Leveringsadres_Gemeente'\\\r\n",
-							", 'WerkelijkVerbruik_RM_2017', 'BenaderendVerbruik_VM_2017', 'AantalToegangspunten_2017'\\\r\n",
-							", 'WerkelijkVerbruik_RM_2018', 'BenaderendVerbruik_VM_2018', 'AantalToegangspunten_2018'\\\r\n",
-							", 'WerkelijkVerbruik_RM_2019', 'BenaderendVerbruik_VM_2019', 'AantalToegangspunten_2019'\\\r\n",
-							", 'WerkelijkVerbruik_RM_2020', 'BenaderendVerbruik_VM_2020', 'AantalToegangspunten_2020'\\\r\n",
-							", 'WerkelijkVerbruik_RM_2021', 'BenaderendVerbruik_VM_2021', 'AantalToegangspunten_2021']]\r\n",
-							"\r\n",
-							"# Adding the additional calculated/custom columns\r\n",
-							"selected_df1['MeasurementType'] = \"Analogue\"\r\n",
-							"#selected_df1['MeasurementYear'] = year\r\n",
-							"#selected_df1['MeasurementMonth'] = month\r\n",
 							"\r\n",
 							"# convert the date column to datetime\r\n",
 							"try:\r\n",
