@@ -537,6 +537,53 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/Electricity_Measurement_pyspark_join')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "cmdevsynapse-WorkspaceDefaultStorage",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "Binary",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"folderPath": "Electricity_Measurement_pyspark_join",
+						"fileSystem": "output"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/cmdevsynapse-WorkspaceDefaultStorage')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/Electricity_Measurement_pyspark_union')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"description": "Electricity_Measurement_pyspark_union",
+				"linkedServiceName": {
+					"referenceName": "cmdevsynapse-WorkspaceDefaultStorage",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "Binary",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"folderPath": "Electricity_Measurement_pyspark_union",
+						"fileSystem": "output"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/cmdevsynapse-WorkspaceDefaultStorage')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/cmdevsynapse-WorkspaceDefaultSqlServer')]",
 			"type": "Microsoft.Synapse/workspaces/linkedServices",
 			"apiVersion": "2019-06-01-preview",
@@ -703,7 +750,7 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "b94112f6-6ff1-4429-8da9-5488fdc68e5d"
+						"spark.autotune.trackingId": "b6f65cb4-3c9c-4eb6-a8c6-e29a1dc0cd75"
 					}
 				},
 				"metadata": {
@@ -752,10 +799,10 @@
 						},
 						"source": [
 							"# Getiing the parameter value from the pipeline \r\n",
-							"FolderName = \"2022_10\""
+							"FolderName = \"2023_02\""
 						],
 						"outputs": [],
-						"execution_count": 45
+						"execution_count": 23
 					},
 					{
 						"cell_type": "code",
@@ -773,11 +820,11 @@
 						"source": [
 							"# Using the parameter value creating a new variables to use while reading the file\r\n",
 							"FolderName_Without_Separator = FolderName.replace(\"_\", \"\")\r\n",
-							"year = FolderName.split('_')[0]\r\n",
-							"month = FolderName.split('_')[1]"
+							"year = int(FolderName.split('_')[0])\r\n",
+							"month = int(FolderName.split('_')[1])"
 						],
 						"outputs": [],
-						"execution_count": 46
+						"execution_count": 24
 					},
 					{
 						"cell_type": "code",
@@ -795,7 +842,7 @@
 							"spark.conf.set('fs.azure.sas.%s.%s.blob.core.windows.net' % (blob_container_name, blob_account_name),blob_sas_token)"
 						],
 						"outputs": [],
-						"execution_count": 47
+						"execution_count": 25
 					},
 					{
 						"cell_type": "code",
@@ -826,7 +873,7 @@
 							"amr_delimiter_type = (f_get_delimiter(amr_Filename))"
 						],
 						"outputs": [],
-						"execution_count": 48
+						"execution_count": 26
 					},
 					{
 						"cell_type": "code",
@@ -891,7 +938,8 @@
 							"selected_df1['BenaderendVerbruik_VM_2020_Norm'] = selected_df1[\"BenaderendVerbruik_VM_2020\"]\r\n",
 							"selected_df1['BenaderendVerbruik_VM_2021_Norm'] = selected_df1[\"BenaderendVerbruik_VM_2021\"]\r\n",
 							"\r\n",
-							"if selected_df1['WerkelijkVerbruik_RM_2017'].head(1).dtypes == \"object\":\r\n",
+							"#selected_df1['WerkelijkVerbruik_RM_2017'].head(1).dtypes == \"object\":\r\n",
+							"if year < 2023:\r\n",
 							"    selected_df1['WerkelijkVerbruik_RM_2017'] = selected_df1['WerkelijkVerbruik_RM_2017'].str.replace(',','.')\r\n",
 							"    selected_df1['WerkelijkVerbruik_RM_2018'] = selected_df1['WerkelijkVerbruik_RM_2018'].str.replace(',','.')\r\n",
 							"    selected_df1['WerkelijkVerbruik_RM_2019'] = selected_df1['WerkelijkVerbruik_RM_2019'].str.replace(',','.')\r\n",
@@ -907,7 +955,7 @@
 							"+ selected_df1['WerkelijkVerbruik_RM_2018'].astype(float) + selected_df1['WerkelijkVerbruik_RM_2019'].astype(float) + selected_df1['WerkelijkVerbruik_RM_2020'].astype(float)\\\r\n",
 							"+ selected_df1['WerkelijkVerbruik_RM_2021'].astype(float))/5)\r\n",
 							"\r\n",
-							"if selected_df1['BenaderendVerbruik_VM_2017'].head(1).dtypes == \"object\":\r\n",
+							"if year < 2023:\r\n",
 							"    selected_df1['BenaderendVerbruik_VM_2017'] = selected_df1['BenaderendVerbruik_VM_2017'].str.replace(',','.')\r\n",
 							"    selected_df1['BenaderendVerbruik_VM_2018'] = selected_df1['BenaderendVerbruik_VM_2018'].str.replace(',','.')\r\n",
 							"    selected_df1['BenaderendVerbruik_VM_2019'] = selected_df1['BenaderendVerbruik_VM_2019'].str.replace(',','.')\r\n",
@@ -923,7 +971,7 @@
 							"+ selected_df1['BenaderendVerbruik_VM_2018'].astype(float) + selected_df1['BenaderendVerbruik_VM_2019'].astype(float) + selected_df1['BenaderendVerbruik_VM_2020'].astype(float)\\\r\n",
 							"+ selected_df1['BenaderendVerbruik_VM_2021'].astype(float))/5)\r\n",
 							"\r\n",
-							"if selected_df1['BenaderendVerbruik_VM_2017'].head(1).dtypes == \"object\":\r\n",
+							"if year < 2023:\r\n",
 							"    selected_df1['BenaderendVerbruik_VM_2017_Norm'] = selected_df1['BenaderendVerbruik_VM_2017_Norm'].str.replace(',','.')\r\n",
 							"    selected_df1['BenaderendVerbruik_VM_2018_Norm'] = selected_df1['BenaderendVerbruik_VM_2018_Norm'].str.replace(',','.')\r\n",
 							"    selected_df1['BenaderendVerbruik_VM_2019_Norm'] = selected_df1['BenaderendVerbruik_VM_2019_Norm'].str.replace(',','.')\r\n",
@@ -953,7 +1001,7 @@
 							", 'MeasurementType']] #, 'MeasurementYear', 'MeasurementMonth'"
 						],
 						"outputs": [],
-						"execution_count": 49
+						"execution_count": 27
 					},
 					{
 						"cell_type": "code",
@@ -974,7 +1022,7 @@
 							"selected_df1.columns"
 						],
 						"outputs": [],
-						"execution_count": 50
+						"execution_count": 28
 					},
 					{
 						"cell_type": "code",
@@ -994,7 +1042,7 @@
 							"selected_df1.head()"
 						],
 						"outputs": [],
-						"execution_count": 51
+						"execution_count": 29
 					},
 					{
 						"cell_type": "code",
@@ -1025,7 +1073,7 @@
 							"amr_delimiter_type = (f_get_delimiter(amr_Filename))"
 						],
 						"outputs": [],
-						"execution_count": 52
+						"execution_count": 30
 					},
 					{
 						"cell_type": "code",
@@ -1083,8 +1131,8 @@
 							"selected_df2['Peildatum'] = selected_df2['Peildatum'].dt.strftime('%d-%m-%Y')\r\n",
 							"\r\n",
 							"\r\n",
-							"\r\n",
-							"if selected_df2['WerkelijkVerbruik_RM_2017'].head(1).dtypes == \"object\":\r\n",
+							"#selected_df2['WerkelijkVerbruik_RM_2017'].head(1).dtypes == \"object\":\r\n",
+							"if year < 2023: \r\n",
 							"    selected_df2['WerkelijkVerbruik_RM_2017'] = selected_df2['WerkelijkVerbruik_RM_2017'].str.replace(',','.')\r\n",
 							"    selected_df2['WerkelijkVerbruik_RM_2018'] = selected_df2['WerkelijkVerbruik_RM_2018'].str.replace(',','.')\r\n",
 							"    selected_df2['WerkelijkVerbruik_RM_2019'] = selected_df2['WerkelijkVerbruik_RM_2019'].str.replace(',','.')\r\n",
@@ -1100,7 +1148,7 @@
 							"+ selected_df2['WerkelijkVerbruik_RM_2018'].astype(float) + selected_df2['WerkelijkVerbruik_RM_2019'].astype(float) + selected_df2['WerkelijkVerbruik_RM_2020'].astype(float)\\\r\n",
 							"+ selected_df2['WerkelijkVerbruik_RM_2021'].astype(float))/5)\r\n",
 							"\r\n",
-							"if selected_df2['BenaderendVerbruik_VM_2017'].head(1).dtypes == \"object\":\r\n",
+							"if year < 2023:\r\n",
 							"    selected_df2['BenaderendVerbruik_VM_2017'] = selected_df2['BenaderendVerbruik_VM_2017'].str.replace(',','.')\r\n",
 							"    selected_df2['BenaderendVerbruik_VM_2018'] = selected_df2['BenaderendVerbruik_VM_2018'].str.replace(',','.')\r\n",
 							"    selected_df2['BenaderendVerbruik_VM_2019'] = selected_df2['BenaderendVerbruik_VM_2019'].str.replace(',','.')\r\n",
@@ -1116,7 +1164,7 @@
 							"+ selected_df2['BenaderendVerbruik_VM_2018'].astype(float) + selected_df2['BenaderendVerbruik_VM_2019'].astype(float) + selected_df2['BenaderendVerbruik_VM_2020'].astype(float)\\\r\n",
 							"+ selected_df2['BenaderendVerbruik_VM_2021'].astype(float))/5)\r\n",
 							"\r\n",
-							"if selected_df2['BenaderendVerbruik_VM_2017'].head(1).dtypes == \"object\":\r\n",
+							"if year < 2023:\r\n",
 							"    selected_df2['BenaderendVerbruik_VM_2017_Norm'] = selected_df2['BenaderendVerbruik_VM_2017_Norm'].str.replace(',','.')\r\n",
 							"    selected_df2['BenaderendVerbruik_VM_2018_Norm'] = selected_df2['BenaderendVerbruik_VM_2018_Norm'].str.replace(',','.')\r\n",
 							"    selected_df2['BenaderendVerbruik_VM_2019_Norm'] = selected_df2['BenaderendVerbruik_VM_2019_Norm'].str.replace(',','.')\r\n",
@@ -1146,7 +1194,7 @@
 							", 'MeasurementType']] #, 'MeasurementYear', 'MeasurementMonth'"
 						],
 						"outputs": [],
-						"execution_count": 53
+						"execution_count": 31
 					},
 					{
 						"cell_type": "code",
@@ -1167,7 +1215,7 @@
 							"selected_df2.columns"
 						],
 						"outputs": [],
-						"execution_count": 54
+						"execution_count": 32
 					},
 					{
 						"cell_type": "code",
@@ -1187,7 +1235,7 @@
 							"selected_df2.head()"
 						],
 						"outputs": [],
-						"execution_count": 55
+						"execution_count": 33
 					},
 					{
 						"cell_type": "code",
@@ -1208,7 +1256,7 @@
 							"print(selected_df2.shape[0]) #Digital Reading - 7005"
 						],
 						"outputs": [],
-						"execution_count": 56
+						"execution_count": 34
 					},
 					{
 						"cell_type": "code",
@@ -1230,7 +1278,7 @@
 							""
 						],
 						"outputs": [],
-						"execution_count": 57
+						"execution_count": 35
 					},
 					{
 						"cell_type": "code",
@@ -1253,7 +1301,7 @@
 							""
 						],
 						"outputs": [],
-						"execution_count": 58
+						"execution_count": 36
 					},
 					{
 						"cell_type": "code",
@@ -1275,7 +1323,7 @@
 							"count_group_by2.head() #Digital Reading Group By"
 						],
 						"outputs": [],
-						"execution_count": 59
+						"execution_count": 37
 					},
 					{
 						"cell_type": "code",
@@ -1295,7 +1343,7 @@
 							"df = pd.concat([selected_df2, selected_df1])"
 						],
 						"outputs": [],
-						"execution_count": 60
+						"execution_count": 38
 					},
 					{
 						"cell_type": "code",
@@ -1315,7 +1363,7 @@
 							"df.head(5)"
 						],
 						"outputs": [],
-						"execution_count": 61
+						"execution_count": 39
 					},
 					{
 						"cell_type": "code",
@@ -1334,7 +1382,7 @@
 							"df.dtypes"
 						],
 						"outputs": [],
-						"execution_count": 62
+						"execution_count": 40
 					},
 					{
 						"cell_type": "code",
@@ -1353,7 +1401,7 @@
 							"spark_df = spark.createDataFrame(df)"
 						],
 						"outputs": [],
-						"execution_count": 63
+						"execution_count": 41
 					},
 					{
 						"cell_type": "code",
@@ -1384,7 +1432,7 @@
 							".save(file_path)"
 						],
 						"outputs": [],
-						"execution_count": 64
+						"execution_count": 42
 					},
 					{
 						"cell_type": "code",
@@ -1406,7 +1454,7 @@
 							""
 						],
 						"outputs": [],
-						"execution_count": 65
+						"execution_count": 43
 					},
 					{
 						"cell_type": "code",
@@ -1443,7 +1491,7 @@
 							"# , 'DM_MeasurementType']] #, 'DM_MeasurementYear', 'DM_MeasurementMonth'"
 						],
 						"outputs": [],
-						"execution_count": 66
+						"execution_count": 44
 					},
 					{
 						"cell_type": "code",
@@ -1464,7 +1512,7 @@
 							""
 						],
 						"outputs": [],
-						"execution_count": 67
+						"execution_count": 45
 					},
 					{
 						"cell_type": "code",
@@ -1484,7 +1532,7 @@
 							"join_df.head(5)"
 						],
 						"outputs": [],
-						"execution_count": 68
+						"execution_count": 46
 					},
 					{
 						"cell_type": "code",
@@ -1503,7 +1551,7 @@
 							"spark_join_df = spark.createDataFrame(join_df)"
 						],
 						"outputs": [],
-						"execution_count": 69
+						"execution_count": 47
 					},
 					{
 						"cell_type": "code",
@@ -1534,7 +1582,7 @@
 							".save(file_path)"
 						],
 						"outputs": [],
-						"execution_count": 70
+						"execution_count": 48
 					},
 					{
 						"cell_type": "code",
@@ -1585,7 +1633,7 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "27402296-0bc2-41c8-9843-619e8feaacf8"
+						"spark.autotune.trackingId": "fd7627eb-13d3-4260-830d-758275a5a2d5"
 					}
 				},
 				"metadata": {
@@ -1610,8 +1658,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 4,
-						"memory": 28,
-						"automaticScaleJobs": false
+						"memory": 28
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -2777,78 +2824,6 @@
 			"dependsOn": []
 		},
 		{
-			"name": "[concat(parameters('workspaceName'), '/devpool')]",
-			"type": "Microsoft.Synapse/workspaces/bigDataPools",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"autoPause": {
-					"enabled": true,
-					"delayInMinutes": 20
-				},
-				"autoScale": {
-					"enabled": true,
-					"maxNodeCount": 3,
-					"minNodeCount": 3
-				},
-				"nodeCount": 3,
-				"nodeSize": "Small",
-				"nodeSizeFamily": "MemoryOptimized",
-				"sparkVersion": "3.3",
-				"isComputeIsolationEnabled": false,
-				"sessionLevelPackagesEnabled": true,
-				"annotations": []
-			},
-			"dependsOn": [],
-			"location": "northeurope"
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/Electricity_Measurement_pyspark_join')]",
-			"type": "Microsoft.Synapse/workspaces/datasets",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "cmdevsynapse-WorkspaceDefaultStorage",
-					"type": "LinkedServiceReference"
-				},
-				"annotations": [],
-				"type": "Binary",
-				"typeProperties": {
-					"location": {
-						"type": "AzureBlobFSLocation",
-						"folderPath": "Electricity_Measurement_pyspark_join",
-						"fileSystem": "output"
-					}
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('workspaceId'), '/linkedServices/cmdevsynapse-WorkspaceDefaultStorage')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/Electricity_Measurement_pyspark_union')]",
-			"type": "Microsoft.Synapse/workspaces/datasets",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"description": "Electricity_Measurement_pyspark_union",
-				"linkedServiceName": {
-					"referenceName": "cmdevsynapse-WorkspaceDefaultStorage",
-					"type": "LinkedServiceReference"
-				},
-				"annotations": [],
-				"type": "Binary",
-				"typeProperties": {
-					"location": {
-						"type": "AzureBlobFSLocation",
-						"folderPath": "Electricity_Measurement_pyspark_union",
-						"fileSystem": "output"
-					}
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('workspaceId'), '/linkedServices/cmdevsynapse-WorkspaceDefaultStorage')]"
-			]
-		},
-		{
 			"name": "[concat(parameters('workspaceName'), '/SparkSQL_Load_Data_From_Blob_To_Synapse_SQL_Pool')]",
 			"type": "Microsoft.Synapse/workspaces/notebooks",
 			"apiVersion": "2019-06-01-preview",
@@ -2874,7 +2849,7 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "7a644e76-81d7-4cc8-bb37-d9841186b3aa"
+						"spark.autotune.trackingId": "158e34db-6feb-4adf-87f6-5b86a48e1145"
 					}
 				},
 				"metadata": {
@@ -2899,8 +2874,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 4,
-						"memory": 28,
-						"automaticScaleJobs": false
+						"memory": 28
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -2926,7 +2900,7 @@
 							"FolderName = \"2022_08\""
 						],
 						"outputs": [],
-						"execution_count": 2
+						"execution_count": 3
 					},
 					{
 						"cell_type": "code",
@@ -2948,11 +2922,10 @@
 							"month = FolderName.split('_')[1]"
 						],
 						"outputs": [],
-						"execution_count": 6
+						"execution_count": null
 					},
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							"from pyspark.sql import SparkSession\r\n",
 							"from pyspark.sql.functions import lit,col\r\n",
@@ -2966,7 +2939,31 @@
 							"spark.conf.set('fs.azure.sas.%s.%s.blob.core.windows.net' % (blob_container_name, blob_account_name),blob_sas_token)"
 						],
 						"outputs": [],
-						"execution_count": 7
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Run SQL queries: Once you have created a temporary view, you can run SQL queries on it using the spark.sql method.\r\n",
+							"# Example 2: Filter the temporary view using a condition\r\n",
+							"result_df = spark.sql(\"SELECT * FROM people WHERE age > 30\")\r\n",
+							"\r\n",
+							"# Display the result: To display the result of the SQL query, you can use the show method.\r\n",
+							"result_df.show()"
+						],
+						"outputs": [],
+						"execution_count": null
 					},
 					{
 						"cell_type": "code",
@@ -2994,7 +2991,14 @@
 							"    except Exception as err:\r\n",
 							"        print(\"Error Occured \", str(err))\r\n",
 							"amr_Filename = 'abfss://rawdata@rawdevstorage.dfs.core.windows.net/%s/P6523_Verbruiken_AMR_GEMEENTE_%s.csv' % (FolderName, FolderName_Without_Separator)\r\n",
-							"amr_delimiter_type = (f_get_delimiter(amr_Filename))"
+							"amr_delimiter_type = (f_get_delimiter(amr_Filename))\r\n",
+							"\r\n",
+							"# Reading the first File (Analogue Reading File)\r\n",
+							"FileName = 'abfss://rawdata@rawdevstorage.dfs.core.windows.net/%s/P6523_Verbruiken_AMR_GEMEENTE_%s.csv' % (FolderName,FolderName_Without_Separator)\r\n",
+							"df1 = spark.read.load(FileName, format='csv', header=True,delimiter=amr_delimiter_type,inferSchema=True)\r\n",
+							"\r\n",
+							"# Create a temporary view: To run SQL queries on a PySpark DataFrame, you need to create a temporary view using the createOrReplaceTempView method.\r\n",
+							"df1.createOrReplaceTempView(\"AMR_Measurement_Reading\")"
 						],
 						"outputs": [],
 						"execution_count": 8
@@ -3013,9 +3017,7 @@
 							}
 						},
 						"source": [
-							"# Reading the first File (Analogue Reading File)\r\n",
-							"FileName = 'abfss://rawdata@rawdevstorage.dfs.core.windows.net/%s/P6523_Verbruiken_AMR_GEMEENTE_%s.csv' % (FolderName,FolderName_Without_Separator)\r\n",
-							"df1 = spark.read.load(FileName, format='csv', header=True,delimiter=amr_delimiter_type,inferSchema=True)\r\n",
+							"\r\n",
 							"\r\n",
 							"# Convert to pandas data frame\r\n",
 							"df1 = df1.select(\"*\").toPandas()\r\n",
@@ -3686,6 +3688,31 @@
 				]
 			},
 			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/devpool')]",
+			"type": "Microsoft.Synapse/workspaces/bigDataPools",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"autoPause": {
+					"enabled": true,
+					"delayInMinutes": 10
+				},
+				"autoScale": {
+					"enabled": true,
+					"maxNodeCount": 3,
+					"minNodeCount": 3
+				},
+				"nodeCount": 3,
+				"nodeSize": "Small",
+				"nodeSizeFamily": "MemoryOptimized",
+				"sparkVersion": "3.3",
+				"isComputeIsolationEnabled": false,
+				"sessionLevelPackagesEnabled": true,
+				"annotations": []
+			},
+			"dependsOn": [],
+			"location": "northeurope"
 		}
 	]
 }
