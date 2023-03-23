@@ -22,7 +22,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "43273e18-687a-4e28-822c-500604b1a384"
+				"spark.autotune.trackingId": "b537391e-7d93-4a0d-8671-32c948d5faf3"
 			}
 		},
 		"metadata": {
@@ -71,9 +71,9 @@
 				},
 				"source": [
 					"# Getiing the parameter value from the pipeline \r\n",
-					"FolderName = \"2022_10\""
+					"FolderName = \"2023_02\""
 				],
-				"execution_count": 45
+				"execution_count": 23
 			},
 			{
 				"cell_type": "code",
@@ -91,10 +91,10 @@
 				"source": [
 					"# Using the parameter value creating a new variables to use while reading the file\r\n",
 					"FolderName_Without_Separator = FolderName.replace(\"_\", \"\")\r\n",
-					"year = FolderName.split('_')[0]\r\n",
-					"month = FolderName.split('_')[1]"
+					"year = int(FolderName.split('_')[0])\r\n",
+					"month = int(FolderName.split('_')[1])"
 				],
-				"execution_count": 46
+				"execution_count": 24
 			},
 			{
 				"cell_type": "code",
@@ -110,7 +110,7 @@
 					"blob_sas_token = token_library.getConnectionString(\"cmdevsynapse-WorkspaceDefaultStorage\")\r\n",
 					"spark.conf.set('fs.azure.sas.%s.%s.blob.core.windows.net' % (blob_container_name, blob_account_name),blob_sas_token)"
 				],
-				"execution_count": 47
+				"execution_count": 25
 			},
 			{
 				"cell_type": "code",
@@ -140,7 +140,7 @@
 					"amr_Filename = 'abfss://rawdata@rawdevstorage.dfs.core.windows.net/%s/P6523_Verbruiken_AMR_GEMEENTE_%s.csv' % (FolderName, FolderName_Without_Separator)\r\n",
 					"amr_delimiter_type = (f_get_delimiter(amr_Filename))"
 				],
-				"execution_count": 48
+				"execution_count": 26
 			},
 			{
 				"cell_type": "code",
@@ -205,7 +205,8 @@
 					"selected_df1['BenaderendVerbruik_VM_2020_Norm'] = selected_df1[\"BenaderendVerbruik_VM_2020\"]\r\n",
 					"selected_df1['BenaderendVerbruik_VM_2021_Norm'] = selected_df1[\"BenaderendVerbruik_VM_2021\"]\r\n",
 					"\r\n",
-					"if selected_df1['WerkelijkVerbruik_RM_2017'].head(1).dtypes == \"object\":\r\n",
+					"#selected_df1['WerkelijkVerbruik_RM_2017'].head(1).dtypes == \"object\":\r\n",
+					"if year < 2023:\r\n",
 					"    selected_df1['WerkelijkVerbruik_RM_2017'] = selected_df1['WerkelijkVerbruik_RM_2017'].str.replace(',','.')\r\n",
 					"    selected_df1['WerkelijkVerbruik_RM_2018'] = selected_df1['WerkelijkVerbruik_RM_2018'].str.replace(',','.')\r\n",
 					"    selected_df1['WerkelijkVerbruik_RM_2019'] = selected_df1['WerkelijkVerbruik_RM_2019'].str.replace(',','.')\r\n",
@@ -221,7 +222,7 @@
 					"+ selected_df1['WerkelijkVerbruik_RM_2018'].astype(float) + selected_df1['WerkelijkVerbruik_RM_2019'].astype(float) + selected_df1['WerkelijkVerbruik_RM_2020'].astype(float)\\\r\n",
 					"+ selected_df1['WerkelijkVerbruik_RM_2021'].astype(float))/5)\r\n",
 					"\r\n",
-					"if selected_df1['BenaderendVerbruik_VM_2017'].head(1).dtypes == \"object\":\r\n",
+					"if year < 2023:\r\n",
 					"    selected_df1['BenaderendVerbruik_VM_2017'] = selected_df1['BenaderendVerbruik_VM_2017'].str.replace(',','.')\r\n",
 					"    selected_df1['BenaderendVerbruik_VM_2018'] = selected_df1['BenaderendVerbruik_VM_2018'].str.replace(',','.')\r\n",
 					"    selected_df1['BenaderendVerbruik_VM_2019'] = selected_df1['BenaderendVerbruik_VM_2019'].str.replace(',','.')\r\n",
@@ -237,7 +238,7 @@
 					"+ selected_df1['BenaderendVerbruik_VM_2018'].astype(float) + selected_df1['BenaderendVerbruik_VM_2019'].astype(float) + selected_df1['BenaderendVerbruik_VM_2020'].astype(float)\\\r\n",
 					"+ selected_df1['BenaderendVerbruik_VM_2021'].astype(float))/5)\r\n",
 					"\r\n",
-					"if selected_df1['BenaderendVerbruik_VM_2017'].head(1).dtypes == \"object\":\r\n",
+					"if year < 2023:\r\n",
 					"    selected_df1['BenaderendVerbruik_VM_2017_Norm'] = selected_df1['BenaderendVerbruik_VM_2017_Norm'].str.replace(',','.')\r\n",
 					"    selected_df1['BenaderendVerbruik_VM_2018_Norm'] = selected_df1['BenaderendVerbruik_VM_2018_Norm'].str.replace(',','.')\r\n",
 					"    selected_df1['BenaderendVerbruik_VM_2019_Norm'] = selected_df1['BenaderendVerbruik_VM_2019_Norm'].str.replace(',','.')\r\n",
@@ -266,7 +267,7 @@
 					",'Gemiddeld_WerkelijkVerbruik','Gemiddeld_BenaderendVerbruik','Gemiddeld_BenaderendVerbruik_Norm','Total_AantalToegangspunten'\\\r\n",
 					", 'MeasurementType']] #, 'MeasurementYear', 'MeasurementMonth'"
 				],
-				"execution_count": 49
+				"execution_count": 27
 			},
 			{
 				"cell_type": "code",
@@ -286,7 +287,7 @@
 					"# Checking the column names\r\n",
 					"selected_df1.columns"
 				],
-				"execution_count": 50
+				"execution_count": 28
 			},
 			{
 				"cell_type": "code",
@@ -305,7 +306,7 @@
 					"# Selecting the top 5 rows\r\n",
 					"selected_df1.head()"
 				],
-				"execution_count": 51
+				"execution_count": 29
 			},
 			{
 				"cell_type": "code",
@@ -335,7 +336,7 @@
 					"amr_Filename = 'abfss://rawdata@rawdevstorage.dfs.core.windows.net/%s/P6523_Verbruiken_DM_GEMEENTE_%s.csv' % (FolderName, FolderName_Without_Separator)\r\n",
 					"amr_delimiter_type = (f_get_delimiter(amr_Filename))"
 				],
-				"execution_count": 52
+				"execution_count": 30
 			},
 			{
 				"cell_type": "code",
@@ -393,8 +394,8 @@
 					"selected_df2['Peildatum'] = selected_df2['Peildatum'].dt.strftime('%d-%m-%Y')\r\n",
 					"\r\n",
 					"\r\n",
-					"\r\n",
-					"if selected_df2['WerkelijkVerbruik_RM_2017'].head(1).dtypes == \"object\":\r\n",
+					"#selected_df2['WerkelijkVerbruik_RM_2017'].head(1).dtypes == \"object\":\r\n",
+					"if year < 2023: \r\n",
 					"    selected_df2['WerkelijkVerbruik_RM_2017'] = selected_df2['WerkelijkVerbruik_RM_2017'].str.replace(',','.')\r\n",
 					"    selected_df2['WerkelijkVerbruik_RM_2018'] = selected_df2['WerkelijkVerbruik_RM_2018'].str.replace(',','.')\r\n",
 					"    selected_df2['WerkelijkVerbruik_RM_2019'] = selected_df2['WerkelijkVerbruik_RM_2019'].str.replace(',','.')\r\n",
@@ -410,7 +411,7 @@
 					"+ selected_df2['WerkelijkVerbruik_RM_2018'].astype(float) + selected_df2['WerkelijkVerbruik_RM_2019'].astype(float) + selected_df2['WerkelijkVerbruik_RM_2020'].astype(float)\\\r\n",
 					"+ selected_df2['WerkelijkVerbruik_RM_2021'].astype(float))/5)\r\n",
 					"\r\n",
-					"if selected_df2['BenaderendVerbruik_VM_2017'].head(1).dtypes == \"object\":\r\n",
+					"if year < 2023:\r\n",
 					"    selected_df2['BenaderendVerbruik_VM_2017'] = selected_df2['BenaderendVerbruik_VM_2017'].str.replace(',','.')\r\n",
 					"    selected_df2['BenaderendVerbruik_VM_2018'] = selected_df2['BenaderendVerbruik_VM_2018'].str.replace(',','.')\r\n",
 					"    selected_df2['BenaderendVerbruik_VM_2019'] = selected_df2['BenaderendVerbruik_VM_2019'].str.replace(',','.')\r\n",
@@ -426,7 +427,7 @@
 					"+ selected_df2['BenaderendVerbruik_VM_2018'].astype(float) + selected_df2['BenaderendVerbruik_VM_2019'].astype(float) + selected_df2['BenaderendVerbruik_VM_2020'].astype(float)\\\r\n",
 					"+ selected_df2['BenaderendVerbruik_VM_2021'].astype(float))/5)\r\n",
 					"\r\n",
-					"if selected_df2['BenaderendVerbruik_VM_2017'].head(1).dtypes == \"object\":\r\n",
+					"if year < 2023:\r\n",
 					"    selected_df2['BenaderendVerbruik_VM_2017_Norm'] = selected_df2['BenaderendVerbruik_VM_2017_Norm'].str.replace(',','.')\r\n",
 					"    selected_df2['BenaderendVerbruik_VM_2018_Norm'] = selected_df2['BenaderendVerbruik_VM_2018_Norm'].str.replace(',','.')\r\n",
 					"    selected_df2['BenaderendVerbruik_VM_2019_Norm'] = selected_df2['BenaderendVerbruik_VM_2019_Norm'].str.replace(',','.')\r\n",
@@ -455,7 +456,7 @@
 					",'Gemiddeld_WerkelijkVerbruik','Gemiddeld_BenaderendVerbruik','Gemiddeld_BenaderendVerbruik_Norm','Total_AantalToegangspunten'\\\r\n",
 					", 'MeasurementType']] #, 'MeasurementYear', 'MeasurementMonth'"
 				],
-				"execution_count": 53
+				"execution_count": 31
 			},
 			{
 				"cell_type": "code",
@@ -475,7 +476,7 @@
 					"# Checking the column names\r\n",
 					"selected_df2.columns"
 				],
-				"execution_count": 54
+				"execution_count": 32
 			},
 			{
 				"cell_type": "code",
@@ -494,7 +495,7 @@
 					"# Selecting the top 5 rows\r\n",
 					"selected_df2.head()"
 				],
-				"execution_count": 55
+				"execution_count": 33
 			},
 			{
 				"cell_type": "code",
@@ -514,7 +515,7 @@
 					"print(selected_df1.shape[0]) #Analogue Reading - 2660\r\n",
 					"print(selected_df2.shape[0]) #Digital Reading - 7005"
 				],
-				"execution_count": 56
+				"execution_count": 34
 			},
 			{
 				"cell_type": "code",
@@ -535,7 +536,7 @@
 					"grouped_data2 = selected_df2.groupby(['Peildatum', 'Markt', 'Leveringsadres_Postcode'])\r\n",
 					""
 				],
-				"execution_count": 57
+				"execution_count": 35
 			},
 			{
 				"cell_type": "code",
@@ -557,7 +558,7 @@
 					"count_group_by1.head() #Analogue Reading Group BY\r\n",
 					""
 				],
-				"execution_count": 58
+				"execution_count": 36
 			},
 			{
 				"cell_type": "code",
@@ -578,7 +579,7 @@
 					")\r\n",
 					"count_group_by2.head() #Digital Reading Group By"
 				],
-				"execution_count": 59
+				"execution_count": 37
 			},
 			{
 				"cell_type": "code",
@@ -597,7 +598,7 @@
 					"# Doing union operation to get a single dataframe combining Analogue and Digital measurement data\r\n",
 					"df = pd.concat([selected_df2, selected_df1])"
 				],
-				"execution_count": 60
+				"execution_count": 38
 			},
 			{
 				"cell_type": "code",
@@ -616,7 +617,7 @@
 				"source": [
 					"df.head(5)"
 				],
-				"execution_count": 61
+				"execution_count": 39
 			},
 			{
 				"cell_type": "code",
@@ -634,7 +635,7 @@
 				"source": [
 					"df.dtypes"
 				],
-				"execution_count": 62
+				"execution_count": 40
 			},
 			{
 				"cell_type": "code",
@@ -652,7 +653,7 @@
 				"source": [
 					"spark_df = spark.createDataFrame(df)"
 				],
-				"execution_count": 63
+				"execution_count": 41
 			},
 			{
 				"cell_type": "code",
@@ -682,7 +683,7 @@
 					".mode(mode_)\\\r\n",
 					".save(file_path)"
 				],
-				"execution_count": 64
+				"execution_count": 42
 			},
 			{
 				"cell_type": "code",
@@ -703,7 +704,7 @@
 					"selected_df2 = selected_df2.add_prefix('DM_')\r\n",
 					""
 				],
-				"execution_count": 65
+				"execution_count": 43
 			},
 			{
 				"cell_type": "code",
@@ -739,7 +740,7 @@
 					"# , 'AM_Gemiddeld_WerkelijkVerbruik','AM_Gemiddeld_BenaderendVerbruik','AM_Gemiddeld_BenaderendVerbruik_Norm','AM_Total_AantalToegangspunten'\r\n",
 					"# , 'DM_MeasurementType']] #, 'DM_MeasurementYear', 'DM_MeasurementMonth'"
 				],
-				"execution_count": 66
+				"execution_count": 44
 			},
 			{
 				"cell_type": "code",
@@ -759,7 +760,7 @@
 					"join_df.shape[0]\r\n",
 					""
 				],
-				"execution_count": 67
+				"execution_count": 45
 			},
 			{
 				"cell_type": "code",
@@ -778,7 +779,7 @@
 					"# Displaying the top 5 rows\r\n",
 					"join_df.head(5)"
 				],
-				"execution_count": 68
+				"execution_count": 46
 			},
 			{
 				"cell_type": "code",
@@ -796,7 +797,7 @@
 				"source": [
 					"spark_join_df = spark.createDataFrame(join_df)"
 				],
-				"execution_count": 69
+				"execution_count": 47
 			},
 			{
 				"cell_type": "code",
@@ -826,7 +827,7 @@
 					".mode(mode_)\\\r\n",
 					".save(file_path)"
 				],
-				"execution_count": 70
+				"execution_count": 48
 			},
 			{
 				"cell_type": "code",
