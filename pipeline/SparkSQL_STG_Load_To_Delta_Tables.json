@@ -4,8 +4,8 @@
 		"description": "Pandas_STG_Load_To_Delta_Tables",
 		"activities": [
 			{
-				"name": "Delete_Electricity_Measurement_pyspark_union",
-				"description": "Delete_Electricity_Measurement_pyspark_union",
+				"name": "Delete_Electricity_Measurement_sparksql_union",
+				"description": "Delete_Electricity_Measurement_sparksql_union",
 				"type": "Delete",
 				"dependsOn": [],
 				"policy": {
@@ -18,7 +18,7 @@
 				"userProperties": [],
 				"typeProperties": {
 					"dataset": {
-						"referenceName": "Electricity_Measurement_pyspark_union",
+						"referenceName": "Electricity_Measurement_sparksql_union",
 						"type": "DatasetReference"
 					},
 					"enableLogging": false,
@@ -30,8 +30,8 @@
 				}
 			},
 			{
-				"name": "Delete_Electricity_Measurement_pyspark_join",
-				"description": "Delete_Electricity_Measurement_pyspark_join",
+				"name": "Delete_Electricity_Measurement_sparksql_join",
+				"description": "Delete_Electricity_Measurement_sparksql_join",
 				"type": "Delete",
 				"dependsOn": [],
 				"policy": {
@@ -44,7 +44,7 @@
 				"userProperties": [],
 				"typeProperties": {
 					"dataset": {
-						"referenceName": "Electricity_Measurement_pyspark_join",
+						"referenceName": "Electricity_Measurement_sparksql_join",
 						"type": "DatasetReference"
 					},
 					"enableLogging": false,
@@ -61,13 +61,13 @@
 				"type": "GetMetadata",
 				"dependsOn": [
 					{
-						"activity": "Delete_Electricity_Measurement_pyspark_union",
+						"activity": "Delete_Electricity_Measurement_sparksql_union",
 						"dependencyConditions": [
 							"Succeeded"
 						]
 					},
 					{
-						"activity": "Delete_Electricity_Measurement_pyspark_join",
+						"activity": "Delete_Electricity_Measurement_sparksql_join",
 						"dependencyConditions": [
 							"Succeeded"
 						]
