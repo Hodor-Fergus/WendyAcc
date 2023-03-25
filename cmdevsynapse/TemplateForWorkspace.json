@@ -2847,7 +2847,7 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "1b749568-e19a-43ca-b091-a325338b605a"
+						"spark.autotune.trackingId": "07b74bc6-3826-46d6-a694-c22da51d045c"
 					}
 				},
 				"metadata": {
@@ -2872,7 +2872,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 4,
-						"memory": 28
+						"memory": 28,
+						"automaticScaleJobs": false
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -2895,10 +2896,10 @@
 						},
 						"source": [
 							"# Getiing the parameter value from the pipeline \r\n",
-							"FolderName = \"2022_08\""
+							"FolderName = \"2022_10\""
 						],
 						"outputs": [],
-						"execution_count": 63
+						"execution_count": 87
 					},
 					{
 						"cell_type": "code",
@@ -2920,10 +2921,11 @@
 							"month = FolderName.split('_')[1]"
 						],
 						"outputs": [],
-						"execution_count": 64
+						"execution_count": null
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"from pyspark.sql import SparkSession\r\n",
 							"from pyspark.sql.functions import lit,col\r\n",
@@ -2937,7 +2939,26 @@
 							"spark.conf.set('fs.azure.sas.%s.%s.blob.core.windows.net' % (blob_container_name, blob_account_name),blob_sas_token)"
 						],
 						"outputs": [],
-						"execution_count": 65
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"spark.sql(\"set spark.sql.legacy.timeParserPolicy=LEGACY\")"
+						],
+						"outputs": [],
+						"execution_count": null
 					},
 					{
 						"cell_type": "code",
