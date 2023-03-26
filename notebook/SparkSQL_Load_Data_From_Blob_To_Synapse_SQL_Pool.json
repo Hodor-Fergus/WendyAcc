@@ -22,7 +22,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "88aee0ce-b13b-4244-a039-1aa0fa70bc1f"
+				"spark.autotune.trackingId": "cc9adc4d-03fd-47a0-b820-ee4435c415be"
 			}
 		},
 		"metadata": {
@@ -72,7 +72,7 @@
 				"source": [
 					"# Getiing the parameter value from the pipeline \r\n",
 					"FolderName = \"2022_10\"\r\n",
-					"Mode = \"override\""
+					"Mode = \"overwrite\""
 				],
 				"execution_count": 87
 			},
