@@ -4,75 +4,10 @@
 		"description": "Pandas_STG_Load_To_Delta_Tables",
 		"activities": [
 			{
-				"name": "Delete_Electricity_Measurement_pandas_union",
-				"description": "Delete_Electricity_Measurement_pandas_union",
-				"type": "Delete",
-				"dependsOn": [],
-				"policy": {
-					"timeout": "0.12:00:00",
-					"retry": 0,
-					"retryIntervalInSeconds": 30,
-					"secureOutput": false,
-					"secureInput": false
-				},
-				"userProperties": [],
-				"typeProperties": {
-					"dataset": {
-						"referenceName": "Electricity_Measurement_pandas_union",
-						"type": "DatasetReference"
-					},
-					"enableLogging": false,
-					"storeSettings": {
-						"type": "AzureBlobFSReadSettings",
-						"recursive": true,
-						"enablePartitionDiscovery": false
-					}
-				}
-			},
-			{
-				"name": "Delete_Electricity_Measurement_pandas_join",
-				"description": "Delete_Electricity_Measurement_pandas_join",
-				"type": "Delete",
-				"dependsOn": [],
-				"policy": {
-					"timeout": "0.12:00:00",
-					"retry": 0,
-					"retryIntervalInSeconds": 30,
-					"secureOutput": false,
-					"secureInput": false
-				},
-				"userProperties": [],
-				"typeProperties": {
-					"dataset": {
-						"referenceName": "Electricity_Measurement_pandas_join",
-						"type": "DatasetReference"
-					},
-					"enableLogging": false,
-					"storeSettings": {
-						"type": "AzureBlobFSReadSettings",
-						"recursive": true,
-						"enablePartitionDiscovery": false
-					}
-				}
-			},
-			{
 				"name": "Get Metadata of ADLS Data Source Container",
 				"description": "Get Metadata of ADLS Data Source Container",
 				"type": "GetMetadata",
-				"dependsOn": [
-					{
-						"activity": "Delete_Electricity_Measurement_pandas_union",
-						"dependencyConditions": [
-							"Succeeded"
-						]
-					},
-					{
-						"activity": "Delete_Electricity_Measurement_pandas_join",
-						"dependencyConditions": [
-							"Succeeded"
-						]
-					}
-				],
+				"dependsOn": [],
 				"policy": {
 					"timeout": "0.12:00:00",
 					"retry": 0,
@@ -91,6 +26,7 @@
 					],
 					"storeSettings": {
 						"type": "AzureBlobFSReadSettings",
+						"recursive": true,
 						"enablePartitionDiscovery": false
 					},
 					"formatSettings": {
@@ -161,6 +97,12 @@
 				}
 			}
 		],
+		"variables": {
+			"Mode": {
+				"type": "String",
+				"defaultValue": "overwrite"
+			}
+		},
 		"annotations": []
 	}
 }
