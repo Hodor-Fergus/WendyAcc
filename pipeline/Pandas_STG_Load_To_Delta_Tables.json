@@ -92,6 +92,24 @@
 								},
 								"driverSize": "Small"
 							}
+						},
+						{
+							"name": "Set variable Mode",
+							"description": "Set variable Mode",
+							"type": "SetVariable",
+							"dependsOn": [
+								{
+									"activity": "Load the data from the blob container",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "Mode",
+								"value": "append"
+							}
 						}
 					]
 				}
