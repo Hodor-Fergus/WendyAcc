@@ -461,6 +461,221 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/SparkSQL_STG_Load_To_Delta_Tables')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"description": "Pandas_STG_Load_To_Delta_Tables",
+				"activities": [
+					{
+						"name": "Delete_Electricity_Measurement_sparksql_union",
+						"description": "Delete_Electricity_Measurement_sparksql_union",
+						"type": "Delete",
+						"dependsOn": [
+							{
+								"activity": "ForEach Container",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "Electricity_Measurement_sparksql_union",
+								"type": "DatasetReference",
+								"parameters": {}
+							},
+							"enableLogging": false,
+							"storeSettings": {
+								"type": "AzureBlobFSReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							}
+						}
+					},
+					{
+						"name": "Delete_Electricity_Measurement_sparksql_join",
+						"description": "Delete_Electricity_Measurement_sparksql_join",
+						"type": "Delete",
+						"dependsOn": [
+							{
+								"activity": "ForEach Container",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "Electricity_Measurement_sparksql_join",
+								"type": "DatasetReference",
+								"parameters": {}
+							},
+							"enableLogging": false,
+							"storeSettings": {
+								"type": "AzureBlobFSReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							}
+						}
+					},
+					{
+						"name": "Get Metadata of ADLS Data Source Container",
+						"description": "Get Metadata of ADLS Data Source Container",
+						"type": "GetMetadata",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "ADLS_Container_rawdata",
+								"type": "DatasetReference",
+								"parameters": {}
+							},
+							"fieldList": [
+								"childItems"
+							],
+							"storeSettings": {
+								"type": "AzureBlobFSReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							},
+							"formatSettings": {
+								"type": "DelimitedTextReadSettings"
+							}
+						}
+					},
+					{
+						"name": "ForEach Container",
+						"description": "ForEach Container",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "Get Metadata of ADLS Data Source Container",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('Get Metadata of ADLS Data Source Container').output.childItems",
+								"type": "Expression"
+							},
+							"isSequential": true,
+							"activities": [
+								{
+									"name": "Load the data from the blob container",
+									"description": "Load the data from the blob container",
+									"type": "SynapseNotebook",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"notebook": {
+											"referenceName": "SparkSQL_Load_Data_From_Blob_To_Synapse_SQL_Pool",
+											"type": "NotebookReference"
+										},
+										"parameters": {
+											"FolderName": {
+												"value": {
+													"value": "@item()['name']",
+													"type": "Expression"
+												},
+												"type": "string"
+											},
+											"Mode": {
+												"value": {
+													"value": "@variables('Mode')",
+													"type": "Expression"
+												},
+												"type": "string"
+											}
+										},
+										"snapshot": true,
+										"sparkPool": {
+											"referenceName": "devpool",
+											"type": "BigDataPoolReference"
+										},
+										"executorSize": "Small",
+										"conf": {
+											"spark.dynamicAllocation.enabled": false
+										},
+										"driverSize": "Small"
+									}
+								},
+								{
+									"name": "Set variable Mode",
+									"description": "Set variable Mode",
+									"type": "SetVariable",
+									"dependsOn": [
+										{
+											"activity": "Load the data from the blob container",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"userProperties": [],
+									"typeProperties": {
+										"variableName": "Mode",
+										"value": "append"
+									}
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"variables": {
+					"Mode": {
+						"type": "String",
+						"defaultValue": "override"
+					}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/datasets/Electricity_Measurement_sparksql_union')]",
+				"[concat(variables('workspaceId'), '/datasets/Electricity_Measurement_sparksql_join')]",
+				"[concat(variables('workspaceId'), '/datasets/ADLS_Container_rawdata')]",
+				"[concat(variables('workspaceId'), '/notebooks/SparkSQL_Load_Data_From_Blob_To_Synapse_SQL_Pool')]",
+				"[concat(variables('workspaceId'), '/bigDataPools/devpool')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/ADLS_Container_rawdata')]",
 			"type": "Microsoft.Synapse/workspaces/datasets",
 			"apiVersion": "2019-06-01-preview",
@@ -575,6 +790,52 @@
 					"location": {
 						"type": "AzureBlobFSLocation",
 						"folderPath": "Electricity_Measurement_pyspark_union",
+						"fileSystem": "output"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/cmdevsynapse-WorkspaceDefaultStorage')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/Electricity_Measurement_sparksql_join')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "cmdevsynapse-WorkspaceDefaultStorage",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "Binary",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"folderPath": "Electricity_Measurement_sparksql_join",
+						"fileSystem": "output"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/cmdevsynapse-WorkspaceDefaultStorage')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/Electricity_Measurement_sparksql_union')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "cmdevsynapse-WorkspaceDefaultStorage",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "Binary",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"folderPath": "Electricity_Measurement_sparksql_union",
 						"fileSystem": "output"
 					}
 				}
@@ -2847,7 +3108,7 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "07b74bc6-3826-46d6-a694-c22da51d045c"
+						"spark.autotune.trackingId": "daac105b-9f9f-46e6-b492-9526c4824547"
 					}
 				},
 				"metadata": {
@@ -2872,8 +3133,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 4,
-						"memory": 28,
-						"automaticScaleJobs": false
+						"memory": 28
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -2925,7 +3185,6 @@
 					},
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							"from pyspark.sql import SparkSession\r\n",
 							"from pyspark.sql.functions import lit,col\r\n",
@@ -3798,235 +4057,6 @@
 			},
 			"dependsOn": [],
 			"location": "northeurope"
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/SparkSQL_STG_Load_To_Delta_Tables')]",
-			"type": "Microsoft.Synapse/workspaces/pipelines",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"description": "Pandas_STG_Load_To_Delta_Tables",
-				"activities": [
-					{
-						"name": "Delete_Electricity_Measurement_sparksql_union",
-						"description": "Delete_Electricity_Measurement_sparksql_union",
-						"type": "Delete",
-						"dependsOn": [],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"dataset": {
-								"referenceName": "Electricity_Measurement_sparksql_union",
-								"type": "DatasetReference",
-								"parameters": {}
-							},
-							"enableLogging": false,
-							"storeSettings": {
-								"type": "AzureBlobFSReadSettings",
-								"recursive": true,
-								"enablePartitionDiscovery": false
-							}
-						}
-					},
-					{
-						"name": "Delete_Electricity_Measurement_sparksql_join",
-						"description": "Delete_Electricity_Measurement_sparksql_join",
-						"type": "Delete",
-						"dependsOn": [],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"dataset": {
-								"referenceName": "Electricity_Measurement_sparksql_join",
-								"type": "DatasetReference",
-								"parameters": {}
-							},
-							"enableLogging": false,
-							"storeSettings": {
-								"type": "AzureBlobFSReadSettings",
-								"recursive": true,
-								"enablePartitionDiscovery": false
-							}
-						}
-					},
-					{
-						"name": "Get Metadata of ADLS Data Source Container",
-						"description": "Get Metadata of ADLS Data Source Container",
-						"type": "GetMetadata",
-						"dependsOn": [
-							{
-								"activity": "Delete_Electricity_Measurement_sparksql_union",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							},
-							{
-								"activity": "Delete_Electricity_Measurement_sparksql_join",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"dataset": {
-								"referenceName": "ADLS_Container_rawdata",
-								"type": "DatasetReference",
-								"parameters": {}
-							},
-							"fieldList": [
-								"childItems"
-							],
-							"storeSettings": {
-								"type": "AzureBlobFSReadSettings",
-								"recursive": true,
-								"enablePartitionDiscovery": false
-							},
-							"formatSettings": {
-								"type": "DelimitedTextReadSettings"
-							}
-						}
-					},
-					{
-						"name": "ForEach Container",
-						"description": "ForEach Container",
-						"type": "ForEach",
-						"dependsOn": [
-							{
-								"activity": "Get Metadata of ADLS Data Source Container",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"userProperties": [],
-						"typeProperties": {
-							"items": {
-								"value": "@activity('Get Metadata of ADLS Data Source Container').output.childItems",
-								"type": "Expression"
-							},
-							"isSequential": true,
-							"activities": [
-								{
-									"name": "Load the data from the blob container",
-									"description": "Load the data from the blob container",
-									"type": "SynapseNotebook",
-									"dependsOn": [],
-									"policy": {
-										"timeout": "0.12:00:00",
-										"retry": 0,
-										"retryIntervalInSeconds": 30,
-										"secureOutput": false,
-										"secureInput": false
-									},
-									"userProperties": [],
-									"typeProperties": {
-										"notebook": {
-											"referenceName": "SparkSQL_Load_Data_From_Blob_To_Synapse_SQL_Pool",
-											"type": "NotebookReference"
-										},
-										"parameters": {
-											"FolderName": {
-												"value": {
-													"value": "@item()['name']",
-													"type": "Expression"
-												},
-												"type": "string"
-											}
-										},
-										"snapshot": true,
-										"sparkPool": {
-											"referenceName": "devpool",
-											"type": "BigDataPoolReference"
-										},
-										"executorSize": "Small",
-										"conf": {
-											"spark.dynamicAllocation.enabled": false
-										},
-										"driverSize": "Small"
-									}
-								}
-							]
-						}
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {},
-					"cancelAfter": {}
-				},
-				"annotations": []
-			},
-			"dependsOn": [
-				"[concat(variables('workspaceId'), '/datasets/Electricity_Measurement_sparksql_union')]",
-				"[concat(variables('workspaceId'), '/datasets/Electricity_Measurement_sparksql_join')]",
-				"[concat(variables('workspaceId'), '/datasets/ADLS_Container_rawdata')]",
-				"[concat(variables('workspaceId'), '/notebooks/SparkSQL_Load_Data_From_Blob_To_Synapse_SQL_Pool')]",
-				"[concat(variables('workspaceId'), '/bigDataPools/devpool')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/Electricity_Measurement_sparksql_union')]",
-			"type": "Microsoft.Synapse/workspaces/datasets",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "cmdevsynapse-WorkspaceDefaultStorage",
-					"type": "LinkedServiceReference"
-				},
-				"annotations": [],
-				"type": "Binary",
-				"typeProperties": {
-					"location": {
-						"type": "AzureBlobFSLocation",
-						"folderPath": "Electricity_Measurement_sparksql_union",
-						"fileSystem": "output"
-					}
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('workspaceId'), '/linkedServices/cmdevsynapse-WorkspaceDefaultStorage')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/Electricity_Measurement_sparksql_join')]",
-			"type": "Microsoft.Synapse/workspaces/datasets",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "cmdevsynapse-WorkspaceDefaultStorage",
-					"type": "LinkedServiceReference"
-				},
-				"annotations": [],
-				"type": "Binary",
-				"typeProperties": {
-					"location": {
-						"type": "AzureBlobFSLocation",
-						"folderPath": "Electricity_Measurement_sparksql_join",
-						"fileSystem": "output"
-					}
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('workspaceId'), '/linkedServices/cmdevsynapse-WorkspaceDefaultStorage')]"
-			]
 		}
 	]
 }
