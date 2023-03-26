@@ -79,6 +79,13 @@
 											"type": "Expression"
 										},
 										"type": "string"
+									},
+									"Mode": {
+										"value": {
+											"value": "@variables('Mode')",
+											"type": "Expression"
+										},
+										"type": "string"
 									}
 								},
 								"snapshot": true,
