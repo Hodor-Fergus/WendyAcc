@@ -7,7 +7,14 @@
 				"name": "Delete_Electricity_Measurement_sparksql_union",
 				"description": "Delete_Electricity_Measurement_sparksql_union",
 				"type": "Delete",
-				"dependsOn": [],
+				"dependsOn": [
+					{
+						"activity": "ForEach Container",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
 				"policy": {
 					"timeout": "0.12:00:00",
 					"retry": 0,
@@ -33,7 +40,14 @@
 				"name": "Delete_Electricity_Measurement_sparksql_join",
 				"description": "Delete_Electricity_Measurement_sparksql_join",
 				"type": "Delete",
-				"dependsOn": [],
+				"dependsOn": [
+					{
+						"activity": "ForEach Container",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
 				"policy": {
 					"timeout": "0.12:00:00",
 					"retry": 0,
@@ -59,20 +73,7 @@
 				"name": "Get Metadata of ADLS Data Source Container",
 				"description": "Get Metadata of ADLS Data Source Container",
 				"type": "GetMetadata",
-				"dependsOn": [
-					{
-						"activity": "Delete_Electricity_Measurement_sparksql_union",
-						"dependencyConditions": [
-							"Succeeded"
-						]
-					},
-					{
-						"activity": "Delete_Electricity_Measurement_sparksql_join",
-						"dependencyConditions": [
-							"Succeeded"
-						]
-					}
-				],
+				"dependsOn": [],
 				"policy": {
 					"timeout": "0.12:00:00",
 					"retry": 0,
@@ -144,6 +145,13 @@
 											"type": "Expression"
 										},
 										"type": "string"
+									},
+									"Mode": {
+										"value": {
+											"value": "@variables('Mode')",
+											"type": "Expression"
+										},
+										"type": "string"
 									}
 								},
 								"snapshot": true,
@@ -157,11 +165,35 @@
 								},
 								"driverSize": "Small"
 							}
+						},
+						{
+							"name": "Set variable Mode",
+							"description": "Set variable Mode",
+							"type": "SetVariable",
+							"dependsOn": [
+								{
+									"activity": "Load the data from the blob container",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "Mode",
+								"value": "append"
+							}
 						}
 					]
 				}
 			}
 		],
+		"variables": {
+			"Mode": {
+				"type": "String",
+				"defaultValue": "override"
+			}
+		},
 		"annotations": []
 	}
 }
