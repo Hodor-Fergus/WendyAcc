@@ -201,6 +201,13 @@
 													"type": "Expression"
 												},
 												"type": "string"
+											},
+											"Mode": {
+												"value": {
+													"value": "@variables('Mode')",
+													"type": "Expression"
+												},
+												"type": "string"
 											}
 										},
 										"snapshot": true,
@@ -336,6 +343,13 @@
 											"FolderName": {
 												"value": {
 													"value": "@item()['name']",
+													"type": "Expression"
+												},
+												"type": "string"
+											},
+											"Mode": {
+												"value": {
+													"value": "@variables('Mode')",
 													"type": "Expression"
 												},
 												"type": "string"
