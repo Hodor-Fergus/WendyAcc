@@ -71,7 +71,7 @@
 						"type": "Wait",
 						"dependsOn": [
 							{
-								"activity": "Execute Pandas Pipeline",
+								"activity": "Execute SparkSQL Pipeline",
 								"dependencyConditions": [
 									"Succeeded"
 								]
@@ -80,6 +80,28 @@
 						"userProperties": [],
 						"typeProperties": {
 							"waitTimeInSeconds": 5
+						}
+					},
+					{
+						"name": "Execute SparkSQL Pipeline",
+						"description": "Execute SparkSQL Pipeline",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "Execute Pandas Pipeline",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "SparkSQL_STG_Load_To_Delta_Tables",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {}
 						}
 					}
 				],
@@ -91,7 +113,8 @@
 			},
 			"dependsOn": [
 				"[concat(variables('workspaceId'), '/pipelines/Pyspark_STG_Load_To_Delta_Tables')]",
-				"[concat(variables('workspaceId'), '/pipelines/Pandas_STG_Load_To_Delta_Tables')]"
+				"[concat(variables('workspaceId'), '/pipelines/Pandas_STG_Load_To_Delta_Tables')]",
+				"[concat(variables('workspaceId'), '/pipelines/SparkSQL_STG_Load_To_Delta_Tables')]"
 			]
 		},
 		{
@@ -102,77 +125,10 @@
 				"description": "Pandas_STG_Load_To_Delta_Tables",
 				"activities": [
 					{
-						"name": "Delete_Electricity_Measurement_pandas_union",
-						"description": "Delete_Electricity_Measurement_pandas_union",
-						"type": "Delete",
-						"dependsOn": [],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"dataset": {
-								"referenceName": "Electricity_Measurement_pandas_union",
-								"type": "DatasetReference",
-								"parameters": {}
-							},
-							"enableLogging": false,
-							"storeSettings": {
-								"type": "AzureBlobFSReadSettings",
-								"recursive": true,
-								"enablePartitionDiscovery": false
-							}
-						}
-					},
-					{
-						"name": "Delete_Electricity_Measurement_pandas_join",
-						"description": "Delete_Electricity_Measurement_pandas_join",
-						"type": "Delete",
-						"dependsOn": [],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"dataset": {
-								"referenceName": "Electricity_Measurement_pandas_join",
-								"type": "DatasetReference",
-								"parameters": {}
-							},
-							"enableLogging": false,
-							"storeSettings": {
-								"type": "AzureBlobFSReadSettings",
-								"recursive": true,
-								"enablePartitionDiscovery": false
-							}
-						}
-					},
-					{
 						"name": "Get Metadata of ADLS Data Source Container",
 						"description": "Get Metadata of ADLS Data Source Container",
 						"type": "GetMetadata",
-						"dependsOn": [
-							{
-								"activity": "Delete_Electricity_Measurement_pandas_union",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							},
-							{
-								"activity": "Delete_Electricity_Measurement_pandas_join",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
+						"dependsOn": [],
 						"policy": {
 							"timeout": "0.12:00:00",
 							"retry": 0,
@@ -258,6 +214,24 @@
 										},
 										"driverSize": "Small"
 									}
+								},
+								{
+									"name": "Set variable Mode",
+									"description": "Set variable Mode",
+									"type": "SetVariable",
+									"dependsOn": [
+										{
+											"activity": "Load the data from the blob container",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"userProperties": [],
+									"typeProperties": {
+										"variableName": "Mode",
+										"value": "append"
+									}
 								}
 							]
 						}
@@ -267,11 +241,15 @@
 					"elapsedTimeMetric": {},
 					"cancelAfter": {}
 				},
+				"variables": {
+					"Mode": {
+						"type": "String",
+						"defaultValue": "overwrite"
+					}
+				},
 				"annotations": []
 			},
 			"dependsOn": [
-				"[concat(variables('workspaceId'), '/datasets/Electricity_Measurement_pandas_union')]",
-				"[concat(variables('workspaceId'), '/datasets/Electricity_Measurement_pandas_join')]",
 				"[concat(variables('workspaceId'), '/datasets/ADLS_Container_rawdata')]",
 				"[concat(variables('workspaceId'), '/notebooks/Pandas_Load_Data_From_Blob_To_Synapse_SQL_Pool')]",
 				"[concat(variables('workspaceId'), '/bigDataPools/devpool')]"
@@ -285,77 +263,10 @@
 				"description": "Pandas_STG_Load_To_Delta_Tables",
 				"activities": [
 					{
-						"name": "Delete_Electricity_Measurement_pyspark_union",
-						"description": "Delete_Electricity_Measurement_pyspark_union",
-						"type": "Delete",
-						"dependsOn": [],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"dataset": {
-								"referenceName": "Electricity_Measurement_pyspark_union",
-								"type": "DatasetReference",
-								"parameters": {}
-							},
-							"enableLogging": false,
-							"storeSettings": {
-								"type": "AzureBlobFSReadSettings",
-								"recursive": true,
-								"enablePartitionDiscovery": false
-							}
-						}
-					},
-					{
-						"name": "Delete_Electricity_Measurement_pyspark_join",
-						"description": "Delete_Electricity_Measurement_pyspark_join",
-						"type": "Delete",
-						"dependsOn": [],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"dataset": {
-								"referenceName": "Electricity_Measurement_pyspark_join",
-								"type": "DatasetReference",
-								"parameters": {}
-							},
-							"enableLogging": false,
-							"storeSettings": {
-								"type": "AzureBlobFSReadSettings",
-								"recursive": true,
-								"enablePartitionDiscovery": false
-							}
-						}
-					},
-					{
 						"name": "Get Metadata of ADLS Data Source Container",
 						"description": "Get Metadata of ADLS Data Source Container",
 						"type": "GetMetadata",
-						"dependsOn": [
-							{
-								"activity": "Delete_Electricity_Measurement_pyspark_union",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							},
-							{
-								"activity": "Delete_Electricity_Measurement_pyspark_join",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
+						"dependsOn": [],
 						"policy": {
 							"timeout": "0.12:00:00",
 							"retry": 0,
@@ -441,6 +352,24 @@
 										},
 										"driverSize": "Small"
 									}
+								},
+								{
+									"name": "Set variable Mode",
+									"description": "Set variable Mode",
+									"type": "SetVariable",
+									"dependsOn": [
+										{
+											"activity": "Load the data from the blob container",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"userProperties": [],
+									"typeProperties": {
+										"variableName": "Mode",
+										"value": "append"
+									}
 								}
 							]
 						}
@@ -450,11 +379,15 @@
 					"elapsedTimeMetric": {},
 					"cancelAfter": {}
 				},
+				"variables": {
+					"Mode": {
+						"type": "String",
+						"defaultValue": "overwrite"
+					}
+				},
 				"annotations": []
 			},
 			"dependsOn": [
-				"[concat(variables('workspaceId'), '/datasets/Electricity_Measurement_pyspark_union')]",
-				"[concat(variables('workspaceId'), '/datasets/Electricity_Measurement_pyspark_join')]",
 				"[concat(variables('workspaceId'), '/datasets/ADLS_Container_rawdata')]",
 				"[concat(variables('workspaceId'), '/notebooks/PySpark_Load_Data_From_Blob_To_Synapse_SQL_Pool')]",
 				"[concat(variables('workspaceId'), '/bigDataPools/devpool')]"
