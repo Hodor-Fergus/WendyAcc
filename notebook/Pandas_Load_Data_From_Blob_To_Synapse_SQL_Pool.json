@@ -22,7 +22,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "b537391e-7d93-4a0d-8671-32c948d5faf3"
+				"spark.autotune.trackingId": "e2c55f6e-ba7c-486a-b4d5-7fe3cf7b518e"
 			}
 		},
 		"metadata": {
@@ -71,7 +71,8 @@
 				},
 				"source": [
 					"# Getiing the parameter value from the pipeline \r\n",
-					"FolderName = \"2023_02\""
+					"FolderName = \"2023_02\"\r\n",
+					"Mode = \"override\""
 				],
 				"execution_count": 23
 			},
@@ -89,6 +90,7 @@
 					}
 				},
 				"source": [
+					"\r\n",
 					"# Using the parameter value creating a new variables to use while reading the file\r\n",
 					"FolderName_Without_Separator = FolderName.replace(\"_\", \"\")\r\n",
 					"year = int(FolderName.split('_')[0])\r\n",
@@ -672,7 +674,7 @@
 					"file_path = 'abfss://output@rawdevstorage.dfs.core.windows.net/Electricity_Measurement_pandas_union'\r\n",
 					"write_format=\"delta\"\r\n",
 					"partition_by=[\"Peildatum\"]\r\n",
-					"mode_ = \"append\" #overwrite #append\r\n",
+					"mode_ = Mode #overwrite #append\r\n",
 					"\r\n",
 					"spark_df\\\r\n",
 					".write\\\r\n",
@@ -816,7 +818,7 @@
 					"file_path = 'abfss://output@rawdevstorage.dfs.core.windows.net/Electricity_Measurement_pandas_join'\r\n",
 					"write_format=\"delta\"\r\n",
 					"partition_by=[\"DM_Peildatum\"]\r\n",
-					"mode_ = \"append\" #overwrite #append\r\n",
+					"mode_ = Mode #overwrite #append\r\n",
 					"\r\n",
 					"spark_join_df\\\r\n",
 					".write\\\r\n",
