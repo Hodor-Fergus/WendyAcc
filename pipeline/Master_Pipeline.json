@@ -44,7 +44,7 @@
 				"type": "Wait",
 				"dependsOn": [
 					{
-						"activity": "Execute Pandas Pipeline",
+						"activity": "Execute SparkSQL Pipeline",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -53,6 +53,27 @@
 				"userProperties": [],
 				"typeProperties": {
 					"waitTimeInSeconds": 5
+				}
+			},
+			{
+				"name": "Execute SparkSQL Pipeline",
+				"description": "Execute SparkSQL Pipeline",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Execute Pandas Pipeline",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "SparkSQL_STG_Load_To_Delta_Tables",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
 				}
 			}
 		],
