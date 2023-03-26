@@ -662,7 +662,7 @@
 				"variables": {
 					"Mode": {
 						"type": "String",
-						"defaultValue": "override"
+						"defaultValue": "overwrite"
 					}
 				},
 				"annotations": []
@@ -3108,7 +3108,7 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "daac105b-9f9f-46e6-b492-9526c4824547"
+						"spark.autotune.trackingId": "2eabe5c6-7399-45a5-8070-5ddade118bf0"
 					}
 				},
 				"metadata": {
@@ -3133,7 +3133,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 4,
-						"memory": 28
+						"memory": 28,
+						"automaticScaleJobs": false
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -3156,7 +3157,8 @@
 						},
 						"source": [
 							"# Getiing the parameter value from the pipeline \r\n",
-							"FolderName = \"2022_10\""
+							"FolderName = \"2022_10\"\r\n",
+							"Mode = \"override\""
 						],
 						"outputs": [],
 						"execution_count": 87
@@ -3185,6 +3187,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"from pyspark.sql import SparkSession\r\n",
 							"from pyspark.sql.functions import lit,col\r\n",
@@ -3965,7 +3968,7 @@
 							"file_path = 'abfss://output@rawdevstorage.dfs.core.windows.net/Electricity_Measurement_sparksql_union'\r\n",
 							"write_format=\"delta\"\r\n",
 							"partition_by=[\"Peildatum\"]\r\n",
-							"mode_ = \"append\" #overwrite #append\r\n",
+							"mode_ = Mode #overwrite #append\r\n",
 							"\r\n",
 							"union_df\\\r\n",
 							".write\\\r\n",
@@ -3996,7 +3999,7 @@
 							"file_path = 'abfss://output@rawdevstorage.dfs.core.windows.net/Electricity_Measurement_sparksql_join'\r\n",
 							"write_format=\"delta\"\r\n",
 							"partition_by=[\"DM_Peildatum\"]\r\n",
-							"mode_ = \"append\" #overwrite #append\r\n",
+							"mode_ = Mode #overwrite #append\r\n",
 							"\r\n",
 							"join_df\\\r\n",
 							".write\\\r\n",
