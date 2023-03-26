@@ -468,74 +468,6 @@
 				"description": "Pandas_STG_Load_To_Delta_Tables",
 				"activities": [
 					{
-						"name": "Delete_Electricity_Measurement_sparksql_union",
-						"description": "Delete_Electricity_Measurement_sparksql_union",
-						"type": "Delete",
-						"dependsOn": [
-							{
-								"activity": "ForEach Container",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"dataset": {
-								"referenceName": "Electricity_Measurement_sparksql_union",
-								"type": "DatasetReference",
-								"parameters": {}
-							},
-							"enableLogging": false,
-							"storeSettings": {
-								"type": "AzureBlobFSReadSettings",
-								"recursive": true,
-								"enablePartitionDiscovery": false
-							}
-						}
-					},
-					{
-						"name": "Delete_Electricity_Measurement_sparksql_join",
-						"description": "Delete_Electricity_Measurement_sparksql_join",
-						"type": "Delete",
-						"dependsOn": [
-							{
-								"activity": "ForEach Container",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"dataset": {
-								"referenceName": "Electricity_Measurement_sparksql_join",
-								"type": "DatasetReference",
-								"parameters": {}
-							},
-							"enableLogging": false,
-							"storeSettings": {
-								"type": "AzureBlobFSReadSettings",
-								"recursive": true,
-								"enablePartitionDiscovery": false
-							}
-						}
-					},
-					{
 						"name": "Get Metadata of ADLS Data Source Container",
 						"description": "Get Metadata of ADLS Data Source Container",
 						"type": "GetMetadata",
@@ -668,8 +600,6 @@
 				"annotations": []
 			},
 			"dependsOn": [
-				"[concat(variables('workspaceId'), '/datasets/Electricity_Measurement_sparksql_union')]",
-				"[concat(variables('workspaceId'), '/datasets/Electricity_Measurement_sparksql_join')]",
 				"[concat(variables('workspaceId'), '/datasets/ADLS_Container_rawdata')]",
 				"[concat(variables('workspaceId'), '/notebooks/SparkSQL_Load_Data_From_Blob_To_Synapse_SQL_Pool')]",
 				"[concat(variables('workspaceId'), '/bigDataPools/devpool')]"
@@ -3108,7 +3038,7 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "2eabe5c6-7399-45a5-8070-5ddade118bf0"
+						"spark.autotune.trackingId": "88aee0ce-b13b-4244-a039-1aa0fa70bc1f"
 					}
 				},
 				"metadata": {
@@ -3133,8 +3063,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 4,
-						"memory": 28,
-						"automaticScaleJobs": false
+						"memory": 28
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -3187,7 +3116,6 @@
 					},
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							"from pyspark.sql import SparkSession\r\n",
 							"from pyspark.sql.functions import lit,col\r\n",
