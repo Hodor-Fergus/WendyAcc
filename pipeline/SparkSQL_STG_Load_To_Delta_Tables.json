@@ -191,7 +191,7 @@
 		"variables": {
 			"Mode": {
 				"type": "String",
-				"defaultValue": "override"
+				"defaultValue": "overwrite"
 			}
 		},
 		"annotations": []

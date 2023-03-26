@@ -22,7 +22,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "daac105b-9f9f-46e6-b492-9526c4824547"
+				"spark.autotune.trackingId": "88aee0ce-b13b-4244-a039-1aa0fa70bc1f"
 			}
 		},
 		"metadata": {
@@ -71,7 +71,8 @@
 				},
 				"source": [
 					"# Getiing the parameter value from the pipeline \r\n",
-					"FolderName = \"2022_10\""
+					"FolderName = \"2022_10\"\r\n",
+					"Mode = \"override\""
 				],
 				"execution_count": 87
 			},
@@ -865,7 +866,7 @@
 					"file_path = 'abfss://output@rawdevstorage.dfs.core.windows.net/Electricity_Measurement_sparksql_union'\r\n",
 					"write_format=\"delta\"\r\n",
 					"partition_by=[\"Peildatum\"]\r\n",
-					"mode_ = \"append\" #overwrite #append\r\n",
+					"mode_ = Mode #overwrite #append\r\n",
 					"\r\n",
 					"union_df\\\r\n",
 					".write\\\r\n",
@@ -895,7 +896,7 @@
 					"file_path = 'abfss://output@rawdevstorage.dfs.core.windows.net/Electricity_Measurement_sparksql_join'\r\n",
 					"write_format=\"delta\"\r\n",
 					"partition_by=[\"DM_Peildatum\"]\r\n",
-					"mode_ = \"append\" #overwrite #append\r\n",
+					"mode_ = Mode #overwrite #append\r\n",
 					"\r\n",
 					"join_df\\\r\n",
 					".write\\\r\n",
