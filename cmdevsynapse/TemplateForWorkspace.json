@@ -941,7 +941,7 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "b537391e-7d93-4a0d-8671-32c948d5faf3"
+						"spark.autotune.trackingId": "369652ad-034f-489a-9210-f330d5016da8"
 					}
 				},
 				"metadata": {
@@ -966,7 +966,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 4,
-						"memory": 28
+						"memory": 28,
+						"automaticScaleJobs": false
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -989,7 +990,8 @@
 						},
 						"source": [
 							"# Getiing the parameter value from the pipeline \r\n",
-							"FolderName = \"2023_02\""
+							"FolderName = \"2023_02\"\r\n",
+							"Mode = \"override\""
 						],
 						"outputs": [],
 						"execution_count": 23
@@ -1008,6 +1010,7 @@
 							}
 						},
 						"source": [
+							"\r\n",
 							"# Using the parameter value creating a new variables to use while reading the file\r\n",
 							"FolderName_Without_Separator = FolderName.replace(\"_\", \"\")\r\n",
 							"year = int(FolderName.split('_')[0])\r\n",
@@ -1018,6 +1021,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"from pyspark.sql import SparkSession\r\n",
 							"from pyspark.sql.functions import lit,col\r\n",
@@ -1609,7 +1613,7 @@
 							"file_path = 'abfss://output@rawdevstorage.dfs.core.windows.net/Electricity_Measurement_pandas_union'\r\n",
 							"write_format=\"delta\"\r\n",
 							"partition_by=[\"Peildatum\"]\r\n",
-							"mode_ = \"append\" #overwrite #append\r\n",
+							"mode_ = Mode #overwrite #append\r\n",
 							"\r\n",
 							"spark_df\\\r\n",
 							".write\\\r\n",
@@ -1759,7 +1763,7 @@
 							"file_path = 'abfss://output@rawdevstorage.dfs.core.windows.net/Electricity_Measurement_pandas_join'\r\n",
 							"write_format=\"delta\"\r\n",
 							"partition_by=[\"DM_Peildatum\"]\r\n",
-							"mode_ = \"append\" #overwrite #append\r\n",
+							"mode_ = Mode #overwrite #append\r\n",
 							"\r\n",
 							"spark_join_df\\\r\n",
 							".write\\\r\n",
@@ -1822,7 +1826,7 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "fd7627eb-13d3-4260-830d-758275a5a2d5"
+						"spark.autotune.trackingId": "867e6fba-26f0-48ce-95d6-eeeb4abf7e02"
 					}
 				},
 				"metadata": {
@@ -1847,7 +1851,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 4,
-						"memory": 28
+						"memory": 28,
+						"automaticScaleJobs": false
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -1870,7 +1875,8 @@
 						},
 						"source": [
 							"# Getiing the parameter value from the pipeline \r\n",
-							"FolderName = \"2022_10\""
+							"FolderName = \"2022_10\"\r\n",
+							"Mode = \"override\""
 						],
 						"outputs": [],
 						"execution_count": 73
@@ -2368,7 +2374,7 @@
 							"file_path = 'abfss://output@rawdevstorage.dfs.core.windows.net/Electricity_Measurement_pyspark_union'\r\n",
 							"write_format=\"delta\"\r\n",
 							"partition_by=[\"Peildatum\"]\r\n",
-							"mode_ = \"append\" #overwrite #append\r\n",
+							"mode_ = Mode #overwrite #append\r\n",
 							"\r\n",
 							"df\\\r\n",
 							".write\\\r\n",
@@ -2483,7 +2489,7 @@
 							"file_path = 'abfss://output@rawdevstorage.dfs.core.windows.net/Electricity_Measurement_pyspark_join'\r\n",
 							"write_format=\"delta\"\r\n",
 							"partition_by=[\"DM_Peildatum\"]\r\n",
-							"mode_ = \"append\" #overwrite #append\r\n",
+							"mode_ = Mode #overwrite #append\r\n",
 							"\r\n",
 							"join_df\\\r\n",
 							".write\\\r\n",
@@ -3038,7 +3044,7 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "88aee0ce-b13b-4244-a039-1aa0fa70bc1f"
+						"spark.autotune.trackingId": "bd4c1f34-7ef3-42c6-8ddd-4ef5e65e9b23"
 					}
 				},
 				"metadata": {
@@ -3063,7 +3069,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 4,
-						"memory": 28
+						"memory": 28,
+						"automaticScaleJobs": false
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -3116,6 +3123,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"from pyspark.sql import SparkSession\r\n",
 							"from pyspark.sql.functions import lit,col\r\n",
