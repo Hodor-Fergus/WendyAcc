@@ -1,0 +1,1808 @@
+{
+	"name": "Pandas_Final",
+	"properties": {
+		"nbformat": 4,
+		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "devpool",
+			"type": "BigDataPoolReference"
+		},
+		"sessionProperties": {
+			"driverMemory": "28g",
+			"driverCores": 4,
+			"executorMemory": "28g",
+			"executorCores": 4,
+			"numExecutors": 2,
+			"conf": {
+				"spark.dynamicAllocation.enabled": "false",
+				"spark.dynamicAllocation.minExecutors": "2",
+				"spark.dynamicAllocation.maxExecutors": "2",
+				"spark.autotune.trackingId": "a2ce0d27-80b0-4f57-99a4-1f2cbb5c8428"
+			}
+		},
+		"metadata": {
+			"saveOutput": true,
+			"enableDebugMode": false,
+			"kernelspec": {
+				"name": "synapse_pyspark",
+				"display_name": "Synapse PySpark"
+			},
+			"language_info": {
+				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/87083017-2c2b-47c8-8ea7-b4d36686fc97/resourceGroups/Dev_ResourceGroup/providers/Microsoft.Synapse/workspaces/cmdevsynapse/bigDataPools/devpool",
+				"name": "devpool",
+				"type": "Spark",
+				"endpoint": "https://cmdevsynapse.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/devpool",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net"
+				},
+				"sparkVersion": "3.3",
+				"nodeCount": 3,
+				"cores": 4,
+				"memory": 28,
+				"automaticScaleJobs": false
+			},
+			"sessionKeepAliveTimeout": 30
+		},
+		"cells": [
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Pandas ETL"
+				]
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Parameters and Libraries"
+				]
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"### Create Parameter used to change read folder and mode dynamically in pipeline"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"tags": [
+						"parameters"
+					]
+				},
+				"source": [
+					"#Get Month/Year Folder From Bronze and use to get the value in the pipeline (Toggled as a parameter)\r\n",
+					"FolderName = \"2022_08\"\r\n",
+					"Mode = \"overwrite\"\r\n",
+					"#For the first time it overwrites and for subsequent notebooks, it apppends which is adjusted via the pipeline"
+				],
+				"execution_count": 11
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"### Generate Month Year Folder "
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"#Using FolderName to create new variable to read file (automatically in pipeline)\r\n",
+					"FolderName_SeperatorRemoved = FolderName.replace (\"_\", \"\")\r\n",
+					"year = FolderName.split('_')[0]\r\n",
+					"month = FolderName.split('_')[1]"
+				],
+				"execution_count": 12
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"### Import Libraries"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"from pyspark.sql import SparkSession\r\n",
+					"from pyspark.sql.functions import lit,col\r\n",
+					"import re\r\n",
+					"import pandas as pd\r\n",
+					"import warnings\r\n",
+					"warnings.filterwarnings('ignore') ##This will ignore all Filter warnings in your code."
+				],
+				"execution_count": 13
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Create Connections"
+				]
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"### Create Spark Session"
+				]
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"#Spark Session\r\n",
+					"# storage_acc_name = \"dlscloubisintern\"\r\n",
+					"# storage_container = \"rawdatafile\"\r\n",
+					"# sc = SparkSession.builder.getOrCreate()\r\n",
+					"# token_library = sc._jvm.com.microsoft.azure.synapse.tokenlibrary.TokenLibrary\r\n",
+					"# storage_sas_token = token_library.getConnectionString(\"syn-intern-westeu-1-WorkspaceDefaultStorage\")\r\n",
+					"# spark.conf.set('fs.azure.sas.{}.{}.blob.core.windows.net' .format(storage_container, storage_acc_name),storage_sas_token)\r\n",
+					"\r\n",
+					"blob_account_name = \"rawdevstorage\"\r\n",
+					"blob_container_name = \"rawdata\"\r\n",
+					"sc = SparkSession.builder.getOrCreate()\r\n",
+					"token_library = sc._jvm.com.microsoft.azure.synapse.tokenlibrary.TokenLibrary\r\n",
+					"blob_sas_token = token_library.getConnectionString(\"cmdevsynapse-WorkspaceDefaultStorage\")\r\n",
+					"spark.conf.set('fs.azure.sas.%s.%s.blob.core.windows.net' % (blob_container_name, blob_account_name),blob_sas_token)"
+				],
+				"execution_count": 14
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Dynamic Delimiter"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Create a dynamic column delimiter using regex\r\n",
+					"\r\n",
+					"def f_get_delimiter (source_path):\r\n",
+					"    try:\r\n",
+					"        headerlist = spark.sparkContext.textFile(source_path).take(1)\r\n",
+					"        header_str = ''.join(headerlist)\r\n",
+					"\r\n",
+					"        results= re.search(\"(,|;|\\\\|)\",header_str)\r\n",
+					"        return results.group()\r\n",
+					"    except Exception as err:\r\n",
+					"        print(\"Error Occured \", str(err))"
+				],
+				"execution_count": 15
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## ANALOGUE ETL"
+				]
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"### Read and Load AMR Data"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"#Read Analogue File\r\n",
+					"\r\n",
+					"amr_Filename = 'abfss://rawdata@rawdevstorage.dfs.core.windows.net/{}/P6523_Verbruiken_AMR_GEMEENTE_{}.csv' .format(FolderName, FolderName_SeperatorRemoved)\r\n",
+					"amr_delimiter_type = (f_get_delimiter(amr_Filename))\r\n",
+					"print(amr_delimiter_type)\r\n",
+					"\r\n",
+					"AMRData = spark.read.load(amr_Filename,format='csv',inferschema=True,header=True,delimiter=amr_delimiter_type) \r\n",
+					""
+				],
+				"execution_count": 16
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"### Convert Dataset to Pandas"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"#Convert To Pandas\r\n",
+					"\r\n",
+					"AMRData = AMRData.toPandas()\r\n",
+					"#AMRData = AMRData.select(\"*\").toPandas()"
+				],
+				"execution_count": 17
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"### Transform AMR Data\r\n",
+					"Due to inconsistent data formats and extra columns for 2023, if files are > than the year 2022 we modify our code to suit the year \r\n",
+					""
+				]
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"#### Select Required Columns"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"if int(year) < 2023:\r\n",
+					"    select_amr = AMRData[['Trekkingsdatum', 'Peildatum', 'Markt', 'Leveringsadres_Postcode', 'Leveringsadres_Gemeente'\\\r\n",
+					"    , 'WerkelijkVerbruik_RM_2017', 'BenaderendVerbruik_VM_2017', 'AantalToegangspunten_2017'\\\r\n",
+					"    , 'WerkelijkVerbruik_RM_2018', 'BenaderendVerbruik_VM_2018', 'AantalToegangspunten_2018'\\\r\n",
+					"    , 'WerkelijkVerbruik_RM_2019', 'BenaderendVerbruik_VM_2019', 'AantalToegangspunten_2019'\\\r\n",
+					"    , 'WerkelijkVerbruik_RM_2020', 'BenaderendVerbruik_VM_2020', 'AantalToegangspunten_2020'\\\r\n",
+					"    , 'WerkelijkVerbruik_RM_2021', 'BenaderendVerbruik_VM_2021', 'AantalToegangspunten_2021']]\r\n",
+					"else:\r\n",
+					"    select_amr = AMRData[['Trekkingsdatum', 'Peildatum', 'Markt', 'Leveringsadres_Postcode', 'Leveringsadres_Gemeente'\\\r\n",
+					"    , 'WerkelijkVerbruik_RM_2017', 'BenaderendVerbruik_VM_2017', 'AantalToegangspunten_2017'\\\r\n",
+					"    , 'WerkelijkVerbruik_RM_2018', 'BenaderendVerbruik_VM_2018', 'AantalToegangspunten_2018'\\\r\n",
+					"    , 'WerkelijkVerbruik_RM_2019', 'BenaderendVerbruik_VM_2019', 'AantalToegangspunten_2019'\\\r\n",
+					"    , 'WerkelijkVerbruik_RM_2020', 'BenaderendVerbruik_VM_2020', 'AantalToegangspunten_2020'\\\r\n",
+					"    , 'WerkelijkVerbruik_RM_2021', 'BenaderendVerbruik_VM_2021', 'AantalToegangspunten_2021'\\\r\n",
+					"    , 'WerkelijkVerbruik_RM_2022', 'BenaderendVerbruik_VM_2022', 'AantalToegangspunten_2022']]"
+				],
+				"execution_count": 18
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"#### Fix Date Error\r\n",
+					"dd/mmm/yy and dd/mmm/yyyy are default date formats handled by pyspark and pandas. The datasets have 4 different date formats. Since Pandas handles 2 by default, you have to specify the other formats and convert to default format"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"#Convert datetime\r\n",
+					"#d = day, m = month, y = year, b = month name\r\n",
+					"\r\n",
+					"try:\r\n",
+					"    select_amr['Peildatum'] = pd.to_datetime(select_amr['Peildatum'], format= '%d/%b/%y')\r\n",
+					"except:\r\n",
+					"    try:\r\n",
+					"        select_amr['Peildatum'] = pd.to_datetime(select_amr['Peildatum'], format='%m/%d/%y')\r\n",
+					"    except:\r\n",
+					"        try:\r\n",
+					"            select_amr['Peildatum'] = pd.to_datetime(select_amr['Peildatum'], format='%d/%b/%Y')\r\n",
+					"        except:\r\n",
+					"            select_amr['Peildatum'] = pd.to_datetime(select_amr['Peildatum'], format='%d-%b-%y')\r\n",
+					"        \r\n",
+					"\r\n",
+					"#Convert to desired format\r\n",
+					"select_amr['Peildatum'] = select_amr['Peildatum'].dt.strftime('%d-%m-%Y')"
+				],
+				"execution_count": 19
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"#### Convert Numerical columns from string to float for years < 2023"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"#Due to inconsistent data formats, if files are < than the year 2023, \r\n",
+					"#We replace the , to . in the numerical columns and convert the numerical columns from string to float \r\n",
+					"#but if > 2023 we leave it as it is (corrected format)\r\n",
+					"\r\n",
+					"if int(year) < 2023:\r\n",
+					"    select_amr[\"WerkelijkVerbruik_RM_2017\"] = select_amr [\"WerkelijkVerbruik_RM_2017\"].str.replace(',','.').astype(float)\r\n",
+					"    select_amr[\"WerkelijkVerbruik_RM_2018\"] = select_amr [\"WerkelijkVerbruik_RM_2018\"].str.replace(',','.').astype(float)\r\n",
+					"    select_amr[\"WerkelijkVerbruik_RM_2019\"] = select_amr [\"WerkelijkVerbruik_RM_2019\"].str.replace(',','.').astype(float)\r\n",
+					"    select_amr[\"WerkelijkVerbruik_RM_2020\"] = select_amr [\"WerkelijkVerbruik_RM_2020\"].str.replace(',','.').astype(float)\r\n",
+					"    select_amr[\"WerkelijkVerbruik_RM_2021\"] = select_amr [\"WerkelijkVerbruik_RM_2021\"].str.replace(',','.').astype(float)\r\n",
+					"    select_amr[\"BenaderendVerbruik_VM_2017\"] = select_amr [\"BenaderendVerbruik_VM_2017\"].str.replace(',','.').astype(float)\r\n",
+					"    select_amr[\"BenaderendVerbruik_VM_2018\"] = select_amr [\"BenaderendVerbruik_VM_2018\"].str.replace(',','.').astype(float)\r\n",
+					"    select_amr[\"BenaderendVerbruik_VM_2019\"] = select_amr [\"BenaderendVerbruik_VM_2019\"].str.replace(',','.').astype(float)\r\n",
+					"    select_amr[\"BenaderendVerbruik_VM_2020\"] = select_amr [\"BenaderendVerbruik_VM_2020\"].str.replace(',','.').astype(float)\r\n",
+					"    select_amr[\"BenaderendVerbruik_VM_2021\"] = select_amr [\"BenaderendVerbruik_VM_2021\"].str.replace(',','.').astype(float)"
+				],
+				"execution_count": 20
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"#### Group AMR Data for Granularity"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"#as_index = True means the grouping columns should be used as index in the resulting dataframe\r\n",
+					"#reset_index() = the current index becomes the new index in the dataframe\r\n",
+					"if int(year) < 2023 :\r\n",
+					"    group_amr = select_amr.groupby(['Trekkingsdatum','Peildatum','Markt','Leveringsadres_Postcode','Leveringsadres_Gemeente'], as_index=True).agg(\\\r\n",
+					"    {'AantalToegangspunten_2017': 'sum','WerkelijkVerbruik_RM_2017': 'sum','BenaderendVerbruik_VM_2017': 'sum'\\\r\n",
+					"    ,'AantalToegangspunten_2018': 'sum','WerkelijkVerbruik_RM_2018': 'sum','BenaderendVerbruik_VM_2018': 'sum'\\\r\n",
+					"    ,'AantalToegangspunten_2019': 'sum','WerkelijkVerbruik_RM_2019': 'sum','BenaderendVerbruik_VM_2019': 'sum'\\\r\n",
+					"    ,'AantalToegangspunten_2020': 'sum','WerkelijkVerbruik_RM_2020': 'sum','BenaderendVerbruik_VM_2020': 'sum'\\\r\n",
+					"    ,'AantalToegangspunten_2021': 'sum','WerkelijkVerbruik_RM_2021': 'sum','BenaderendVerbruik_VM_2021': 'sum'}).reset_index()\r\n",
+					"else:\r\n",
+					"    group_amr = select_amr.groupby(['Trekkingsdatum','Peildatum','Markt','Leveringsadres_Postcode','Leveringsadres_Gemeente'], as_index=True).agg(\\\r\n",
+					"    {'AantalToegangspunten_2017': 'sum','WerkelijkVerbruik_RM_2017': 'sum','BenaderendVerbruik_VM_2017': 'sum'\\\r\n",
+					"    ,'AantalToegangspunten_2018': 'sum','WerkelijkVerbruik_RM_2018': 'sum','BenaderendVerbruik_VM_2018': 'sum'\\\r\n",
+					"    ,'AantalToegangspunten_2019': 'sum','WerkelijkVerbruik_RM_2019': 'sum','BenaderendVerbruik_VM_2019': 'sum'\\\r\n",
+					"    ,'AantalToegangspunten_2020': 'sum','WerkelijkVerbruik_RM_2020': 'sum','BenaderendVerbruik_VM_2020': 'sum'\\\r\n",
+					"    ,'AantalToegangspunten_2021': 'sum','WerkelijkVerbruik_RM_2021': 'sum','BenaderendVerbruik_VM_2021': 'sum'\\\r\n",
+					"    ,'AantalToegangspunten_2022': 'sum','WerkelijkVerbruik_RM_2022': 'sum','BenaderendVerbruik_VM_2022': 'sum'}).reset_index()"
+				],
+				"execution_count": 21
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"#### Rename Columns and Select Required Columns"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"\r\n",
+					"#rename columns\r\n",
+					" #inplace true overrides existing dataframe\r\n",
+					"\r\n",
+					"if int(year) < 2023:\r\n",
+					"    select_amr = group_amr.rename({'Trekkingsdatum':'amr_Trekkingsdatum', 'Peildatum':'amr_Peildatum', 'Markt':'amr_Markt', 'Leveringsadres_Postcode':'amr_Leveringsadres_Postcode'\r\n",
+					"    , 'Leveringsadres_Gemeente':'amr_Leveringsadres_Gemeente'\\\r\n",
+					"    , 'WerkelijkVerbruik_RM_2017':'amr_WerkelijkVerbruik_2017', 'BenaderendVerbruik_VM_2017':'amr_BenaderendVerbruik_2017', 'AantalToegangspunten_2017':'amr_AantalToegangspunten_2017'\\\r\n",
+					"    , 'WerkelijkVerbruik_RM_2018':'amr_WerkelijkVerbruik_2018', 'BenaderendVerbruik_VM_2018':'amr_BenaderendVerbruik_2018', 'AantalToegangspunten_2018':'amr_AantalToegangspunten_2018'\\\r\n",
+					"    , 'WerkelijkVerbruik_RM_2019':'amr_WerkelijkVerbruik_2019', 'BenaderendVerbruik_VM_2019':'amr_BenaderendVerbruik_2019', 'AantalToegangspunten_2019':'amr_AantalToegangspunten_2019'\\\r\n",
+					"    , 'WerkelijkVerbruik_RM_2020':'amr_WerkelijkVerbruik_2020', 'BenaderendVerbruik_VM_2020':'amr_BenaderendVerbruik_2020', 'AantalToegangspunten_2020':'amr_AantalToegangspunten_2020'\\\r\n",
+					"    , 'WerkelijkVerbruik_RM_2021':'amr_WerkelijkVerbruik_2021', 'BenaderendVerbruik_VM_2021':'amr_BenaderendVerbruik_2021', 'AantalToegangspunten_2021':'amr_AantalToegangspunten_2021'}\\\r\n",
+					"    , axis='columns')\r\n",
+					"    #Create Norms\r\n",
+					"    select_amr[\"amr_WerkelijkVerbruik_2017_Norm\"] = select_amr [\"amr_WerkelijkVerbruik_2017\"]\r\n",
+					"    select_amr[\"amr_WerkelijkVerbruik_2018_Norm\"] = select_amr [\"amr_WerkelijkVerbruik_2018\"]\r\n",
+					"    select_amr[\"amr_WerkelijkVerbruik_2019_Norm\"] = select_amr [\"amr_WerkelijkVerbruik_2019\"]\r\n",
+					"    select_amr[\"amr_WerkelijkVerbruik_2020_Norm\"] = select_amr [\"amr_WerkelijkVerbruik_2020\"]\r\n",
+					"    select_amr[\"amr_WerkelijkVerbruik_2021_Norm\"] = select_amr [\"amr_WerkelijkVerbruik_2021\"]\r\n",
+					"    select_amr[\"amr_BenaderendVerbruik_2017_Norm\"] = select_amr [\"amr_BenaderendVerbruik_2017\"]\r\n",
+					"    select_amr[\"amr_BenaderendVerbruik_2018_Norm\"] = select_amr [\"amr_BenaderendVerbruik_2018\"]\r\n",
+					"    select_amr[\"amr_BenaderendVerbruik_2019_Norm\"] = select_amr [\"amr_BenaderendVerbruik_2019\"]\r\n",
+					"    select_amr[\"amr_BenaderendVerbruik_2020_Norm\"] = select_amr [\"amr_BenaderendVerbruik_2020\"]\r\n",
+					"    select_amr[\"amr_BenaderendVerbruik_2021_Norm\"] = select_amr [\"amr_BenaderendVerbruik_2021\"]\r\n",
+					"    #rearrange\r\n",
+					"    clean_amr = select_amr[['amr_Trekkingsdatum', 'amr_Peildatum', 'amr_Markt', 'amr_Leveringsadres_Postcode', 'amr_Leveringsadres_Gemeente'\\\r\n",
+					"    , 'amr_AantalToegangspunten_2017', 'amr_WerkelijkVerbruik_2017', 'amr_WerkelijkVerbruik_2017_Norm', 'amr_BenaderendVerbruik_2017', 'amr_BenaderendVerbruik_2017_Norm'\\\r\n",
+					"    , 'amr_AantalToegangspunten_2018', 'amr_WerkelijkVerbruik_2018', 'amr_WerkelijkVerbruik_2018_Norm', 'amr_BenaderendVerbruik_2018', 'amr_BenaderendVerbruik_2018_Norm'\\\r\n",
+					"    , 'amr_AantalToegangspunten_2019', 'amr_WerkelijkVerbruik_2019', 'amr_WerkelijkVerbruik_2019_Norm', 'amr_BenaderendVerbruik_2019', 'amr_BenaderendVerbruik_2019_Norm'\\\r\n",
+					"    , 'amr_AantalToegangspunten_2020', 'amr_WerkelijkVerbruik_2020', 'amr_WerkelijkVerbruik_2020_Norm', 'amr_BenaderendVerbruik_2020', 'amr_BenaderendVerbruik_2020_Norm'\\\r\n",
+					"    , 'amr_AantalToegangspunten_2021', 'amr_WerkelijkVerbruik_2021', 'amr_WerkelijkVerbruik_2021_Norm', 'amr_BenaderendVerbruik_2021', 'amr_BenaderendVerbruik_2021_Norm']]\r\n",
+					"else:\r\n",
+					"    select_amr = group_amr.rename({'Trekkingsdatum':'amr_Trekkingsdatum', 'Peildatum':'amr_Peildatum', 'Markt':'amr_Markt', 'Leveringsadres_Postcode':'amr_Leveringsadres_Postcode'\r\n",
+					"    , 'Leveringsadres_Gemeente':'amr_Leveringsadres_Gemeente'\\\r\n",
+					"    , 'WerkelijkVerbruik_RM_2017':'amr_WerkelijkVerbruik_2017', 'BenaderendVerbruik_VM_2017':'amr_BenaderendVerbruik_2017', 'AantalToegangspunten_2017':'amr_AantalToegangspunten_2017'\\\r\n",
+					"    , 'WerkelijkVerbruik_RM_2018':'amr_WerkelijkVerbruik_2018', 'BenaderendVerbruik_VM_2018':'amr_BenaderendVerbruik_2018', 'AantalToegangspunten_2018':'amr_AantalToegangspunten_2018'\\\r\n",
+					"    , 'WerkelijkVerbruik_RM_2019':'amr_WerkelijkVerbruik_2019', 'BenaderendVerbruik_VM_2019':'amr_BenaderendVerbruik_2019', 'AantalToegangspunten_2019':'amr_AantalToegangspunten_2019'\\\r\n",
+					"    , 'WerkelijkVerbruik_RM_2020':'amr_WerkelijkVerbruik_2020', 'BenaderendVerbruik_VM_2020':'amr_BenaderendVerbruik_2020', 'AantalToegangspunten_2020':'amr_AantalToegangspunten_2020'\\\r\n",
+					"    , 'WerkelijkVerbruik_RM_2021':'amr_WerkelijkVerbruik_2021', 'BenaderendVerbruik_VM_2021':'amr_BenaderendVerbruik_2021', 'AantalToegangspunten_2021':'amr_AantalToegangspunten_2021'\\\r\n",
+					"    , 'WerkelijkVerbruik_RM_2022':'amr_WerkelijkVerbruik_2022', 'BenaderendVerbruik_VM_2022':'amr_BenaderendVerbruik_2022', 'AantalToegangspunten_2022':'amr_AantalToegangspunten_2022'}\\\r\n",
+					"    , axis='columns')\r\n",
+					"    #Create Norms\r\n",
+					"    select_amr[\"amr_WerkelijkVerbruik_2017_Norm\"] = select_amr [\"amr_WerkelijkVerbruik_2017\"]\r\n",
+					"    select_amr[\"amr_WerkelijkVerbruik_2018_Norm\"] = select_amr [\"amr_WerkelijkVerbruik_2018\"]\r\n",
+					"    select_amr[\"amr_WerkelijkVerbruik_2019_Norm\"] = select_amr [\"amr_WerkelijkVerbruik_2019\"]\r\n",
+					"    select_amr[\"amr_WerkelijkVerbruik_2020_Norm\"] = select_amr [\"amr_WerkelijkVerbruik_2020\"]\r\n",
+					"    select_amr[\"amr_WerkelijkVerbruik_2021_Norm\"] = select_amr [\"amr_WerkelijkVerbruik_2021\"]\r\n",
+					"    select_amr[\"amr_WerkelijkVerbruik_2022_Norm\"] = select_amr [\"amr_WerkelijkVerbruik_2022\"]\r\n",
+					"    select_amr[\"amr_BenaderendVerbruik_2017_Norm\"] = select_amr [\"amr_BenaderendVerbruik_2017\"]\r\n",
+					"    select_amr[\"amr_BenaderendVerbruik_2018_Norm\"] = select_amr [\"amr_BenaderendVerbruik_2018\"]\r\n",
+					"    select_amr[\"amr_BenaderendVerbruik_2019_Norm\"] = select_amr [\"amr_BenaderendVerbruik_2019\"]\r\n",
+					"    select_amr[\"amr_BenaderendVerbruik_2020_Norm\"] = select_amr [\"amr_BenaderendVerbruik_2020\"]\r\n",
+					"    select_amr[\"amr_BenaderendVerbruik_2021_Norm\"] = select_amr [\"amr_BenaderendVerbruik_2021\"]\r\n",
+					"    select_amr[\"amr_BenaderendVerbruik_2022_Norm\"] = select_amr [\"amr_BenaderendVerbruik_2022\"]\r\n",
+					"    #rearrange\r\n",
+					"    clean_amr = select_amr[['amr_Trekkingsdatum', 'amr_Peildatum', 'amr_Markt', 'amr_Leveringsadres_Postcode', 'amr_Leveringsadres_Gemeente'\\\r\n",
+					"    , 'amr_AantalToegangspunten_2017', 'amr_WerkelijkVerbruik_2017', 'amr_WerkelijkVerbruik_2017_Norm', 'amr_BenaderendVerbruik_2017', 'amr_BenaderendVerbruik_2017_Norm'\\\r\n",
+					"    , 'amr_AantalToegangspunten_2018', 'amr_WerkelijkVerbruik_2018', 'amr_WerkelijkVerbruik_2018_Norm', 'amr_BenaderendVerbruik_2018', 'amr_BenaderendVerbruik_2018_Norm'\\\r\n",
+					"    , 'amr_AantalToegangspunten_2019', 'amr_WerkelijkVerbruik_2019', 'amr_WerkelijkVerbruik_2019_Norm', 'amr_BenaderendVerbruik_2019', 'amr_BenaderendVerbruik_2019_Norm'\\\r\n",
+					"    , 'amr_AantalToegangspunten_2020', 'amr_WerkelijkVerbruik_2020', 'amr_WerkelijkVerbruik_2020_Norm', 'amr_BenaderendVerbruik_2020', 'amr_BenaderendVerbruik_2020_Norm'\\\r\n",
+					"    , 'amr_AantalToegangspunten_2021', 'amr_WerkelijkVerbruik_2021', 'amr_WerkelijkVerbruik_2021_Norm', 'amr_BenaderendVerbruik_2021', 'amr_BenaderendVerbruik_2021_Norm'\\\r\n",
+					"    , 'amr_AantalToegangspunten_2022', 'amr_WerkelijkVerbruik_2022', 'amr_WerkelijkVerbruik_2022_Norm', 'amr_BenaderendVerbruik_2022', 'amr_BenaderendVerbruik_2022_Norm']]\r\n",
+					""
+				],
+				"execution_count": 22
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(clean_amr)"
+				],
+				"execution_count": 23
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"### Create Aggregate AMR Values and rearrange data\r\n",
+					"**Pandas doesn't recognize decimal values as a comma (EU format ,) but as a point (US format .) thus we have to replace the value.**\\\r\n",
+					"df[\"column name 1\"] = df [\"column name 1\"].str.replace(',','.')"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"if int(year) < 2023:\r\n",
+					"    clean_amr['amr_Gemiddeld_WerkelijkVerbruik'] = ((clean_amr['amr_WerkelijkVerbruik_2017'] + clean_amr['amr_WerkelijkVerbruik_2018']\\\r\n",
+					"    + clean_amr['amr_WerkelijkVerbruik_2019'] + clean_amr['amr_WerkelijkVerbruik_2020']+ clean_amr['amr_WerkelijkVerbruik_2021'])/5)\r\n",
+					"\r\n",
+					"    clean_amr['amr_Gemiddeld_WerkelijkVerbruik_Norm'] = ((clean_amr['amr_WerkelijkVerbruik_2017_Norm'] + clean_amr['amr_WerkelijkVerbruik_2018_Norm']\\\r\n",
+					"    + clean_amr['amr_WerkelijkVerbruik_2019_Norm'] + clean_amr['amr_WerkelijkVerbruik_2020_Norm'] + clean_amr['amr_WerkelijkVerbruik_2021_Norm'])/5)\r\n",
+					"\r\n",
+					"    clean_amr['amr_Gemiddeld_BenaderendVerbruik'] = ((clean_amr['amr_BenaderendVerbruik_2017'] + clean_amr['amr_BenaderendVerbruik_2018']\\\r\n",
+					"    + clean_amr['amr_BenaderendVerbruik_2019'] + clean_amr['amr_BenaderendVerbruik_2020'] + clean_amr['amr_BenaderendVerbruik_2021'])/5)\r\n",
+					"\r\n",
+					"    clean_amr['amr_Gemiddeld_BenaderendVerbruik_Norm'] = ((clean_amr['amr_BenaderendVerbruik_2017_Norm'] + clean_amr['amr_BenaderendVerbruik_2018_Norm']\\\r\n",
+					"    + clean_amr['amr_BenaderendVerbruik_2019_Norm'] + clean_amr['amr_BenaderendVerbruik_2020_Norm'] + clean_amr['amr_BenaderendVerbruik_2021_Norm'])/5)\r\n",
+					"\r\n",
+					"    clean_amr['amr_Total_AantalToegangspunten'] = ((clean_amr['amr_AantalToegangspunten_2017'] + clean_amr['amr_AantalToegangspunten_2018']\\\r\n",
+					"    + clean_amr['amr_AantalToegangspunten_2019'] + clean_amr['amr_AantalToegangspunten_2020'] + clean_amr['amr_AantalToegangspunten_2021'])/5)\r\n",
+					"\r\n",
+					"    agg_clean_amr = clean_amr[['amr_Trekkingsdatum', 'amr_Peildatum', 'amr_Markt', 'amr_Leveringsadres_Postcode', 'amr_Leveringsadres_Gemeente'\\\r\n",
+					"    , 'amr_AantalToegangspunten_2017', 'amr_WerkelijkVerbruik_2017', 'amr_WerkelijkVerbruik_2017_Norm', 'amr_BenaderendVerbruik_2017', 'amr_BenaderendVerbruik_2017_Norm'\\\r\n",
+					"    , 'amr_AantalToegangspunten_2018', 'amr_WerkelijkVerbruik_2018', 'amr_WerkelijkVerbruik_2018_Norm', 'amr_BenaderendVerbruik_2018', 'amr_BenaderendVerbruik_2018_Norm'\\\r\n",
+					"    , 'amr_AantalToegangspunten_2019', 'amr_WerkelijkVerbruik_2019', 'amr_WerkelijkVerbruik_2019_Norm', 'amr_BenaderendVerbruik_2019', 'amr_BenaderendVerbruik_2019_Norm'\\\r\n",
+					"    , 'amr_AantalToegangspunten_2020', 'amr_WerkelijkVerbruik_2020', 'amr_WerkelijkVerbruik_2020_Norm', 'amr_BenaderendVerbruik_2020', 'amr_BenaderendVerbruik_2020_Norm'\\\r\n",
+					"    , 'amr_AantalToegangspunten_2021', 'amr_WerkelijkVerbruik_2021', 'amr_WerkelijkVerbruik_2021_Norm', 'amr_BenaderendVerbruik_2021', 'amr_BenaderendVerbruik_2021_Norm'\\\r\n",
+					"    , 'amr_Total_AantalToegangspunten','amr_Gemiddeld_WerkelijkVerbruik','amr_Gemiddeld_WerkelijkVerbruik_Norm','amr_Gemiddeld_BenaderendVerbruik'\\\r\n",
+					"    , 'amr_Gemiddeld_BenaderendVerbruik_Norm']]\r\n",
+					"\r\n",
+					"else:\r\n",
+					"    clean_amr['amr_Gemiddeld_WerkelijkVerbruik'] = ((clean_amr['amr_WerkelijkVerbruik_2017'] + clean_amr['amr_WerkelijkVerbruik_2018']\\\r\n",
+					"    + clean_amr['amr_WerkelijkVerbruik_2019'] + clean_amr['amr_WerkelijkVerbruik_2020']+ clean_amr['amr_WerkelijkVerbruik_2021']\\\r\n",
+					"    + clean_amr['amr_WerkelijkVerbruik_2022'])/6)\r\n",
+					"\r\n",
+					"    clean_amr['amr_Gemiddeld_WerkelijkVerbruik_Norm'] = ((clean_amr['amr_WerkelijkVerbruik_2017_Norm'] + clean_amr['amr_WerkelijkVerbruik_2018_Norm']\\\r\n",
+					"    + clean_amr['amr_WerkelijkVerbruik_2019_Norm'] + clean_amr['amr_WerkelijkVerbruik_2020_Norm'] + clean_amr['amr_WerkelijkVerbruik_2021_Norm']\\\r\n",
+					"    + clean_amr['amr_WerkelijkVerbruik_2022_Norm'])/6)\r\n",
+					"\r\n",
+					"    clean_amr['amr_Gemiddeld_BenaderendVerbruik'] = ((clean_amr['amr_BenaderendVerbruik_2017'] + clean_amr['amr_BenaderendVerbruik_2018']\\\r\n",
+					"    + clean_amr['amr_BenaderendVerbruik_2019'] + clean_amr['amr_BenaderendVerbruik_2020'] + clean_amr['amr_BenaderendVerbruik_2021']\\\r\n",
+					"    + clean_amr['amr_BenaderendVerbruik_2022'])/6)\r\n",
+					"\r\n",
+					"    clean_amr['amr_Gemiddeld_BenaderendVerbruik_Norm'] = ((clean_amr['amr_BenaderendVerbruik_2017_Norm'] + clean_amr['amr_BenaderendVerbruik_2018_Norm']\\\r\n",
+					"    + clean_amr['amr_BenaderendVerbruik_2019_Norm'] + clean_amr['amr_BenaderendVerbruik_2020_Norm'] + clean_amr['amr_BenaderendVerbruik_2021_Norm']\\\r\n",
+					"    + clean_amr['amr_BenaderendVerbruik_2022_Norm'])/6)\r\n",
+					"\r\n",
+					"    clean_amr['amr_Total_AantalToegangspunten'] = ((clean_amr['amr_AantalToegangspunten_2017'] + clean_amr['amr_AantalToegangspunten_2018']\\\r\n",
+					"    + clean_amr['amr_AantalToegangspunten_2019'] + clean_amr['amr_AantalToegangspunten_2020'] + clean_amr['amr_AantalToegangspunten_2021']\\\r\n",
+					"    + clean_amr['amr_AantalToegangspunten_2022'])/6)\r\n",
+					"\r\n",
+					"    agg_clean_amr = clean_amr[['amr_Trekkingsdatum', 'amr_Peildatum', 'amr_Markt', 'amr_Leveringsadres_Postcode', 'amr_Leveringsadres_Gemeente'\\\r\n",
+					"    , 'amr_AantalToegangspunten_2017', 'amr_WerkelijkVerbruik_2017', 'amr_WerkelijkVerbruik_2017_Norm', 'amr_BenaderendVerbruik_2017', 'amr_BenaderendVerbruik_2017_Norm'\\\r\n",
+					"    , 'amr_AantalToegangspunten_2018', 'amr_WerkelijkVerbruik_2018', 'amr_WerkelijkVerbruik_2018_Norm', 'amr_BenaderendVerbruik_2018', 'amr_BenaderendVerbruik_2018_Norm'\\\r\n",
+					"    , 'amr_AantalToegangspunten_2019', 'amr_WerkelijkVerbruik_2019', 'amr_WerkelijkVerbruik_2019_Norm', 'amr_BenaderendVerbruik_2019', 'amr_BenaderendVerbruik_2019_Norm'\\\r\n",
+					"    , 'amr_AantalToegangspunten_2020', 'amr_WerkelijkVerbruik_2020', 'amr_WerkelijkVerbruik_2020_Norm', 'amr_BenaderendVerbruik_2020', 'amr_BenaderendVerbruik_2020_Norm'\\\r\n",
+					"    , 'amr_AantalToegangspunten_2021', 'amr_WerkelijkVerbruik_2021', 'amr_WerkelijkVerbruik_2021_Norm', 'amr_BenaderendVerbruik_2021', 'amr_BenaderendVerbruik_2021_Norm'\\\r\n",
+					"    , 'amr_AantalToegangspunten_2022', 'amr_WerkelijkVerbruik_2022', 'amr_WerkelijkVerbruik_2022_Norm', 'amr_BenaderendVerbruik_2022', 'amr_BenaderendVerbruik_2022_Norm'\\\r\n",
+					"    , 'amr_Total_AantalToegangspunten','amr_Gemiddeld_WerkelijkVerbruik','amr_Gemiddeld_WerkelijkVerbruik_Norm','amr_Gemiddeld_BenaderendVerbruik'\\\r\n",
+					"    , 'amr_Gemiddeld_BenaderendVerbruik_Norm']]"
+				],
+				"execution_count": 24
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"# agg_clean_amr.columns\r\n",
+					"display(agg_clean_amr)\r\n",
+					""
+				],
+				"execution_count": 25
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## DIGITAL ETL"
+				]
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"### Read and Load DM Data"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"#Read digital file for pandas\r\n",
+					"dmr_Filename = 'abfss://rawdata@rawdevstorage.dfs.core.windows.net/{}/P6523_Verbruiken_DM_GEMEENTE_{}.csv' .format(FolderName, FolderName_SeperatorRemoved)\r\n",
+					"dmr_delimiter_type = (f_get_delimiter(dmr_Filename))\r\n",
+					"\r\n",
+					"DMData = spark.read.load(dmr_Filename,format='csv',inferschema=True,header=True,delimiter=dmr_delimiter_type) "
+				],
+				"execution_count": 26
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"### Convert Dataset to Pandas"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"#COnvert To Pandas\r\n",
+					"DMData = DMData.select(\"*\").toPandas()\r\n",
+					""
+				],
+				"execution_count": 27
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"### Transform DM Data"
+				]
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"##### Select Required Columns"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"if int(year) < 2023:\r\n",
+					"    select_dm = DMData[['Trekkingsdatum', 'Peildatum', 'Markt', 'Leveringsadres_Postcode', 'Leveringsadres_Gemeente'\\\r\n",
+					"    , 'WerkelijkVerbruik_RM_2017', 'BenaderendVerbruik_VM_2017','BenaderendVerbruik_VM_2017_Norm', 'AantalToegangspunten_2017'\\\r\n",
+					"    , 'WerkelijkVerbruik_RM_2018', 'BenaderendVerbruik_VM_2018','BenaderendVerbruik_VM_2018_Norm', 'AantalToegangspunten_2018'\\\r\n",
+					"    , 'WerkelijkVerbruik_RM_2019', 'BenaderendVerbruik_VM_2019','BenaderendVerbruik_VM_2019_Norm', 'AantalToegangspunten_2019'\\\r\n",
+					"    , 'WerkelijkVerbruik_RM_2020', 'BenaderendVerbruik_VM_2020','BenaderendVerbruik_VM_2020_Norm', 'AantalToegangspunten_2020'\\\r\n",
+					"    , 'WerkelijkVerbruik_RM_2021', 'BenaderendVerbruik_VM_2021','BenaderendVerbruik_VM_2021_Norm', 'AantalToegangspunten_2021']]\r\n",
+					"else:\r\n",
+					"    select_dm = DMData[['Trekkingsdatum', 'Peildatum', 'Markt', 'Leveringsadres_Postcode', 'Leveringsadres_Gemeente'\\\r\n",
+					"    , 'WerkelijkVerbruik_RM_2017', 'BenaderendVerbruik_VM_2017','BenaderendVerbruik_VM_2017_Norm', 'AantalToegangspunten_2017'\\\r\n",
+					"    , 'WerkelijkVerbruik_RM_2018', 'BenaderendVerbruik_VM_2018','BenaderendVerbruik_VM_2018_Norm', 'AantalToegangspunten_2018'\\\r\n",
+					"    , 'WerkelijkVerbruik_RM_2019', 'BenaderendVerbruik_VM_2019','BenaderendVerbruik_VM_2019_Norm', 'AantalToegangspunten_2019'\\\r\n",
+					"    , 'WerkelijkVerbruik_RM_2020', 'BenaderendVerbruik_VM_2020','BenaderendVerbruik_VM_2020_Norm', 'AantalToegangspunten_2020'\\\r\n",
+					"    , 'WerkelijkVerbruik_RM_2021', 'BenaderendVerbruik_VM_2021','BenaderendVerbruik_VM_2021_Norm', 'AantalToegangspunten_2021'\\\r\n",
+					"    , 'WerkelijkVerbruik_RM_2022', 'BenaderendVerbruik_VM_2022','BenaderendVerbruik_VM_2022_Norm', 'AantalToegangspunten_2022']]"
+				],
+				"execution_count": 28
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"##### Fix Date Error"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"\r\n",
+					"#Convert datetime\r\n",
+					"#d = day, m = month, y = year, b = month name\r\n",
+					"\r\n",
+					"try:\r\n",
+					"    select_dm['Peildatum'] = pd.to_datetime(select_dm['Peildatum'], format= '%d/%b/%y')\r\n",
+					"except:\r\n",
+					"    try:\r\n",
+					"        select_dm['Peildatum'] = pd.to_datetime(select_dm['Peildatum'], format='%m/%d/%y')\r\n",
+					"    except:\r\n",
+					"        try:\r\n",
+					"            select_dm['Peildatum'] = pd.to_datetime(select_dm['Peildatum'], format='%d/%b/%Y')\r\n",
+					"        except:\r\n",
+					"            select_dm['Peildatum'] = pd.to_datetime(select_dm['Peildatum'], format='%d-%b-%y')\r\n",
+					"        \r\n",
+					"\r\n",
+					"#Convert to desired format\r\n",
+					"select_dm['Peildatum'] = select_dm['Peildatum'].dt.strftime('%d-%m-%Y')"
+				],
+				"execution_count": 29
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"##### Convert Numerical columns from string to float for years < 2023"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"select_dm.dtypes"
+				],
+				"execution_count": 30
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"if int(year) < 2023:\r\n",
+					"    select_dm[\"WerkelijkVerbruik_RM_2017\"] = select_dm [\"WerkelijkVerbruik_RM_2017\"].str.replace(',','.').astype(float)\r\n",
+					"    select_dm[\"WerkelijkVerbruik_RM_2018\"] = select_dm [\"WerkelijkVerbruik_RM_2018\"].str.replace(',','.').astype(float)\r\n",
+					"    select_dm[\"WerkelijkVerbruik_RM_2019\"] = select_dm [\"WerkelijkVerbruik_RM_2019\"].str.replace(',','.').astype(float)\r\n",
+					"    select_dm[\"WerkelijkVerbruik_RM_2020\"] = select_dm [\"WerkelijkVerbruik_RM_2020\"].str.replace(',','.').astype(float)\r\n",
+					"    select_dm[\"WerkelijkVerbruik_RM_2021\"] = select_dm [\"WerkelijkVerbruik_RM_2021\"].str.replace(',','.').astype(float)\r\n",
+					"    select_dm[\"BenaderendVerbruik_VM_2017\"] = select_dm [\"BenaderendVerbruik_VM_2017\"].str.replace(',','.').astype(float)\r\n",
+					"    select_dm[\"BenaderendVerbruik_VM_2018\"] = select_dm [\"BenaderendVerbruik_VM_2018\"].str.replace(',','.').astype(float)\r\n",
+					"    select_dm[\"BenaderendVerbruik_VM_2019\"] = select_dm [\"BenaderendVerbruik_VM_2019\"].str.replace(',','.').astype(float)\r\n",
+					"    select_dm[\"BenaderendVerbruik_VM_2020\"] = select_dm [\"BenaderendVerbruik_VM_2020\"].str.replace(',','.').astype(float)\r\n",
+					"    select_dm[\"BenaderendVerbruik_VM_2021\"] = select_dm [\"BenaderendVerbruik_VM_2021\"].str.replace(',','.').astype(float)\r\n",
+					"    select_dm[\"BenaderendVerbruik_VM_2017_Norm\"] = select_dm [\"BenaderendVerbruik_VM_2017_Norm\"].str.replace(',','.').astype(float)\r\n",
+					"    select_dm[\"BenaderendVerbruik_VM_2018_Norm\"] = select_dm [\"BenaderendVerbruik_VM_2018_Norm\"].str.replace(',','.').astype(float)\r\n",
+					"    select_dm[\"BenaderendVerbruik_VM_2019_Norm\"] = select_dm [\"BenaderendVerbruik_VM_2019_Norm\"].str.replace(',','.').astype(float)\r\n",
+					"    select_dm[\"BenaderendVerbruik_VM_2020_Norm\"] = select_dm [\"BenaderendVerbruik_VM_2020_Norm\"].str.replace(',','.').astype(float)\r\n",
+					"    select_dm[\"BenaderendVerbruik_VM_2021_Norm\"] = select_dm [\"BenaderendVerbruik_VM_2021_Norm\"].str.replace(',','.').astype(float)"
+				],
+				"execution_count": 31
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"##### Group DM Data for Granularity"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"if int(year) < 2023 :\r\n",
+					"    group_dm = select_dm.groupby(['Trekkingsdatum','Peildatum','Markt','Leveringsadres_Postcode','Leveringsadres_Gemeente'], as_index=True).agg(\\\r\n",
+					"    {'AantalToegangspunten_2017': 'sum','WerkelijkVerbruik_RM_2017': 'sum','BenaderendVerbruik_VM_2017': 'sum','BenaderendVerbruik_VM_2017_Norm': 'sum'\\\r\n",
+					"    ,'AantalToegangspunten_2018': 'sum','WerkelijkVerbruik_RM_2018': 'sum','BenaderendVerbruik_VM_2018': 'sum','BenaderendVerbruik_VM_2018_Norm': 'sum'\\\r\n",
+					"    ,'AantalToegangspunten_2019': 'sum','WerkelijkVerbruik_RM_2019': 'sum','BenaderendVerbruik_VM_2019': 'sum','BenaderendVerbruik_VM_2019_Norm': 'sum'\\\r\n",
+					"    ,'AantalToegangspunten_2020': 'sum','WerkelijkVerbruik_RM_2020': 'sum','BenaderendVerbruik_VM_2020': 'sum','BenaderendVerbruik_VM_2020_Norm': 'sum'\\\r\n",
+					"    ,'AantalToegangspunten_2021': 'sum','WerkelijkVerbruik_RM_2021': 'sum','BenaderendVerbruik_VM_2021': 'sum','BenaderendVerbruik_VM_2021_Norm': 'sum'}).reset_index()\r\n",
+					"else:\r\n",
+					"    group_dm = select_dm.groupby(['Trekkingsdatum','Peildatum','Markt','Leveringsadres_Postcode','Leveringsadres_Gemeente'], as_index=True).agg(\\\r\n",
+					"    {'AantalToegangspunten_2017': 'sum','WerkelijkVerbruik_RM_2017': 'sum','BenaderendVerbruik_VM_2017': 'sum','BenaderendVerbruik_VM_2017_Norm': 'sum'\\\r\n",
+					"    ,'AantalToegangspunten_2018': 'sum','WerkelijkVerbruik_RM_2018': 'sum','BenaderendVerbruik_VM_2018': 'sum','BenaderendVerbruik_VM_2018_Norm': 'sum'\\\r\n",
+					"    ,'AantalToegangspunten_2019': 'sum','WerkelijkVerbruik_RM_2019': 'sum','BenaderendVerbruik_VM_2019': 'sum','BenaderendVerbruik_VM_2019_Norm': 'sum'\\\r\n",
+					"    ,'AantalToegangspunten_2020': 'sum','WerkelijkVerbruik_RM_2020': 'sum','BenaderendVerbruik_VM_2020': 'sum','BenaderendVerbruik_VM_2020_Norm': 'sum'\\\r\n",
+					"    ,'AantalToegangspunten_2021': 'sum','WerkelijkVerbruik_RM_2021': 'sum','BenaderendVerbruik_VM_2021': 'sum','BenaderendVerbruik_VM_2021_Norm': 'sum'\\\r\n",
+					"    ,'AantalToegangspunten_2022': 'sum','WerkelijkVerbruik_RM_2022': 'sum','BenaderendVerbruik_VM_2022': 'sum','BenaderendVerbruik_VM_2022_Norm': 'sum'}).reset_index()\r\n",
+					"\r\n",
+					""
+				],
+				"execution_count": 32
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"#### Rename Columns and Select Required Columns"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"\r\n",
+					"#rename columns\r\n",
+					" #inplace true overrides existing dataframe\r\n",
+					"\r\n",
+					"if int(year) < 2023:\r\n",
+					"    select_dm = group_dm.rename({'Trekkingsdatum':'dm_Trekkingsdatum', 'Peildatum':'dm_Peildatum', 'Markt':'dm_Markt', 'Leveringsadres_Postcode':'dm_Leveringsadres_Postcode'\r\n",
+					"    , 'Leveringsadres_Gemeente':'dm_Leveringsadres_Gemeente'\\\r\n",
+					"    , 'WerkelijkVerbruik_RM_2017':'dm_WerkelijkVerbruik_2017', 'BenaderendVerbruik_VM_2017':'dm_BenaderendVerbruik_2017', 'BenaderendVerbruik_VM_2017_Norm': 'dm_BenaderendVerbruik_2017_Norm'\\\r\n",
+					"    , 'WerkelijkVerbruik_RM_2018':'dm_WerkelijkVerbruik_2018', 'BenaderendVerbruik_VM_2018':'dm_BenaderendVerbruik_2018', 'BenaderendVerbruik_VM_2018_Norm': 'dm_BenaderendVerbruik_2018_Norm'\\\r\n",
+					"    , 'WerkelijkVerbruik_RM_2019':'dm_WerkelijkVerbruik_2019', 'BenaderendVerbruik_VM_2019':'dm_BenaderendVerbruik_2019', 'BenaderendVerbruik_VM_2019_Norm': 'dm_BenaderendVerbruik_2019_Norm'\\\r\n",
+					"    , 'WerkelijkVerbruik_RM_2020':'dm_WerkelijkVerbruik_2020', 'BenaderendVerbruik_VM_2020':'dm_BenaderendVerbruik_2020', 'BenaderendVerbruik_VM_2020_Norm': 'dm_BenaderendVerbruik_2020_Norm'\\\r\n",
+					"    , 'WerkelijkVerbruik_RM_2021':'dm_WerkelijkVerbruik_2021', 'BenaderendVerbruik_VM_2021':'dm_BenaderendVerbruik_2021', 'BenaderendVerbruik_VM_2021_Norm': 'dm_BenaderendVerbruik_2021_Norm'\\\r\n",
+					"    , 'AantalToegangspunten_2017':'dm_AantalToegangspunten_2017', 'AantalToegangspunten_2018':'dm_AantalToegangspunten_2018', 'AantalToegangspunten_2019':'dm_AantalToegangspunten_2019'\\\r\n",
+					"    , 'AantalToegangspunten_2020':'dm_AantalToegangspunten_2020', 'AantalToegangspunten_2021':'dm_AantalToegangspunten_2021'}, axis='columns')\r\n",
+					"\r\n",
+					"    #Create Norms\r\n",
+					"    select_dm[\"dm_WerkelijkVerbruik_2017_Norm\"] = select_dm [\"dm_WerkelijkVerbruik_2017\"]\r\n",
+					"    select_dm[\"dm_WerkelijkVerbruik_2018_Norm\"] = select_dm [\"dm_WerkelijkVerbruik_2018\"]\r\n",
+					"    select_dm[\"dm_WerkelijkVerbruik_2019_Norm\"] = select_dm [\"dm_WerkelijkVerbruik_2019\"]\r\n",
+					"    select_dm[\"dm_WerkelijkVerbruik_2020_Norm\"] = select_dm [\"dm_WerkelijkVerbruik_2020\"]\r\n",
+					"    select_dm[\"dm_WerkelijkVerbruik_2021_Norm\"] = select_dm [\"dm_WerkelijkVerbruik_2021\"]\r\n",
+					"\r\n",
+					"    #rearrange\r\n",
+					"    clean_dm = select_dm[['dm_Trekkingsdatum', 'dm_Peildatum', 'dm_Markt', 'dm_Leveringsadres_Postcode', 'dm_Leveringsadres_Gemeente'\\\r\n",
+					"    , 'dm_AantalToegangspunten_2017', 'dm_WerkelijkVerbruik_2017', 'dm_WerkelijkVerbruik_2017_Norm', 'dm_BenaderendVerbruik_2017', 'dm_BenaderendVerbruik_2017_Norm'\\\r\n",
+					"    , 'dm_AantalToegangspunten_2018', 'dm_WerkelijkVerbruik_2018', 'dm_WerkelijkVerbruik_2018_Norm', 'dm_BenaderendVerbruik_2018', 'dm_BenaderendVerbruik_2018_Norm'\\\r\n",
+					"    , 'dm_AantalToegangspunten_2019', 'dm_WerkelijkVerbruik_2019', 'dm_WerkelijkVerbruik_2019_Norm', 'dm_BenaderendVerbruik_2019', 'dm_BenaderendVerbruik_2019_Norm'\\\r\n",
+					"    , 'dm_AantalToegangspunten_2020', 'dm_WerkelijkVerbruik_2020', 'dm_WerkelijkVerbruik_2020_Norm', 'dm_BenaderendVerbruik_2020', 'dm_BenaderendVerbruik_2020_Norm'\\\r\n",
+					"    , 'dm_AantalToegangspunten_2021', 'dm_WerkelijkVerbruik_2021', 'dm_WerkelijkVerbruik_2021_Norm', 'dm_BenaderendVerbruik_2021', 'dm_BenaderendVerbruik_2021_Norm']]\r\n",
+					"else:\r\n",
+					"    select_dm = group_dm.rename({'Trekkingsdatum':'dm_Trekkingsdatum', 'Peildatum':'dm_Peildatum', 'Markt':'dm_Markt', 'Leveringsadres_Postcode':'dm_Leveringsadres_Postcode'\r\n",
+					"    , 'Leveringsadres_Gemeente':'dm_Leveringsadres_Gemeente'\\\r\n",
+					"    , 'WerkelijkVerbruik_RM_2017':'dm_WerkelijkVerbruik_2017', 'BenaderendVerbruik_VM_2017':'dm_BenaderendVerbruik_2017', 'BenaderendVerbruik_VM_2017_Norm': 'dm_BenaderendVerbruik_2017_Norm'\\\r\n",
+					"    , 'WerkelijkVerbruik_RM_2018':'dm_WerkelijkVerbruik_2018', 'BenaderendVerbruik_VM_2018':'dm_BenaderendVerbruik_2018', 'BenaderendVerbruik_VM_2018_Norm': 'dm_BenaderendVerbruik_2018_Norm'\\\r\n",
+					"    , 'WerkelijkVerbruik_RM_2019':'dm_WerkelijkVerbruik_2019', 'BenaderendVerbruik_VM_2019':'dm_BenaderendVerbruik_2019', 'BenaderendVerbruik_VM_2019_Norm': 'dm_BenaderendVerbruik_2019_Norm'\\\r\n",
+					"    , 'WerkelijkVerbruik_RM_2020':'dm_WerkelijkVerbruik_2020', 'BenaderendVerbruik_VM_2020':'dm_BenaderendVerbruik_2020', 'BenaderendVerbruik_VM_2020_Norm': 'dm_BenaderendVerbruik_2020_Norm'\\\r\n",
+					"    , 'WerkelijkVerbruik_RM_2021':'dm_WerkelijkVerbruik_2021', 'BenaderendVerbruik_VM_2021':'dm_BenaderendVerbruik_2021', 'BenaderendVerbruik_VM_2021_Norm': 'dm_BenaderendVerbruik_2021_Norm'\\\r\n",
+					"    , 'WerkelijkVerbruik_RM_2022':'dm_WerkelijkVerbruik_2022', 'BenaderendVerbruik_VM_2022':'dm_BenaderendVerbruik_2022', 'BenaderendVerbruik_VM_2022_Norm': 'dm_BenaderendVerbruik_2022_Norm'\\\r\n",
+					"    , 'AantalToegangspunten_2017':'dm_AantalToegangspunten_2017', 'AantalToegangspunten_2018':'dm_AantalToegangspunten_2018', 'AantalToegangspunten_2019':'dm_AantalToegangspunten_2019'\\\r\n",
+					"    , 'AantalToegangspunten_2020':'dm_AantalToegangspunten_2020', 'AantalToegangspunten_2021':'dm_AantalToegangspunten_2021', 'AantalToegangspunten_2022':'dm_AantalToegangspunten_2022'}, axis='columns')\r\n",
+					"\r\n",
+					"    #Create Norms\r\n",
+					"    select_dm[\"dm_WerkelijkVerbruik_2017_Norm\"] = select_dm [\"dm_WerkelijkVerbruik_2017\"]\r\n",
+					"    select_dm[\"dm_WerkelijkVerbruik_2018_Norm\"] = select_dm [\"dm_WerkelijkVerbruik_2018\"]\r\n",
+					"    select_dm[\"dm_WerkelijkVerbruik_2019_Norm\"] = select_dm [\"dm_WerkelijkVerbruik_2019\"]\r\n",
+					"    select_dm[\"dm_WerkelijkVerbruik_2020_Norm\"] = select_dm [\"dm_WerkelijkVerbruik_2020\"]\r\n",
+					"    select_dm[\"dm_WerkelijkVerbruik_2021_Norm\"] = select_dm [\"dm_WerkelijkVerbruik_2021\"]\r\n",
+					"    select_dm[\"dm_WerkelijkVerbruik_2022_Norm\"] = select_dm [\"dm_WerkelijkVerbruik_2022\"]\r\n",
+					"\r\n",
+					"    #rearrange\r\n",
+					"    clean_dm = select_dm[['dm_Trekkingsdatum', 'dm_Peildatum', 'dm_Markt', 'dm_Leveringsadres_Postcode', 'dm_Leveringsadres_Gemeente'\\\r\n",
+					"    , 'dm_AantalToegangspunten_2017', 'dm_WerkelijkVerbruik_2017', 'dm_WerkelijkVerbruik_2017_Norm', 'dm_BenaderendVerbruik_2017', 'dm_BenaderendVerbruik_2017_Norm'\\\r\n",
+					"    , 'dm_AantalToegangspunten_2018', 'dm_WerkelijkVerbruik_2018', 'dm_WerkelijkVerbruik_2018_Norm', 'dm_BenaderendVerbruik_2018', 'dm_BenaderendVerbruik_2018_Norm'\\\r\n",
+					"    , 'dm_AantalToegangspunten_2019', 'dm_WerkelijkVerbruik_2019', 'dm_WerkelijkVerbruik_2019_Norm', 'dm_BenaderendVerbruik_2019', 'dm_BenaderendVerbruik_2019_Norm'\\\r\n",
+					"    , 'dm_AantalToegangspunten_2020', 'dm_WerkelijkVerbruik_2020', 'dm_WerkelijkVerbruik_2020_Norm', 'dm_BenaderendVerbruik_2020', 'dm_BenaderendVerbruik_2020_Norm'\\\r\n",
+					"    , 'dm_AantalToegangspunten_2021', 'dm_WerkelijkVerbruik_2021', 'dm_WerkelijkVerbruik_2021_Norm', 'dm_BenaderendVerbruik_2021', 'dm_BenaderendVerbruik_2021_Norm'\\\r\n",
+					"    , 'dm_AantalToegangspunten_2022', 'dm_WerkelijkVerbruik_2022', 'dm_WerkelijkVerbruik_2022_Norm', 'dm_BenaderendVerbruik_2022', 'dm_BenaderendVerbruik_2022_Norm']]"
+				],
+				"execution_count": 33
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"### Create Aggregate DM Values and rearrange columns"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"if int(year) < 2023:\r\n",
+					"    clean_dm['dm_Gemiddeld_WerkelijkVerbruik'] = ((clean_dm['dm_WerkelijkVerbruik_2017'] + clean_dm['dm_WerkelijkVerbruik_2018']\\\r\n",
+					"    + clean_dm['dm_WerkelijkVerbruik_2019'] + clean_dm['dm_WerkelijkVerbruik_2020']+ clean_dm['dm_WerkelijkVerbruik_2021'])/5)\r\n",
+					"\r\n",
+					"    clean_dm['dm_Gemiddeld_WerkelijkVerbruik_Norm'] = ((clean_dm['dm_WerkelijkVerbruik_2017_Norm'] + clean_dm['dm_WerkelijkVerbruik_2018_Norm']\\\r\n",
+					"    + clean_dm['dm_WerkelijkVerbruik_2019_Norm'] + clean_dm['dm_WerkelijkVerbruik_2020_Norm'] + clean_dm['dm_WerkelijkVerbruik_2021_Norm'])/5)\r\n",
+					"\r\n",
+					"    clean_dm['dm_Gemiddeld_BenaderendVerbruik'] = ((clean_dm['dm_BenaderendVerbruik_2017'] + clean_dm['dm_BenaderendVerbruik_2018']\\\r\n",
+					"    + clean_dm['dm_BenaderendVerbruik_2019'] + clean_dm['dm_BenaderendVerbruik_2020'] + clean_dm['dm_BenaderendVerbruik_2021'])/5)\r\n",
+					"\r\n",
+					"    clean_dm['dm_Gemiddeld_BenaderendVerbruik_Norm'] = ((clean_dm['dm_BenaderendVerbruik_2017_Norm'] + clean_dm['dm_BenaderendVerbruik_2018_Norm']\\\r\n",
+					"    + clean_dm['dm_BenaderendVerbruik_2019_Norm'] + clean_dm['dm_BenaderendVerbruik_2020_Norm'] + clean_dm['dm_BenaderendVerbruik_2021_Norm'])/5)\r\n",
+					"\r\n",
+					"    clean_dm['dm_Total_AantalToegangspunten'] = ((clean_dm['dm_AantalToegangspunten_2017'] + clean_dm['dm_AantalToegangspunten_2018']\\\r\n",
+					"    + clean_dm['dm_AantalToegangspunten_2019'] + clean_dm['dm_AantalToegangspunten_2020'] + clean_dm['dm_AantalToegangspunten_2021'])/5)\r\n",
+					"\r\n",
+					"    agg_clean_dm = clean_dm[['dm_Trekkingsdatum', 'dm_Peildatum', 'dm_Markt', 'dm_Leveringsadres_Postcode', 'dm_Leveringsadres_Gemeente'\\\r\n",
+					"    , 'dm_AantalToegangspunten_2017', 'dm_WerkelijkVerbruik_2017', 'dm_WerkelijkVerbruik_2017_Norm', 'dm_BenaderendVerbruik_2017', 'dm_BenaderendVerbruik_2017_Norm'\\\r\n",
+					"    , 'dm_AantalToegangspunten_2018', 'dm_WerkelijkVerbruik_2018', 'dm_WerkelijkVerbruik_2018_Norm', 'dm_BenaderendVerbruik_2018', 'dm_BenaderendVerbruik_2018_Norm'\\\r\n",
+					"    , 'dm_AantalToegangspunten_2019', 'dm_WerkelijkVerbruik_2019', 'dm_WerkelijkVerbruik_2019_Norm', 'dm_BenaderendVerbruik_2019', 'dm_BenaderendVerbruik_2019_Norm'\\\r\n",
+					"    , 'dm_AantalToegangspunten_2020', 'dm_WerkelijkVerbruik_2020', 'dm_WerkelijkVerbruik_2020_Norm', 'dm_BenaderendVerbruik_2020', 'dm_BenaderendVerbruik_2020_Norm'\\\r\n",
+					"    , 'dm_AantalToegangspunten_2021', 'dm_WerkelijkVerbruik_2021', 'dm_WerkelijkVerbruik_2021_Norm', 'dm_BenaderendVerbruik_2021', 'dm_BenaderendVerbruik_2021_Norm'\\\r\n",
+					"    , 'dm_Total_AantalToegangspunten','dm_Gemiddeld_WerkelijkVerbruik','dm_Gemiddeld_WerkelijkVerbruik_Norm','dm_Gemiddeld_BenaderendVerbruik'\\\r\n",
+					"    , 'dm_Gemiddeld_BenaderendVerbruik_Norm']]\r\n",
+					"\r\n",
+					"else:\r\n",
+					"    clean_dm['dm_Gemiddeld_WerkelijkVerbruik'] = ((clean_dm['dm_WerkelijkVerbruik_2017'] + clean_dm['dm_WerkelijkVerbruik_2018']\\\r\n",
+					"    + clean_dm['dm_WerkelijkVerbruik_2019'] + clean_dm['dm_WerkelijkVerbruik_2020']+ clean_dm['dm_WerkelijkVerbruik_2021']\\\r\n",
+					"    + clean_dm['dm_WerkelijkVerbruik_2022'])/6)\r\n",
+					"\r\n",
+					"    clean_dm['dm_Gemiddeld_WerkelijkVerbruik_Norm'] = ((clean_dm['dm_WerkelijkVerbruik_2017_Norm'] + clean_dm['dm_WerkelijkVerbruik_2018_Norm']\\\r\n",
+					"    + clean_dm['dm_WerkelijkVerbruik_2019_Norm'] + clean_dm['dm_WerkelijkVerbruik_2020_Norm'] + clean_dm['dm_WerkelijkVerbruik_2021_Norm']\\\r\n",
+					"    + clean_dm['dm_WerkelijkVerbruik_2022_Norm'])/6)\r\n",
+					"\r\n",
+					"    clean_dm['dm_Gemiddeld_BenaderendVerbruik'] = ((clean_dm['dm_BenaderendVerbruik_2017'] + clean_dm['dm_BenaderendVerbruik_2018']\\\r\n",
+					"    + clean_dm['dm_BenaderendVerbruik_2019'] + clean_dm['dm_BenaderendVerbruik_2020'] + clean_dm['dm_BenaderendVerbruik_2021']\\\r\n",
+					"    + clean_dm['dm_BenaderendVerbruik_2022'])/6)\r\n",
+					"\r\n",
+					"    clean_dm['dm_Gemiddeld_BenaderendVerbruik_Norm'] = ((clean_dm['dm_BenaderendVerbruik_2017_Norm'] + clean_dm['dm_BenaderendVerbruik_2018_Norm']\\\r\n",
+					"    + clean_dm['dm_BenaderendVerbruik_2019_Norm'] + clean_dm['dm_BenaderendVerbruik_2020_Norm'] + clean_dm['dm_BenaderendVerbruik_2021_Norm']\\\r\n",
+					"    + clean_dm['dm_BenaderendVerbruik_2022_Norm'])/6)\r\n",
+					"\r\n",
+					"    clean_dm['dm_Total_AantalToegangspunten'] = ((clean_dm['dm_AantalToegangspunten_2017'] + clean_dm['dm_AantalToegangspunten_2018']\\\r\n",
+					"    + clean_dm['dm_AantalToegangspunten_2019'] + clean_dm['dm_AantalToegangspunten_2020'] + clean_dm['dm_AantalToegangspunten_2021']\\\r\n",
+					"    + clean_dm['dm_AantalToegangspunten_2022'])/6)\r\n",
+					"\r\n",
+					"    agg_clean_dm = clean_dm[['dm_Trekkingsdatum', 'dm_Peildatum', 'dm_Markt', 'dm_Leveringsadres_Postcode', 'dm_Leveringsadres_Gemeente'\\\r\n",
+					"    , 'dm_AantalToegangspunten_2017', 'dm_WerkelijkVerbruik_2017', 'dm_WerkelijkVerbruik_2017_Norm', 'dm_BenaderendVerbruik_2017', 'dm_BenaderendVerbruik_2017_Norm'\\\r\n",
+					"    , 'dm_AantalToegangspunten_2018', 'dm_WerkelijkVerbruik_2018', 'dm_WerkelijkVerbruik_2018_Norm', 'dm_BenaderendVerbruik_2018', 'dm_BenaderendVerbruik_2018_Norm'\\\r\n",
+					"    , 'dm_AantalToegangspunten_2019', 'dm_WerkelijkVerbruik_2019', 'dm_WerkelijkVerbruik_2019_Norm', 'dm_BenaderendVerbruik_2019', 'dm_BenaderendVerbruik_2019_Norm'\\\r\n",
+					"    , 'dm_AantalToegangspunten_2020', 'dm_WerkelijkVerbruik_2020', 'dm_WerkelijkVerbruik_2020_Norm', 'dm_BenaderendVerbruik_2020', 'dm_BenaderendVerbruik_2020_Norm'\\\r\n",
+					"    , 'dm_AantalToegangspunten_2021', 'dm_WerkelijkVerbruik_2021', 'dm_WerkelijkVerbruik_2021_Norm', 'dm_BenaderendVerbruik_2021', 'dm_BenaderendVerbruik_2021_Norm'\\\r\n",
+					"    , 'dm_AantalToegangspunten_2022', 'dm_WerkelijkVerbruik_2022', 'dm_WerkelijkVerbruik_2022_Norm', 'dm_BenaderendVerbruik_2022', 'dm_BenaderendVerbruik_2022_Norm'\\\r\n",
+					"    , 'dm_Total_AantalToegangspunten','dm_Gemiddeld_WerkelijkVerbruik','dm_Gemiddeld_WerkelijkVerbruik_Norm','dm_Gemiddeld_BenaderendVerbruik'\\\r\n",
+					"    , 'dm_Gemiddeld_BenaderendVerbruik_Norm']]\r\n",
+					""
+				],
+				"execution_count": 34
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(agg_clean_dm)\r\n",
+					"display(agg_clean_amr)"
+				],
+				"execution_count": 35
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Create final_amr and final_dm Dataframe"
+				]
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"### Change Postcode from Decimal to Int"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"#Int64 maintains the datatype after join even with null values available. that way post code doesn't have a decimal\r\n",
+					"agg_clean_dm['dm_Leveringsadres_Postcode'] = agg_clean_dm['dm_Leveringsadres_Postcode'].astype('Int64')\r\n",
+					"agg_clean_amr['amr_Leveringsadres_Postcode'] = agg_clean_amr['amr_Leveringsadres_Postcode'].astype('Int64')"
+				],
+				"execution_count": 36
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"### Create Final Dataframe for AMR and DM"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"if int(year) < 2023:\r\n",
+					"    final_amr = agg_clean_amr[['amr_Trekkingsdatum', 'amr_Peildatum', 'amr_Markt', 'amr_Leveringsadres_Postcode', 'amr_Leveringsadres_Gemeente'\\\r\n",
+					"    , 'amr_AantalToegangspunten_2017', 'amr_WerkelijkVerbruik_2017', 'amr_WerkelijkVerbruik_2017_Norm', 'amr_BenaderendVerbruik_2017', 'amr_BenaderendVerbruik_2017_Norm'\\\r\n",
+					"    , 'amr_AantalToegangspunten_2018', 'amr_WerkelijkVerbruik_2018', 'amr_WerkelijkVerbruik_2018_Norm', 'amr_BenaderendVerbruik_2018', 'amr_BenaderendVerbruik_2018_Norm'\\\r\n",
+					"    , 'amr_AantalToegangspunten_2019', 'amr_WerkelijkVerbruik_2019', 'amr_WerkelijkVerbruik_2019_Norm', 'amr_BenaderendVerbruik_2019', 'amr_BenaderendVerbruik_2019_Norm'\\\r\n",
+					"    , 'amr_AantalToegangspunten_2020', 'amr_WerkelijkVerbruik_2020', 'amr_WerkelijkVerbruik_2020_Norm', 'amr_BenaderendVerbruik_2020', 'amr_BenaderendVerbruik_2020_Norm'\\\r\n",
+					"    , 'amr_AantalToegangspunten_2021', 'amr_WerkelijkVerbruik_2021', 'amr_WerkelijkVerbruik_2021_Norm', 'amr_BenaderendVerbruik_2021', 'amr_BenaderendVerbruik_2021_Norm'\\\r\n",
+					"    , 'amr_Total_AantalToegangspunten','amr_Gemiddeld_WerkelijkVerbruik','amr_Gemiddeld_WerkelijkVerbruik_Norm','amr_Gemiddeld_BenaderendVerbruik','amr_Gemiddeld_BenaderendVerbruik_Norm']]\r\n",
+					"    \r\n",
+					"    final_dm = agg_clean_dm[['dm_Trekkingsdatum', 'dm_Peildatum', 'dm_Markt', 'dm_Leveringsadres_Postcode', 'dm_Leveringsadres_Gemeente'\\\r\n",
+					"    , 'dm_AantalToegangspunten_2017', 'dm_WerkelijkVerbruik_2017', 'dm_WerkelijkVerbruik_2017_Norm', 'dm_BenaderendVerbruik_2017', 'dm_BenaderendVerbruik_2017_Norm'\\\r\n",
+					"    , 'dm_AantalToegangspunten_2018', 'dm_WerkelijkVerbruik_2018', 'dm_WerkelijkVerbruik_2018_Norm', 'dm_BenaderendVerbruik_2018', 'dm_BenaderendVerbruik_2018_Norm'\\\r\n",
+					"    , 'dm_AantalToegangspunten_2019', 'dm_WerkelijkVerbruik_2019', 'dm_WerkelijkVerbruik_2019_Norm', 'dm_BenaderendVerbruik_2019', 'dm_BenaderendVerbruik_2019_Norm'\\\r\n",
+					"    , 'dm_AantalToegangspunten_2020', 'dm_WerkelijkVerbruik_2020', 'dm_WerkelijkVerbruik_2020_Norm', 'dm_BenaderendVerbruik_2020', 'dm_BenaderendVerbruik_2020_Norm'\\\r\n",
+					"    , 'dm_AantalToegangspunten_2021', 'dm_WerkelijkVerbruik_2021', 'dm_WerkelijkVerbruik_2021_Norm', 'dm_BenaderendVerbruik_2021', 'dm_BenaderendVerbruik_2021_Norm'\\\r\n",
+					"    , 'dm_Total_AantalToegangspunten','dm_Gemiddeld_WerkelijkVerbruik','dm_Gemiddeld_WerkelijkVerbruik_Norm','dm_Gemiddeld_BenaderendVerbruik','dm_Gemiddeld_BenaderendVerbruik_Norm']]\r\n",
+					"else:\r\n",
+					"    final_amr = agg_clean_amr[['amr_Trekkingsdatum', 'amr_Peildatum', 'amr_Markt', 'amr_Leveringsadres_Postcode', 'amr_Leveringsadres_Gemeente'\\\r\n",
+					"    , 'amr_AantalToegangspunten_2017', 'amr_WerkelijkVerbruik_2017', 'amr_WerkelijkVerbruik_2017_Norm', 'amr_BenaderendVerbruik_2017', 'amr_BenaderendVerbruik_2017_Norm'\\\r\n",
+					"    , 'amr_AantalToegangspunten_2018', 'amr_WerkelijkVerbruik_2018', 'amr_WerkelijkVerbruik_2018_Norm', 'amr_BenaderendVerbruik_2018', 'amr_BenaderendVerbruik_2018_Norm'\\\r\n",
+					"    , 'amr_AantalToegangspunten_2019', 'amr_WerkelijkVerbruik_2019', 'amr_WerkelijkVerbruik_2019_Norm', 'amr_BenaderendVerbruik_2019', 'amr_BenaderendVerbruik_2019_Norm'\\\r\n",
+					"    , 'amr_AantalToegangspunten_2020', 'amr_WerkelijkVerbruik_2020', 'amr_WerkelijkVerbruik_2020_Norm', 'amr_BenaderendVerbruik_2020', 'amr_BenaderendVerbruik_2020_Norm'\\\r\n",
+					"    , 'amr_AantalToegangspunten_2021', 'amr_WerkelijkVerbruik_2021', 'amr_WerkelijkVerbruik_2021_Norm', 'amr_BenaderendVerbruik_2021', 'amr_BenaderendVerbruik_2021_Norm'\\\r\n",
+					"    , 'amr_AantalToegangspunten_2022', 'amr_WerkelijkVerbruik_2022', 'amr_WerkelijkVerbruik_2022_Norm', 'amr_BenaderendVerbruik_2022', 'amr_BenaderendVerbruik_2022_Norm'\\\r\n",
+					"    , 'amr_Total_AantalToegangspunten','amr_Gemiddeld_WerkelijkVerbruik','amr_Gemiddeld_WerkelijkVerbruik_Norm','amr_Gemiddeld_BenaderendVerbruik','amr_Gemiddeld_BenaderendVerbruik_Norm']]\r\n",
+					"\r\n",
+					"    final_dm = agg_clean_dm[['dm_Trekkingsdatum', 'dm_Peildatum', 'dm_Markt', 'dm_Leveringsadres_Postcode', 'dm_Leveringsadres_Gemeente'\\\r\n",
+					"    , 'dm_AantalToegangspunten_2017', 'dm_WerkelijkVerbruik_2017', 'dm_WerkelijkVerbruik_2017_Norm', 'dm_BenaderendVerbruik_2017', 'dm_BenaderendVerbruik_2017_Norm'\\\r\n",
+					"    , 'dm_AantalToegangspunten_2018', 'dm_WerkelijkVerbruik_2018', 'dm_WerkelijkVerbruik_2018_Norm', 'dm_BenaderendVerbruik_2018', 'dm_BenaderendVerbruik_2018_Norm'\\\r\n",
+					"    , 'dm_AantalToegangspunten_2019', 'dm_WerkelijkVerbruik_2019', 'dm_WerkelijkVerbruik_2019_Norm', 'dm_BenaderendVerbruik_2019', 'dm_BenaderendVerbruik_2019_Norm'\\\r\n",
+					"    , 'dm_AantalToegangspunten_2020', 'dm_WerkelijkVerbruik_2020', 'dm_WerkelijkVerbruik_2020_Norm', 'dm_BenaderendVerbruik_2020', 'dm_BenaderendVerbruik_2020_Norm'\\\r\n",
+					"    , 'dm_AantalToegangspunten_2021', 'dm_WerkelijkVerbruik_2021', 'dm_WerkelijkVerbruik_2021_Norm', 'dm_BenaderendVerbruik_2021', 'dm_BenaderendVerbruik_2021_Norm'\\\r\n",
+					"    , 'dm_AantalToegangspunten_2022', 'dm_WerkelijkVerbruik_2022', 'dm_WerkelijkVerbruik_2022_Norm', 'dm_BenaderendVerbruik_2022', 'dm_BenaderendVerbruik_2022_Norm'\\\r\n",
+					"    , 'dm_Total_AantalToegangspunten','dm_Gemiddeld_WerkelijkVerbruik','dm_Gemiddeld_WerkelijkVerbruik_Norm','dm_Gemiddeld_BenaderendVerbruik','dm_Gemiddeld_BenaderendVerbruik_Norm']]\r\n",
+					""
+				],
+				"execution_count": 37
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"### Perform Full Outer Join"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# join() is used to combine two DataFrames on the index but not on columns \r\n",
+					"#whereas merge() is primarily used to specify the columns you wanted to join on\r\n",
+					"#Merge is useful when we don’t want to join on the index. \r\n",
+					"\r\n",
+					"final_amr_dm = pd.merge(final_amr, final_dm, left_on=['amr_Trekkingsdatum', 'amr_Peildatum', 'amr_Markt', 'amr_Leveringsadres_Postcode', 'amr_Leveringsadres_Gemeente'],\\\r\n",
+					"right_on=['dm_Trekkingsdatum', 'dm_Peildatum', 'dm_Markt', 'dm_Leveringsadres_Postcode', 'dm_Leveringsadres_Gemeente'], how = 'outer')\r\n",
+					"print('FULL OUTER JOIN COMPLETE')\r\n",
+					""
+				],
+				"execution_count": 38
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(final_amr_dm)"
+				],
+				"execution_count": 39
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"### Count Rows before and after join"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# check Counts on total file\r\n",
+					"print('Analogue Count: ',final_amr.shape[0])\r\n",
+					"print('Digital Count: ',final_dm.shape[0])\r\n",
+					"print('Total Join Count:',final_amr_dm.shape[0])"
+				],
+				"execution_count": 40
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"#### Coalesce Undefined Grouped Values"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"final_amr_dm['Trekkingsdatum'] = final_amr_dm['amr_Trekkingsdatum'].combine_first(final_amr_dm['dm_Trekkingsdatum'])\r\n",
+					"final_amr_dm['Peildatum'] = final_amr_dm['amr_Peildatum'].combine_first(final_amr_dm['dm_Peildatum'])\r\n",
+					"final_amr_dm['Markt'] = final_amr_dm['amr_Markt'].combine_first(final_amr_dm['dm_Markt'])\r\n",
+					"final_amr_dm['Leveringsadres_Postcode'] = final_amr_dm['amr_Leveringsadres_Postcode'].combine_first(final_amr_dm['dm_Leveringsadres_Postcode'])\r\n",
+					"final_amr_dm['Leveringsadres_Gemeente'] = final_amr_dm['amr_Leveringsadres_Gemeente'].combine_first(final_amr_dm['dm_Leveringsadres_Gemeente'])"
+				],
+				"execution_count": 41
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(final_amr_dm)"
+				],
+				"execution_count": 42
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"if int(year) < 2023:\r\n",
+					"    final_amr_dm = final_amr_dm[['Trekkingsdatum', 'Peildatum', 'Markt', 'Leveringsadres_Postcode', 'Leveringsadres_Gemeente'\\\r\n",
+					"    , 'amr_AantalToegangspunten_2017', 'amr_WerkelijkVerbruik_2017', 'amr_WerkelijkVerbruik_2017_Norm', 'amr_BenaderendVerbruik_2017', 'amr_BenaderendVerbruik_2017_Norm'\\\r\n",
+					"    , 'amr_AantalToegangspunten_2018', 'amr_WerkelijkVerbruik_2018', 'amr_WerkelijkVerbruik_2018_Norm', 'amr_BenaderendVerbruik_2018', 'amr_BenaderendVerbruik_2018_Norm'\\\r\n",
+					"    , 'amr_AantalToegangspunten_2019', 'amr_WerkelijkVerbruik_2019', 'amr_WerkelijkVerbruik_2019_Norm', 'amr_BenaderendVerbruik_2019', 'amr_BenaderendVerbruik_2019_Norm'\\\r\n",
+					"    , 'amr_AantalToegangspunten_2020', 'amr_WerkelijkVerbruik_2020', 'amr_WerkelijkVerbruik_2020_Norm', 'amr_BenaderendVerbruik_2020', 'amr_BenaderendVerbruik_2020_Norm'\\\r\n",
+					"    , 'amr_AantalToegangspunten_2021', 'amr_WerkelijkVerbruik_2021', 'amr_WerkelijkVerbruik_2021_Norm', 'amr_BenaderendVerbruik_2021', 'amr_BenaderendVerbruik_2021_Norm'\\\r\n",
+					"    , 'dm_AantalToegangspunten_2017', 'dm_WerkelijkVerbruik_2017', 'dm_WerkelijkVerbruik_2017_Norm', 'dm_BenaderendVerbruik_2017', 'dm_BenaderendVerbruik_2017_Norm'\\\r\n",
+					"    , 'dm_AantalToegangspunten_2018', 'dm_WerkelijkVerbruik_2018', 'dm_WerkelijkVerbruik_2018_Norm', 'dm_BenaderendVerbruik_2018', 'dm_BenaderendVerbruik_2018_Norm'\\\r\n",
+					"    , 'dm_AantalToegangspunten_2019', 'dm_WerkelijkVerbruik_2019', 'dm_WerkelijkVerbruik_2019_Norm', 'dm_BenaderendVerbruik_2019', 'dm_BenaderendVerbruik_2019_Norm'\\\r\n",
+					"    , 'dm_AantalToegangspunten_2020', 'dm_WerkelijkVerbruik_2020', 'dm_WerkelijkVerbruik_2020_Norm', 'dm_BenaderendVerbruik_2020', 'dm_BenaderendVerbruik_2020_Norm'\\\r\n",
+					"    , 'dm_AantalToegangspunten_2021', 'dm_WerkelijkVerbruik_2021', 'dm_WerkelijkVerbruik_2021_Norm', 'dm_BenaderendVerbruik_2021', 'dm_BenaderendVerbruik_2021_Norm'\\\r\n",
+					"    , 'amr_Total_AantalToegangspunten','amr_Gemiddeld_WerkelijkVerbruik','amr_Gemiddeld_WerkelijkVerbruik_Norm','amr_Gemiddeld_BenaderendVerbruik','amr_Gemiddeld_BenaderendVerbruik_Norm'\\\r\n",
+					"    , 'dm_Total_AantalToegangspunten','dm_Gemiddeld_WerkelijkVerbruik','dm_Gemiddeld_WerkelijkVerbruik_Norm','dm_Gemiddeld_BenaderendVerbruik','dm_Gemiddeld_BenaderendVerbruik_Norm']]\r\n",
+					"else:\r\n",
+					"    final_amr_dm = final_amr_dm[['Trekkingsdatum', 'Peildatum', 'Markt', 'Leveringsadres_Postcode', 'Leveringsadres_Gemeente'\\\r\n",
+					"    , 'amr_AantalToegangspunten_2017', 'amr_WerkelijkVerbruik_2017', 'amr_WerkelijkVerbruik_2017_Norm', 'amr_BenaderendVerbruik_2017', 'amr_BenaderendVerbruik_2017_Norm'\\\r\n",
+					"    , 'amr_AantalToegangspunten_2018', 'amr_WerkelijkVerbruik_2018', 'amr_WerkelijkVerbruik_2018_Norm', 'amr_BenaderendVerbruik_2018', 'amr_BenaderendVerbruik_2018_Norm'\\\r\n",
+					"    , 'amr_AantalToegangspunten_2019', 'amr_WerkelijkVerbruik_2019', 'amr_WerkelijkVerbruik_2019_Norm', 'amr_BenaderendVerbruik_2019', 'amr_BenaderendVerbruik_2019_Norm'\\\r\n",
+					"    , 'amr_AantalToegangspunten_2020', 'amr_WerkelijkVerbruik_2020', 'amr_WerkelijkVerbruik_2020_Norm', 'amr_BenaderendVerbruik_2020', 'amr_BenaderendVerbruik_2020_Norm'\\\r\n",
+					"    , 'amr_AantalToegangspunten_2021', 'amr_WerkelijkVerbruik_2021', 'amr_WerkelijkVerbruik_2021_Norm', 'amr_BenaderendVerbruik_2021', 'amr_BenaderendVerbruik_2021_Norm'\\\r\n",
+					"    , 'amr_AantalToegangspunten_2022', 'amr_WerkelijkVerbruik_2022', 'amr_WerkelijkVerbruik_2022_Norm', 'amr_BenaderendVerbruik_2022', 'amr_BenaderendVerbruik_2022_Norm'\\\r\n",
+					"    , 'dm_AantalToegangspunten_2017', 'dm_WerkelijkVerbruik_2017', 'dm_WerkelijkVerbruik_2017_Norm', 'dm_BenaderendVerbruik_2017', 'dm_BenaderendVerbruik_2017_Norm'\\\r\n",
+					"    , 'dm_AantalToegangspunten_2018', 'dm_WerkelijkVerbruik_2018', 'dm_WerkelijkVerbruik_2018_Norm', 'dm_BenaderendVerbruik_2018', 'dm_BenaderendVerbruik_2018_Norm'\\\r\n",
+					"    , 'dm_AantalToegangspunten_2019', 'dm_WerkelijkVerbruik_2019', 'dm_WerkelijkVerbruik_2019_Norm', 'dm_BenaderendVerbruik_2019', 'dm_BenaderendVerbruik_2019_Norm'\\\r\n",
+					"    , 'dm_AantalToegangspunten_2020', 'dm_WerkelijkVerbruik_2020', 'dm_WerkelijkVerbruik_2020_Norm', 'dm_BenaderendVerbruik_2020', 'dm_BenaderendVerbruik_2020_Norm'\\\r\n",
+					"    , 'dm_AantalToegangspunten_2021', 'dm_WerkelijkVerbruik_2021', 'dm_WerkelijkVerbruik_2021_Norm', 'dm_BenaderendVerbruik_2021', 'dm_BenaderendVerbruik_2021_Norm'\\\r\n",
+					"    , 'dm_AantalToegangspunten_2022', 'dm_WerkelijkVerbruik_2022', 'dm_WerkelijkVerbruik_2022_Norm', 'dm_BenaderendVerbruik_2022', 'dm_BenaderendVerbruik_2022_Norm'\\\r\n",
+					"    , 'amr_Total_AantalToegangspunten','amr_Gemiddeld_WerkelijkVerbruik','amr_Gemiddeld_WerkelijkVerbruik_Norm','amr_Gemiddeld_BenaderendVerbruik','amr_Gemiddeld_BenaderendVerbruik_Norm'\\\r\n",
+					"    , 'dm_Total_AantalToegangspunten','dm_Gemiddeld_WerkelijkVerbruik','dm_Gemiddeld_WerkelijkVerbruik_Norm','dm_Gemiddeld_BenaderendVerbruik','dm_Gemiddeld_BenaderendVerbruik_Norm']]\r\n",
+					"\r\n",
+					"\r\n",
+					""
+				],
+				"execution_count": 43
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"### Calculate Total for aggregate values"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"#Calculate Total\r\n",
+					"final_amr_dm['Total_AantalToegangspunten'] = (final_amr_dm['amr_Total_AantalToegangspunten'] + final_amr_dm['dm_Total_AantalToegangspunten'])\r\n",
+					"final_amr_dm['Total_BenaderendVerbruik'] = (final_amr_dm['amr_Gemiddeld_BenaderendVerbruik'] + final_amr_dm['dm_Gemiddeld_BenaderendVerbruik'])\r\n",
+					"final_amr_dm['Total_BenaderendVerbruik_Norm'] = (final_amr_dm['amr_Gemiddeld_BenaderendVerbruik_Norm'] + final_amr_dm['dm_Gemiddeld_BenaderendVerbruik_Norm'])\r\n",
+					"final_amr_dm['Total_WerkelijkVerbruik'] = (final_amr_dm['amr_Gemiddeld_WerkelijkVerbruik'] + final_amr_dm['dm_Gemiddeld_WerkelijkVerbruik'])\r\n",
+					"final_amr_dm['Total_WerkelijkVerbruik_Norm'] = (final_amr_dm['amr_Gemiddeld_WerkelijkVerbruik_Norm'] + final_amr_dm['dm_Gemiddeld_WerkelijkVerbruik_Norm'])"
+				],
+				"execution_count": 44
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"### Select Final Columns/Attributes"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"if int(year) < 2023:\r\n",
+					"    final_file = final_amr_dm[['Trekkingsdatum', 'Peildatum', 'Markt', 'Leveringsadres_Postcode', 'Leveringsadres_Gemeente'\\\r\n",
+					"    , 'amr_AantalToegangspunten_2017', 'amr_WerkelijkVerbruik_2017', 'amr_WerkelijkVerbruik_2017_Norm', 'amr_BenaderendVerbruik_2017', 'amr_BenaderendVerbruik_2017_Norm'\\\r\n",
+					"    , 'amr_AantalToegangspunten_2018', 'amr_WerkelijkVerbruik_2018', 'amr_WerkelijkVerbruik_2018_Norm', 'amr_BenaderendVerbruik_2018', 'amr_BenaderendVerbruik_2018_Norm'\\\r\n",
+					"    , 'amr_AantalToegangspunten_2019', 'amr_WerkelijkVerbruik_2019', 'amr_WerkelijkVerbruik_2019_Norm', 'amr_BenaderendVerbruik_2019', 'amr_BenaderendVerbruik_2019_Norm'\\\r\n",
+					"    , 'amr_AantalToegangspunten_2020', 'amr_WerkelijkVerbruik_2020', 'amr_WerkelijkVerbruik_2020_Norm', 'amr_BenaderendVerbruik_2020', 'amr_BenaderendVerbruik_2020_Norm'\\\r\n",
+					"    , 'amr_AantalToegangspunten_2021', 'amr_WerkelijkVerbruik_2021', 'amr_WerkelijkVerbruik_2021_Norm', 'amr_BenaderendVerbruik_2021', 'amr_BenaderendVerbruik_2021_Norm'\\\r\n",
+					"    , 'dm_AantalToegangspunten_2017', 'dm_WerkelijkVerbruik_2017', 'dm_WerkelijkVerbruik_2017_Norm', 'dm_BenaderendVerbruik_2017', 'dm_BenaderendVerbruik_2017_Norm'\\\r\n",
+					"    , 'dm_AantalToegangspunten_2018', 'dm_WerkelijkVerbruik_2018', 'dm_WerkelijkVerbruik_2018_Norm', 'dm_BenaderendVerbruik_2018', 'dm_BenaderendVerbruik_2018_Norm'\\\r\n",
+					"    , 'dm_AantalToegangspunten_2019', 'dm_WerkelijkVerbruik_2019', 'dm_WerkelijkVerbruik_2019_Norm', 'dm_BenaderendVerbruik_2019', 'dm_BenaderendVerbruik_2019_Norm'\\\r\n",
+					"    , 'dm_AantalToegangspunten_2020', 'dm_WerkelijkVerbruik_2020', 'dm_WerkelijkVerbruik_2020_Norm', 'dm_BenaderendVerbruik_2020', 'dm_BenaderendVerbruik_2020_Norm'\\\r\n",
+					"    , 'dm_AantalToegangspunten_2021', 'dm_WerkelijkVerbruik_2021', 'dm_WerkelijkVerbruik_2021_Norm', 'dm_BenaderendVerbruik_2021', 'dm_BenaderendVerbruik_2021_Norm'\\\r\n",
+					"    , 'amr_Total_AantalToegangspunten','amr_Gemiddeld_WerkelijkVerbruik','amr_Gemiddeld_WerkelijkVerbruik_Norm','amr_Gemiddeld_BenaderendVerbruik','amr_Gemiddeld_BenaderendVerbruik_Norm'\\\r\n",
+					"    , 'dm_Total_AantalToegangspunten','dm_Gemiddeld_WerkelijkVerbruik','dm_Gemiddeld_WerkelijkVerbruik_Norm','dm_Gemiddeld_BenaderendVerbruik','dm_Gemiddeld_BenaderendVerbruik_Norm'\\\r\n",
+					"    ,'Total_AantalToegangspunten', 'Total_BenaderendVerbruik', 'Total_BenaderendVerbruik_Norm', 'Total_WerkelijkVerbruik', 'Total_WerkelijkVerbruik_Norm']]\r\n",
+					"else:\r\n",
+					"    final_file = final_amr_dm[['Trekkingsdatum', 'Peildatum', 'Markt', 'Leveringsadres_Postcode', 'Leveringsadres_Gemeente'\\\r\n",
+					"    , 'amr_AantalToegangspunten_2017', 'amr_WerkelijkVerbruik_2017', 'amr_WerkelijkVerbruik_2017_Norm', 'amr_BenaderendVerbruik_2017', 'amr_BenaderendVerbruik_2017_Norm'\\\r\n",
+					"    , 'amr_AantalToegangspunten_2018', 'amr_WerkelijkVerbruik_2018', 'amr_WerkelijkVerbruik_2018_Norm', 'amr_BenaderendVerbruik_2018', 'amr_BenaderendVerbruik_2018_Norm'\\\r\n",
+					"    , 'amr_AantalToegangspunten_2019', 'amr_WerkelijkVerbruik_2019', 'amr_WerkelijkVerbruik_2019_Norm', 'amr_BenaderendVerbruik_2019', 'amr_BenaderendVerbruik_2019_Norm'\\\r\n",
+					"    , 'amr_AantalToegangspunten_2020', 'amr_WerkelijkVerbruik_2020', 'amr_WerkelijkVerbruik_2020_Norm', 'amr_BenaderendVerbruik_2020', 'amr_BenaderendVerbruik_2020_Norm'\\\r\n",
+					"    , 'amr_AantalToegangspunten_2021', 'amr_WerkelijkVerbruik_2021', 'amr_WerkelijkVerbruik_2021_Norm', 'amr_BenaderendVerbruik_2021', 'amr_BenaderendVerbruik_2021_Norm'\\\r\n",
+					"    , 'amr_AantalToegangspunten_2022', 'amr_WerkelijkVerbruik_2022', 'amr_WerkelijkVerbruik_2022_Norm', 'amr_BenaderendVerbruik_2022', 'amr_BenaderendVerbruik_2022_Norm'\\\r\n",
+					"    , 'dm_AantalToegangspunten_2017', 'dm_WerkelijkVerbruik_2017', 'dm_WerkelijkVerbruik_2017_Norm', 'dm_BenaderendVerbruik_2017', 'dm_BenaderendVerbruik_2017_Norm'\\\r\n",
+					"    , 'dm_AantalToegangspunten_2018', 'dm_WerkelijkVerbruik_2018', 'dm_WerkelijkVerbruik_2018_Norm', 'dm_BenaderendVerbruik_2018', 'dm_BenaderendVerbruik_2018_Norm'\\\r\n",
+					"    , 'dm_AantalToegangspunten_2019', 'dm_WerkelijkVerbruik_2019', 'dm_WerkelijkVerbruik_2019_Norm', 'dm_BenaderendVerbruik_2019', 'dm_BenaderendVerbruik_2019_Norm'\\\r\n",
+					"    , 'dm_AantalToegangspunten_2020', 'dm_WerkelijkVerbruik_2020', 'dm_WerkelijkVerbruik_2020_Norm', 'dm_BenaderendVerbruik_2020', 'dm_BenaderendVerbruik_2020_Norm'\\\r\n",
+					"    , 'dm_AantalToegangspunten_2021', 'dm_WerkelijkVerbruik_2021', 'dm_WerkelijkVerbruik_2021_Norm', 'dm_BenaderendVerbruik_2021', 'dm_BenaderendVerbruik_2021_Norm'\\\r\n",
+					"    , 'dm_AantalToegangspunten_2022', 'dm_WerkelijkVerbruik_2022', 'dm_WerkelijkVerbruik_2022_Norm', 'dm_BenaderendVerbruik_2022', 'dm_BenaderendVerbruik_2022_Norm'\\\r\n",
+					"    , 'amr_Total_AantalToegangspunten','amr_Gemiddeld_WerkelijkVerbruik','amr_Gemiddeld_WerkelijkVerbruik_Norm','amr_Gemiddeld_BenaderendVerbruik','amr_Gemiddeld_BenaderendVerbruik_Norm'\\\r\n",
+					"    , 'dm_Total_AantalToegangspunten','dm_Gemiddeld_WerkelijkVerbruik','dm_Gemiddeld_WerkelijkVerbruik_Norm','dm_Gemiddeld_BenaderendVerbruik','dm_Gemiddeld_BenaderendVerbruik_Norm'\\\r\n",
+					"    ,'Total_AantalToegangspunten', 'Total_BenaderendVerbruik', 'Total_BenaderendVerbruik_Norm', 'Total_WerkelijkVerbruik', 'Total_WerkelijkVerbruik_Norm']]\r\n",
+					"\r\n",
+					""
+				],
+				"execution_count": 45
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(final_file)"
+				],
+				"execution_count": 46
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"#### Fill NaN Values with 0"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"# fill NaN values with 0\r\n",
+					"final_file = final_file.fillna(0)\r\n",
+					"display(final_file)"
+				],
+				"execution_count": 548
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Convert Dataframe to PySpark before writing to Blob"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"#It is advisable to convert your dataframe back to pyspark since pandas is a python library before saving to disk inorder to have variable options\r\n",
+					"pd_final_file = spark.createDataFrame(final_file)\r\n",
+					"#Write to disk"
+				],
+				"execution_count": 549
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"\r\n",
+					"## Write Dataframe to Blob Storage\r\n",
+					""
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"file_path = 'abfss://silverdata@dlscloubisintern.dfs.core.windows.net/Join/Pandas'\r\n",
+					"write_format = \"delta\"\r\n",
+					"partition_col = [\"Peildatum\"]\r\n",
+					"mode_ = Mode #overwrite #append\r\n",
+					"\r\n",
+					"pd_final_file\\\r\n",
+					".write\\\r\n",
+					".option(\"header\", True)\\\r\n",
+					".option(\"overwriteSchema\", True)\\\r\n",
+					".format(write_format)\\\r\n",
+					".partitionBy(partition_col)\\\r\n",
+					".mode(mode_)\\\r\n",
+					".save(file_path)\r\n",
+					"\r\n",
+					"print(\"Writing File to \" + file_path + \" Complete with Mode \" + mode_)"
+				],
+				"execution_count": null
+			}
+		]
+	}
+}
