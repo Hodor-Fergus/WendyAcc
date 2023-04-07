@@ -22,7 +22,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "cc9adc4d-03fd-47a0-b820-ee4435c415be"
+				"spark.autotune.trackingId": "76507b1a-e315-4b5b-b013-821ca26bd1cd"
 			}
 		},
 		"metadata": {
@@ -74,7 +74,7 @@
 					"FolderName = \"2022_10\"\r\n",
 					"Mode = \"overwrite\""
 				],
-				"execution_count": 87
+				"execution_count": 17
 			},
 			{
 				"cell_type": "code",
@@ -95,7 +95,7 @@
 					"year = FolderName.split('_')[0]\r\n",
 					"month = FolderName.split('_')[1]"
 				],
-				"execution_count": null
+				"execution_count": 18
 			},
 			{
 				"cell_type": "code",
@@ -111,7 +111,7 @@
 					"blob_sas_token = token_library.getConnectionString(\"cmdevsynapse-WorkspaceDefaultStorage\")\r\n",
 					"spark.conf.set('fs.azure.sas.%s.%s.blob.core.windows.net' % (blob_container_name, blob_account_name),blob_sas_token)"
 				],
-				"execution_count": null
+				"execution_count": 19
 			},
 			{
 				"cell_type": "code",
@@ -129,7 +129,7 @@
 				"source": [
 					"spark.sql(\"set spark.sql.legacy.timeParserPolicy=LEGACY\")"
 				],
-				"execution_count": null
+				"execution_count": 20
 			},
 			{
 				"cell_type": "code",
@@ -166,7 +166,7 @@
 					"# Create a temporary view: To run SQL queries on a PySpark DataFrame, you need to create a temporary view using the createOrReplaceTempView method.\r\n",
 					"df1.createOrReplaceTempView(\"AMR_Measurement_Reading\")"
 				],
-				"execution_count": 66
+				"execution_count": 21
 			},
 			{
 				"cell_type": "code",
@@ -207,7 +207,7 @@
 					"# Display the result: To display the result of the SQL query, you can use the show method.\r\n",
 					"display(selected_df1.limit(5))"
 				],
-				"execution_count": 67
+				"execution_count": 22
 			},
 			{
 				"cell_type": "code",
@@ -244,7 +244,7 @@
 					"# Create a temporary view: To run SQL queries on a PySpark DataFrame, you need to create a temporary view using the createOrReplaceTempView method.\r\n",
 					"df2.createOrReplaceTempView(\"DM_Measurement_Reading\")"
 				],
-				"execution_count": 68
+				"execution_count": 23
 			},
 			{
 				"cell_type": "code",
@@ -285,7 +285,7 @@
 					"# Display the result: To display the result of the SQL query, you can use the show method.\r\n",
 					"display(selected_df2.limit(5))"
 				],
-				"execution_count": 69
+				"execution_count": 24
 			},
 			{
 				"cell_type": "code",
@@ -376,7 +376,7 @@
 					"FROM cte_union\r\n",
 					"LIMIT 5"
 				],
-				"execution_count": 70
+				"execution_count": 25
 			},
 			{
 				"cell_type": "code",
@@ -464,7 +464,165 @@
 					"union_df.createOrReplaceTempView(\"Measurement_Reading_union\")\r\n",
 					"display(union_df.limit(5))"
 				],
-				"execution_count": 75
+				"execution_count": 26
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"microsoft": {
+						"language": "sparksql"
+					},
+					"collapsed": false
+				},
+				"source": [
+					"%%sql\r\n",
+					"\r\n",
+					"with cte_AMR as (\r\n",
+					"SELECT Trekkingsdatum\r\n",
+					",COALESCE(TO_DATE(Peildatum, 'dd/MMM/yy') ,TO_DATE(Peildatum, 'MM/dd/yy'),TO_DATE(Peildatum, 'dd-MMM-yy'),Peildatum) as Peildatum\r\n",
+					", Markt\r\n",
+					", CAST(Leveringsadres_Postcode as INT) Leveringsadres_Postcode\r\n",
+					", Leveringsadres_Gemeente\r\n",
+					",SUM(CAST(REPLACE(WerkelijkVerbruik_RM_2017,',','.') as DECIMAL(16,4))) as WerkelijkVerbruik_RM_2017\r\n",
+					",SUM(CAST(REPLACE(BenaderendVerbruik_VM_2017,',','.') as DECIMAL(16,4))) as BenaderendVerbruik_VM_2017\r\n",
+					",SUM(CAST(REPLACE(BenaderendVerbruik_VM_2017,',','.') as DECIMAL(16,4))) as BenaderendVerbruik_VM_2017_Norm\r\n",
+					",SUM(CAST(REPLACE(AantalToegangspunten_2017,',','.') as DECIMAL(16,4))) as AantalToegangspunten_2017\r\n",
+					",SUM(CAST(REPLACE(WerkelijkVerbruik_RM_2018,',','.') as DECIMAL(16,4))) as WerkelijkVerbruik_RM_2018\r\n",
+					",SUM(CAST(REPLACE(BenaderendVerbruik_VM_2018,',','.') as DECIMAL(16,4))) as BenaderendVerbruik_VM_2018\r\n",
+					",SUM(CAST(REPLACE(BenaderendVerbruik_VM_2018,',','.') as DECIMAL(16,4))) as BenaderendVerbruik_VM_2018_Norm\r\n",
+					",SUM(CAST(REPLACE(AantalToegangspunten_2018,',','.') as DECIMAL(16,4))) as AantalToegangspunten_2018\r\n",
+					",SUM(CAST(REPLACE(WerkelijkVerbruik_RM_2019,',','.') as DECIMAL(16,4))) as WerkelijkVerbruik_RM_2019\r\n",
+					",SUM(CAST(REPLACE(BenaderendVerbruik_VM_2019,',','.') as DECIMAL(16,4))) as BenaderendVerbruik_VM_2019\r\n",
+					",SUM(CAST(REPLACE(BenaderendVerbruik_VM_2019,',','.') as DECIMAL(16,4))) as BenaderendVerbruik_VM_2019_Norm\r\n",
+					",SUM(CAST(REPLACE(AantalToegangspunten_2019,',','.') as DECIMAL(16,4))) as AantalToegangspunten_2019\r\n",
+					",SUM(CAST(REPLACE(WerkelijkVerbruik_RM_2020,',','.') as DECIMAL(16,4))) as WerkelijkVerbruik_RM_2020\r\n",
+					",SUM(CAST(REPLACE(BenaderendVerbruik_VM_2020,',','.') as DECIMAL(16,4))) as BenaderendVerbruik_VM_2020\r\n",
+					",SUM(CAST(REPLACE(BenaderendVerbruik_VM_2020,',','.') as DECIMAL(16,4))) as BenaderendVerbruik_VM_2020_Norm\r\n",
+					",SUM(CAST(REPLACE(AantalToegangspunten_2020,',','.') as DECIMAL(16,4))) as AantalToegangspunten_2020\r\n",
+					",SUM(CAST(REPLACE(WerkelijkVerbruik_RM_2021,',','.') as DECIMAL(16,4))) as WerkelijkVerbruik_RM_2021\r\n",
+					",SUM(CAST(REPLACE(BenaderendVerbruik_VM_2021,',','.') as DECIMAL(16,4))) as BenaderendVerbruik_VM_2021\r\n",
+					",SUM(CAST(REPLACE(BenaderendVerbruik_VM_2021,',','.') as DECIMAL(16,4))) as BenaderendVerbruik_VM_2021_Norm\r\n",
+					",SUM(CAST(REPLACE(AantalToegangspunten_2021,',','.') as DECIMAL(16,4))) as AantalToegangspunten_2021\r\n",
+					"FROM AMR_Measurement_Reading\r\n",
+					"GROUP BY  Trekkingsdatum\r\n",
+					",COALESCE(TO_DATE(Peildatum, 'dd/MMM/yy') ,TO_DATE(Peildatum, 'MM/dd/yy'),TO_DATE(Peildatum, 'dd-MMM-yy'),Peildatum)\r\n",
+					", Markt\r\n",
+					", CAST(Leveringsadres_Postcode as INT)\r\n",
+					", Leveringsadres_Gemeente\r\n",
+					")\r\n",
+					",cte_DM as (\r\n",
+					"SELECT Trekkingsdatum\r\n",
+					",COALESCE(TO_DATE(Peildatum, 'dd/MMM/yy') ,TO_DATE(Peildatum, 'MM/dd/yy'),TO_DATE(Peildatum, 'dd-MMM-yy'),Peildatum) as Peildatum\r\n",
+					", Markt\r\n",
+					", CAST(Leveringsadres_Postcode as INT) Leveringsadres_Postcode\r\n",
+					", Leveringsadres_Gemeente\r\n",
+					",SUM(CAST(REPLACE(WerkelijkVerbruik_RM_2017,',','.') as DECIMAL(16,4))) as WerkelijkVerbruik_RM_2017\r\n",
+					",SUM(CAST(REPLACE(BenaderendVerbruik_VM_2017,',','.') as DECIMAL(16,4))) as BenaderendVerbruik_VM_2017\r\n",
+					",SUM(CAST(REPLACE(BenaderendVerbruik_VM_2017,',','.') as DECIMAL(16,4))) as BenaderendVerbruik_VM_2017_Norm\r\n",
+					",SUM(CAST(REPLACE(AantalToegangspunten_2017,',','.') as DECIMAL(16,4))) as AantalToegangspunten_2017\r\n",
+					",SUM(CAST(REPLACE(WerkelijkVerbruik_RM_2018,',','.') as DECIMAL(16,4))) as WerkelijkVerbruik_RM_2018\r\n",
+					",SUM(CAST(REPLACE(BenaderendVerbruik_VM_2018,',','.') as DECIMAL(16,4))) as BenaderendVerbruik_VM_2018\r\n",
+					",SUM(CAST(REPLACE(BenaderendVerbruik_VM_2018,',','.') as DECIMAL(16,4))) as BenaderendVerbruik_VM_2018_Norm\r\n",
+					",SUM(CAST(REPLACE(AantalToegangspunten_2018,',','.') as DECIMAL(16,4))) as AantalToegangspunten_2018\r\n",
+					",SUM(CAST(REPLACE(WerkelijkVerbruik_RM_2019,',','.') as DECIMAL(16,4))) as WerkelijkVerbruik_RM_2019\r\n",
+					",SUM(CAST(REPLACE(BenaderendVerbruik_VM_2019,',','.') as DECIMAL(16,4))) as BenaderendVerbruik_VM_2019\r\n",
+					",SUM(CAST(REPLACE(BenaderendVerbruik_VM_2019,',','.') as DECIMAL(16,4))) as BenaderendVerbruik_VM_2019_Norm\r\n",
+					",SUM(CAST(REPLACE(AantalToegangspunten_2019,',','.') as DECIMAL(16,4))) as AantalToegangspunten_2019\r\n",
+					",SUM(CAST(REPLACE(WerkelijkVerbruik_RM_2020,',','.') as DECIMAL(16,4))) as WerkelijkVerbruik_RM_2020\r\n",
+					",SUM(CAST(REPLACE(BenaderendVerbruik_VM_2020,',','.') as DECIMAL(16,4))) as BenaderendVerbruik_VM_2020\r\n",
+					",SUM(CAST(REPLACE(BenaderendVerbruik_VM_2020,',','.') as DECIMAL(16,4))) as BenaderendVerbruik_VM_2020_Norm\r\n",
+					",SUM(CAST(REPLACE(AantalToegangspunten_2020,',','.') as DECIMAL(16,4))) as AantalToegangspunten_2020\r\n",
+					",SUM(CAST(REPLACE(WerkelijkVerbruik_RM_2021,',','.') as DECIMAL(16,4))) as WerkelijkVerbruik_RM_2021\r\n",
+					",SUM(CAST(REPLACE(BenaderendVerbruik_VM_2021,',','.') as DECIMAL(16,4))) as BenaderendVerbruik_VM_2021\r\n",
+					",SUM(CAST(REPLACE(BenaderendVerbruik_VM_2021,',','.') as DECIMAL(16,4))) as BenaderendVerbruik_VM_2021_Norm\r\n",
+					",SUM(CAST(REPLACE(AantalToegangspunten_2021,',','.') as DECIMAL(16,4))) as AantalToegangspunten_2021\r\n",
+					"FROM DM_Measurement_Reading\r\n",
+					"GROUP BY  Trekkingsdatum\r\n",
+					",COALESCE(TO_DATE(Peildatum, 'dd/MMM/yy') ,TO_DATE(Peildatum, 'MM/dd/yy'),TO_DATE(Peildatum, 'dd-MMM-yy'),Peildatum)\r\n",
+					", Markt\r\n",
+					", CAST(Leveringsadres_Postcode as INT)\r\n",
+					", Leveringsadres_Gemeente\r\n",
+					")\r\n",
+					",CTE_JOIN as (\r\n",
+					"    SELECT \r\n",
+					"    A.Trekkingsdatum                        as AMR_Trekkingsdatum\r\n",
+					"    ,A.Peildatum                            as AMR_Peildatum\r\n",
+					"    ,A.Markt                                as AMR_Markt\r\n",
+					"    ,A.Leveringsadres_Postcode              as AMR_Leveringsadres_Postcode\r\n",
+					"    ,A.Leveringsadres_Gemeente              as AMR_Leveringsadres_Gemeente\r\n",
+					"    ,A.WerkelijkVerbruik_RM_2017            as AMR_WerkelijkVerbruik_RM_2017\r\n",
+					"    ,A.BenaderendVerbruik_VM_2017           as AMR_BenaderendVerbruik_VM_2017\r\n",
+					"    ,A.BenaderendVerbruik_VM_2017_Norm      as AMR_BenaderendVerbruik_VM_2017_Norm\r\n",
+					"    ,A.AantalToegangspunten_2017            as AMR_AantalToegangspunten_2017\r\n",
+					"    ,A.WerkelijkVerbruik_RM_2018            as AMR_WerkelijkVerbruik_RM_2018\r\n",
+					"    ,A.BenaderendVerbruik_VM_2018           as AMR_BenaderendVerbruik_VM_2018\r\n",
+					"    ,A.BenaderendVerbruik_VM_2018_Norm      as AMR_BenaderendVerbruik_VM_2018_Norm\r\n",
+					"    ,A.AantalToegangspunten_2018            as AMR_AantalToegangspunten_2018\r\n",
+					"    ,A.WerkelijkVerbruik_RM_2019            as AMR_WerkelijkVerbruik_RM_2019\r\n",
+					"    ,A.BenaderendVerbruik_VM_2019           as AMR_BenaderendVerbruik_VM_2019\r\n",
+					"    ,A.BenaderendVerbruik_VM_2019_Norm      as AMR_BenaderendVerbruik_VM_2019_Norm\r\n",
+					"    ,A.AantalToegangspunten_2019            as AMR_AantalToegangspunten_2019\r\n",
+					"    ,A.WerkelijkVerbruik_RM_2020            as AMR_WerkelijkVerbruik_RM_2020\r\n",
+					"    ,A.BenaderendVerbruik_VM_2020           as AMR_BenaderendVerbruik_VM_2020\r\n",
+					"    ,A.BenaderendVerbruik_VM_2020_Norm      as AMR_BenaderendVerbruik_VM_2020_Norm\r\n",
+					"    ,A.AantalToegangspunten_2020            as AMR_AantalToegangspunten_2020\r\n",
+					"    ,A.WerkelijkVerbruik_RM_2021            as AMR_WerkelijkVerbruik_RM_2021\r\n",
+					"    ,A.BenaderendVerbruik_VM_2021           as AMR_BenaderendVerbruik_VM_2021\r\n",
+					"    ,A.BenaderendVerbruik_VM_2021_Norm      as AMR_BenaderendVerbruik_VM_2021_Norm\r\n",
+					"    ,A.AantalToegangspunten_2021            as AMR_AantalToegangspunten_2021\r\n",
+					"    ,(CAST(REPLACE(A.WerkelijkVerbruik_RM_2017,',','.') as DECIMAL(16,4))+CAST(REPLACE(A.WerkelijkVerbruik_RM_2018,',','.') as DECIMAL(16,4))+CAST(REPLACE(A.WerkelijkVerbruik_RM_2019,',','.') as DECIMAL(16,4))+CAST(REPLACE(A.WerkelijkVerbruik_RM_2020,',','.') as DECIMAL(16,4))+CAST(REPLACE(A.WerkelijkVerbruik_RM_2021,',','.') as DECIMAL(16,4)))/5 as AMR_Gemiddeld_WerkelijkVerbruik\r\n",
+					"    ,(CAST(REPLACE(A.BenaderendVerbruik_VM_2017,',','.') as DECIMAL(16,4))+CAST(REPLACE(A.BenaderendVerbruik_VM_2018,',','.') as DECIMAL(16,4))+CAST(REPLACE(A.BenaderendVerbruik_VM_2019,',','.') as DECIMAL(16,4))+CAST(REPLACE(A.BenaderendVerbruik_VM_2020,',','.') as DECIMAL(16,4))+CAST(REPLACE(A.BenaderendVerbruik_VM_2021,',','.') as DECIMAL(16,4)))/5 as AMR_Gemiddeld_BenaderendVerbruik\r\n",
+					"    ,(CAST(REPLACE(A.BenaderendVerbruik_VM_2017,',','.') as DECIMAL(16,4))+CAST(REPLACE(A.BenaderendVerbruik_VM_2018,',','.') as DECIMAL(16,4))+CAST(REPLACE(A.BenaderendVerbruik_VM_2019,',','.') as DECIMAL(16,4))+CAST(REPLACE(A.BenaderendVerbruik_VM_2020,',','.') as DECIMAL(16,4))+CAST(REPLACE(A.BenaderendVerbruik_VM_2021,',','.') as DECIMAL(16,4)))/5 as AMR_Gemiddeld_BenaderendVerbruik_Norm\r\n",
+					"    ,CAST(REPLACE(A.AantalToegangspunten_2017,',','.') as DECIMAL(16,4))+CAST(REPLACE(A.AantalToegangspunten_2018,',','.') as DECIMAL(16,4))+CAST(REPLACE(A.AantalToegangspunten_2019,',','.') as DECIMAL(16,4))+CAST(REPLACE(A.AantalToegangspunten_2020,',','.') as DECIMAL(16,4))+CAST(REPLACE(A.AantalToegangspunten_2021,',','.') as DECIMAL(16,4)) as AMR_Total_AantalToegangspunten\r\n",
+					"    ,B.Trekkingsdatum                       as DM_Trekkingsdatum\r\n",
+					"    ,B.Peildatum                            as DM_Peildatum\r\n",
+					"    ,B.Markt                                as DM_Markt\r\n",
+					"    ,B.Leveringsadres_Postcode              as DM_Leveringsadres_Postcode\r\n",
+					"    ,B.Leveringsadres_Gemeente              as DM_Leveringsadres_Gemeente\r\n",
+					"    ,B.WerkelijkVerbruik_RM_2017            as DM_WerkelijkVerbruik_RM_2017\r\n",
+					"    ,B.BenaderendVerbruik_VM_2017           as DM_BenaderendVerbruik_VM_2017\r\n",
+					"    ,B.BenaderendVerbruik_VM_2017_Norm      as DM_BenaderendVerbruik_VM_2017_Norm\r\n",
+					"    ,B.AantalToegangspunten_2017            as DM_AantalToegangspunten_2017\r\n",
+					"    ,B.WerkelijkVerbruik_RM_2018            as DM_WerkelijkVerbruik_RM_2018\r\n",
+					"    ,B.BenaderendVerbruik_VM_2018           as DM_BenaderendVerbruik_VM_2018\r\n",
+					"    ,B.BenaderendVerbruik_VM_2018_Norm      as DM_BenaderendVerbruik_VM_2018_Norm\r\n",
+					"    ,B.AantalToegangspunten_2018            as DM_AantalToegangspunten_2018\r\n",
+					"    ,B.WerkelijkVerbruik_RM_2019            as DM_WerkelijkVerbruik_RM_2019\r\n",
+					"    ,B.BenaderendVerbruik_VM_2019           as DM_BenaderendVerbruik_VM_2019\r\n",
+					"    ,B.BenaderendVerbruik_VM_2019_Norm      as DM_BenaderendVerbruik_VM_2019_Norm\r\n",
+					"    ,B.AantalToegangspunten_2019            as DM_AantalToegangspunten_2019\r\n",
+					"    ,B.WerkelijkVerbruik_RM_2020            as DM_WerkelijkVerbruik_RM_2020\r\n",
+					"    ,B.BenaderendVerbruik_VM_2020           as DM_BenaderendVerbruik_VM_2020\r\n",
+					"    ,B.BenaderendVerbruik_VM_2020_Norm      as DM_BenaderendVerbruik_VM_2020_Norm\r\n",
+					"    ,B.AantalToegangspunten_2020            as DM_AantalToegangspunten_2020\r\n",
+					"    ,B.WerkelijkVerbruik_RM_2021            as DM_WerkelijkVerbruik_RM_2021\r\n",
+					"    ,B.BenaderendVerbruik_VM_2021           as DM_BenaderendVerbruik_VM_2021\r\n",
+					"    ,B.BenaderendVerbruik_VM_2021_Norm      as DM_BenaderendVerbruik_VM_2021_Norm\r\n",
+					"    ,B.AantalToegangspunten_2021            as DM_AantalToegangspunten_2021\r\n",
+					"    ,(CAST(REPLACE(B.WerkelijkVerbruik_RM_2017,',','.') as DECIMAL(16,4))+CAST(REPLACE(B.WerkelijkVerbruik_RM_2018,',','.') as DECIMAL(16,4))+CAST(REPLACE(B.WerkelijkVerbruik_RM_2019,',','.') as DECIMAL(16,4))+CAST(REPLACE(B.WerkelijkVerbruik_RM_2020,',','.') as DECIMAL(16,4))+CAST(REPLACE(B.WerkelijkVerbruik_RM_2021,',','.') as DECIMAL(16,4)))/5 as DM_Gemiddeld_WerkelijkVerbruik\r\n",
+					"    ,(CAST(REPLACE(B.BenaderendVerbruik_VM_2017,',','.') as DECIMAL(16,4))+CAST(REPLACE(B.BenaderendVerbruik_VM_2018,',','.') as DECIMAL(16,4))+CAST(REPLACE(B.BenaderendVerbruik_VM_2019,',','.') as DECIMAL(16,4))+CAST(REPLACE(B.BenaderendVerbruik_VM_2020,',','.') as DECIMAL(16,4))+CAST(REPLACE(B.BenaderendVerbruik_VM_2021,',','.') as DECIMAL(16,4)))/5 as DM_Gemiddeld_BenaderendVerbruik\r\n",
+					"    ,(CAST(REPLACE(B.BenaderendVerbruik_VM_2017,',','.') as DECIMAL(16,4))+CAST(REPLACE(B.BenaderendVerbruik_VM_2018,',','.') as DECIMAL(16,4))+CAST(REPLACE(B.BenaderendVerbruik_VM_2019,',','.') as DECIMAL(16,4))+CAST(REPLACE(B.BenaderendVerbruik_VM_2020,',','.') as DECIMAL(16,4))+CAST(REPLACE(B.BenaderendVerbruik_VM_2021,',','.') as DECIMAL(16,4)))/5 as DM_Gemiddeld_BenaderendVerbruik_Norm\r\n",
+					"    ,CAST(REPLACE(B.AantalToegangspunten_2017,',','.') as DECIMAL(16,4))+CAST(REPLACE(B.AantalToegangspunten_2018,',','.') as DECIMAL(16,4))+CAST(REPLACE(B.AantalToegangspunten_2019,',','.') as DECIMAL(16,4))+CAST(REPLACE(B.AantalToegangspunten_2020,',','.') as DECIMAL(16,4))+CAST(REPLACE(B.AantalToegangspunten_2021,',','.') as DECIMAL(16,4)) as DM_Total_AantalToegangspunten\r\n",
+					"    FROM CTE_AMR A\r\n",
+					"    FULL OUTER JOIN CTE_DM B ON A.Markt=B.Markt \r\n",
+					"    AND A.Leveringsadres_Postcode=B.Leveringsadres_Postcode\r\n",
+					"    AND A.Leveringsadres_Gemeente=B.Leveringsadres_Gemeente\r\n",
+					"    AND A.Peildatum=B.Peildatum\r\n",
+					")\r\n",
+					"Select * \r\n",
+					"FROM CTE_AMR\r\n",
+					"LIMIT 5"
+				],
+				"execution_count": 41
 			},
 			{
 				"cell_type": "code",
@@ -622,7 +780,7 @@
 					"FROM CTE_JOIN\r\n",
 					"LIMIT 5"
 				],
-				"execution_count": 72
+				"execution_count": 42
 			},
 			{
 				"cell_type": "code",
