@@ -5973,6 +5973,330 @@
 			},
 			"dependsOn": [],
 			"location": "northeurope"
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/PySpark_Fact_Dimension_Creation')]",
+			"type": "Microsoft.Synapse/workspaces/notebooks",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"description": "Load Data From Blob To Synapse SQL Pool",
+				"folder": {
+					"name": "Master Pipeline Notebooks"
+				},
+				"nbformat": 4,
+				"nbformat_minor": 2,
+				"bigDataPool": {
+					"referenceName": "devpool",
+					"type": "BigDataPoolReference"
+				},
+				"sessionProperties": {
+					"driverMemory": "28g",
+					"driverCores": 4,
+					"executorMemory": "28g",
+					"executorCores": 4,
+					"numExecutors": 2,
+					"runAsWorkspaceSystemIdentity": false,
+					"conf": {
+						"spark.dynamicAllocation.enabled": "false",
+						"spark.dynamicAllocation.minExecutors": "2",
+						"spark.dynamicAllocation.maxExecutors": "2",
+						"spark.autotune.trackingId": "543105b7-cc6e-4ff4-9fda-e6a5b2518bb7"
+					}
+				},
+				"metadata": {
+					"saveOutput": true,
+					"enableDebugMode": false,
+					"kernelspec": {
+						"name": "synapse_pyspark",
+						"display_name": "Synapse PySpark"
+					},
+					"language_info": {
+						"name": "python"
+					},
+					"a365ComputeOptions": {
+						"id": "/subscriptions/87083017-2c2b-47c8-8ea7-b4d36686fc97/resourceGroups/Dev_ResourceGroup/providers/Microsoft.Synapse/workspaces/cmdevsynapse/bigDataPools/devpool",
+						"name": "devpool",
+						"type": "Spark",
+						"endpoint": "https://cmdevsynapse.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/devpool",
+						"auth": {
+							"type": "AAD",
+							"authResource": "https://dev.azuresynapse.net"
+						},
+						"sparkVersion": "3.3",
+						"nodeCount": 3,
+						"cores": 4,
+						"memory": 28,
+						"automaticScaleJobs": false
+					},
+					"sessionKeepAliveTimeout": 30
+				},
+				"cells": [
+					{
+						"cell_type": "code",
+						"metadata": {
+							"microsoft": {
+								"language": "python"
+							}
+						},
+						"source": [
+							"%%pyspark\r\n",
+							"# Imporing the libraries\r\n",
+							"from pyspark.sql import SparkSession\r\n",
+							"from pyspark.sql.functions import lit,col,sum,mean,regexp_replace,to_date,count,row_number\r\n",
+							"from pyspark.sql.types import DateType\r\n",
+							"from pyspark.sql.window import Window\r\n",
+							"\r\n",
+							"# Creating a spark session and connection to blob storage account\r\n",
+							"blob_account_name = \"rawdevstorage\"\r\n",
+							"blob_container_name = \"output\"\r\n",
+							"sc = SparkSession.builder.getOrCreate()\r\n",
+							"token_library = sc._jvm.com.microsoft.azure.synapse.tokenlibrary.TokenLibrary\r\n",
+							"blob_sas_token = token_library.getConnectionString(\"cmdevsynapse-WorkspaceDefaultStorage\")\r\n",
+							"spark.conf.set(\r\n",
+							"    'fs.azure.sas.%s.%s.blob.core.windows.net' % (blob_container_name, blob_account_name),\r\n",
+							"    blob_sas_token)"
+						],
+						"outputs": [],
+						"execution_count": 65
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Define the path to the Delta table\r\n",
+							"delta_table_path = 'abfss://output@rawdevstorage.dfs.core.windows.net/Electricity_Measurement_pyspark_join'\r\n",
+							"\r\n",
+							"# Read Delta table into a DataFrame\r\n",
+							"reference_table = spark.read.format(\"delta\").load(delta_table_path)"
+						],
+						"outputs": [],
+						"execution_count": 66
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"collapsed": false
+						},
+						"source": [
+							"# Show the contents of the DataFrame\r\n",
+							"display(reference_table.limit(5))"
+						],
+						"outputs": [],
+						"execution_count": 69
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Creating a group by for Markt dimension\r\n",
+							"grouped_reference_table_markt_dimension = reference_table.groupBy(\"DM_Markt\")\r\n",
+							"markt_dimension = grouped_reference_table_markt_dimension.agg(count(\"DM_Trekkingsdatum\"))\r\n",
+							"\r\n",
+							"grouped_reference_table_date_dimension_1 = reference_table.groupBy(\"DM_Trekkingsdatum\")\r\n",
+							"date_dimension_1 = grouped_reference_table_date_dimension_1.agg(count(\"DM_Trekkingsdatum\"))\r\n",
+							"\r\n",
+							"grouped_reference_table_date_dimension_2 = reference_table.groupBy(\"DM_Peildatum\")\r\n",
+							"date_dimension_2 = grouped_reference_table_date_dimension_2.agg(count(\"DM_Trekkingsdatum\"))\r\n",
+							"\r\n",
+							"# Exclude the undefined/null value\r\n",
+							"markt_dimension = markt_dimension.filter(col(\"DM_Markt\").isNotNull())\r\n",
+							"date_dimension_1 = date_dimension_1.filter(col(\"DM_Trekkingsdatum\").isNotNull())\r\n",
+							"date_dimension_2 = date_dimension_2.filter(col(\"DM_Peildatum\").isNotNull())\r\n",
+							"\r\n",
+							"# Rename columns\r\n",
+							"markt_dimension = markt_dimension.withColumnRenamed(\"DM_Markt\", \"Markt_Name\") \\\r\n",
+							".withColumnRenamed(\"count(DM_Trekkingsdatum)\", \"count\")\r\n",
+							"\r\n",
+							"date_dimension_1 = date_dimension_1.withColumnRenamed(\"DM_Trekkingsdatum\", \"Date\") \\\r\n",
+							".withColumnRenamed(\"count(DM_Trekkingsdatum)\", \"count\")\r\n",
+							"\r\n",
+							"date_dimension_2 = date_dimension_2.withColumnRenamed(\"DM_Peildatum\", \"Date\") \\\r\n",
+							".withColumnRenamed(\"count(DM_Trekkingsdatum)\", \"count\")\r\n",
+							"\r\n",
+							"# Selecting specific columns\r\n",
+							"date_dimension_1 =date_dimension_1.select(\"Date\")\r\n",
+							"date_dimension_2 =date_dimension_2.select(\"Date\")\r\n",
+							"\r\n",
+							"\r\n",
+							"# Unioning the date dimension and removing the duplicates\r\n",
+							"date_dimension = date_dimension_1.union(date_dimension_2).distinct()"
+						],
+						"outputs": [],
+						"execution_count": 90
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Define the window specification for the grouping\r\n",
+							"markt_dimension_window_spec = Window.orderBy(markt_dimension[\"Markt_Name\"].desc()) #Window.partitionBy(\"DM_Markt\").orderBy(\"DM_Markt\")\r\n",
+							"date_dimension_window_spec = Window.orderBy(date_dimension[\"Date\"].desc())"
+						],
+						"outputs": [],
+						"execution_count": 91
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"collapsed": false
+						},
+						"source": [
+							"# Add an auto-incrementing column to the DataFrame within the group\r\n",
+							"markt_dimension = markt_dimension.withColumn(\"Markt_ID\", row_number().over(markt_dimension_window_spec))\r\n",
+							"date_dimension = date_dimension.withColumn(\"Date_ID\", row_number().over(date_dimension_window_spec))\r\n",
+							"\r\n",
+							"# Selecting specific columns and Rearranging the columns\r\n",
+							"markt_dimension =markt_dimension.select(\"Markt_ID\", \"Markt_Name\")\r\n",
+							"\r\n",
+							"# Displaying the Markt markt_dimension\r\n",
+							"display(markt_dimension)"
+						],
+						"outputs": [],
+						"execution_count": 92
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"collapsed": false
+						},
+						"source": [
+							"display(date_dimension)"
+						],
+						"outputs": [],
+						"execution_count": 93
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"collapsed": false
+						},
+						"source": [
+							"# Writing the markt dimension to delta file\r\n",
+							"file_path = 'abfss://goldlayer@rawdevstorage.dfs.core.windows.net/PySparkDimensions/Markt_Dimension'\r\n",
+							"write_format=\"delta\"\r\n",
+							"#partition_by=[\"DM_Peildatum\"]\r\n",
+							"mode_ = \"overwrite\" #append\r\n",
+							"\r\n",
+							"markt_dimension\\\r\n",
+							".write\\\r\n",
+							".option(\"header\", \"true\")\\\r\n",
+							".option(\"overwriteSchema\", \"true\")\\\r\n",
+							".format(write_format)\\\r\n",
+							".mode(mode_)\\\r\n",
+							".save(file_path)\r\n",
+							"\r\n",
+							"#.partitionBy(partition_by)\\"
+						],
+						"outputs": [],
+						"execution_count": 64
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							""
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							""
+						],
+						"outputs": [],
+						"execution_count": null
+					}
+				]
+			},
+			"dependsOn": []
 		}
 	]
 }
