@@ -3620,7 +3620,7 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "a75cf2ff-8d3b-4c1f-a58e-4a41475ca735"
+						"spark.autotune.trackingId": "7eb3d156-3b26-4103-bd57-05799f3caf6e"
 					}
 				},
 				"metadata": {
@@ -3645,7 +3645,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 4,
-						"memory": 28
+						"memory": 28,
+						"automaticScaleJobs": false
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -6000,7 +6001,7 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "543105b7-cc6e-4ff4-9fda-e6a5b2518bb7"
+						"spark.autotune.trackingId": "55e41e66-a7e3-41b8-88c4-6f40bacf13ba"
 					}
 				},
 				"metadata": {
@@ -6042,9 +6043,12 @@
 							"%%pyspark\r\n",
 							"# Imporing the libraries\r\n",
 							"from pyspark.sql import SparkSession\r\n",
-							"from pyspark.sql.functions import lit,col,sum,mean,regexp_replace,to_date,count,row_number\r\n",
-							"from pyspark.sql.types import DateType\r\n",
+							"from pyspark.sql.functions import lit,col,sum,mean,regexp_replace,to_date,count,row_number,unix_timestamp\r\n",
+							"from pyspark.sql.types import DateType,TimestampType\r\n",
 							"from pyspark.sql.window import Window\r\n",
+							"\r\n",
+							"# Setting the flag to handle the date formats\r\n",
+							"spark.sql(\"set spark.sql.legacy.timeParserPolicy=LEGACY\")\r\n",
 							"\r\n",
 							"# Creating a spark session and connection to blob storage account\r\n",
 							"blob_account_name = \"rawdevstorage\"\r\n",
@@ -6054,10 +6058,11 @@
 							"blob_sas_token = token_library.getConnectionString(\"cmdevsynapse-WorkspaceDefaultStorage\")\r\n",
 							"spark.conf.set(\r\n",
 							"    'fs.azure.sas.%s.%s.blob.core.windows.net' % (blob_container_name, blob_account_name),\r\n",
-							"    blob_sas_token)"
+							"    blob_sas_token)\r\n",
+							""
 						],
 						"outputs": [],
-						"execution_count": 65
+						"execution_count": 124
 					},
 					{
 						"cell_type": "code",
@@ -6080,7 +6085,7 @@
 							"reference_table = spark.read.format(\"delta\").load(delta_table_path)"
 						],
 						"outputs": [],
-						"execution_count": 66
+						"execution_count": 125
 					},
 					{
 						"cell_type": "code",
@@ -6101,7 +6106,7 @@
 							"display(reference_table.limit(5))"
 						],
 						"outputs": [],
-						"execution_count": 69
+						"execution_count": 126
 					},
 					{
 						"cell_type": "code",
@@ -6146,12 +6151,67 @@
 							"date_dimension_1 =date_dimension_1.select(\"Date\")\r\n",
 							"date_dimension_2 =date_dimension_2.select(\"Date\")\r\n",
 							"\r\n",
-							"\r\n",
 							"# Unioning the date dimension and removing the duplicates\r\n",
 							"date_dimension = date_dimension_1.union(date_dimension_2).distinct()"
 						],
 						"outputs": [],
-						"execution_count": 90
+						"execution_count": 127
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# convert the date column to datetime\r\n",
+							"date_dimension = date_dimension.withColumn(\"Date_Standard\", to_date(date_dimension[\"Date\"], \"tryFormats\").cast(DateType()))\r\n",
+							"\r\n",
+							"# Example date pattern: \"yyyy-MM-dd HH:mm:ss\"\r\n",
+							"date_pattern = \"yyyy-MM-dd HH:mm:ss\"\r\n",
+							"\r\n",
+							"date_dimension = date_dimension.withColumn(\"timestamp_col\", unix_timestamp(\"Date_Standard\", date_pattern).cast(TimestampType()))\r\n",
+							"date_dimension = date_dimension.drop(\"Date_Standard\")\r\n",
+							"\r\n",
+							"# Select the first row of the DataFrame and extract the last column value\r\n",
+							"# last_value = date_dimension.first()[-1]\r\n",
+							"# # Print the last column value to the console\r\n",
+							"# if last_value==None:\r\n",
+							"#     date_dimension = date_dimension.withColumn(\"Date_Standard\", to_date(date_dimension[\"Date\"], \"MM/dd/yy\").cast(DateType()))\r\n",
+							"# last_value = date_dimension.first()[-1]\r\n",
+							"# if last_value==None:\r\n",
+							"#     date_dimension = date_dimension.withColumn(\"Date_Standard\", to_date(date_dimension[\"Date\"], \"dd-MMM-yy\").cast(DateType()))\r\n",
+							""
+						],
+						"outputs": [],
+						"execution_count": 128
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"collapsed": false
+						},
+						"source": [
+							"date_dimension.show()"
+						],
+						"outputs": [],
+						"execution_count": 130
 					},
 					{
 						"cell_type": "code",
