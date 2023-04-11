@@ -22,7 +22,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "8dc81a09-bcce-4ea6-b2c0-a8b216fadf48"
+				"spark.autotune.trackingId": "95b0acd5-adf6-4281-a3a3-b651ed6d19f1"
 			}
 		},
 		"metadata": {
@@ -62,13 +62,15 @@
 				},
 				"source": [
 					"%%pyspark\r\n",
+					"# Imporing the libraries\r\n",
+					"from pyspark.sql import SparkSession\r\n",
+					"from pyspark.sql.functions import lit,col,sum,mean,regexp_replace,to_date,count,row_number\r\n",
+					"from pyspark.sql.types import DateType\r\n",
+					"from pyspark.sql.window import Window\r\n",
+					"\r\n",
 					"# Creating a spark session and connection to blob storage account\r\n",
 					"blob_account_name = \"rawdevstorage\"\r\n",
 					"blob_container_name = \"output\"\r\n",
-					"from pyspark.sql import SparkSession\r\n",
-					"from pyspark.sql.functions import lit,col,sum,mean,regexp_replace,to_date\r\n",
-					"from pyspark.sql.types import DateType\r\n",
-					"\r\n",
 					"sc = SparkSession.builder.getOrCreate()\r\n",
 					"token_library = sc._jvm.com.microsoft.azure.synapse.tokenlibrary.TokenLibrary\r\n",
 					"blob_sas_token = token_library.getConnectionString(\"cmdevsynapse-WorkspaceDefaultStorage\")\r\n",
@@ -76,7 +78,7 @@
 					"    'fs.azure.sas.%s.%s.blob.core.windows.net' % (blob_container_name, blob_account_name),\r\n",
 					"    blob_sas_token)"
 				],
-				"execution_count": 1
+				"execution_count": 65
 			},
 			{
 				"cell_type": "code",
@@ -92,125 +94,13 @@
 					}
 				},
 				"source": [
-					"# Create a dynamic column delimiter using regex for AMR\r\n",
-					"import re\r\n",
-					"def f_get_delimiter (source_path):\r\n",
-					"    try:\r\n",
-					"        headerlist = spark.sparkContext.textFile(source_path).take(1)\r\n",
-					"        header_str = ''.join(headerlist)\r\n",
+					"# Define the path to the Delta table\r\n",
+					"delta_table_path = 'abfss://output@rawdevstorage.dfs.core.windows.net/Electricity_Measurement_pyspark_join'\r\n",
 					"\r\n",
-					"        results= re.search(\"(,|;|\\\\|)\",header_str)\r\n",
-					"        return results.group()\r\n",
-					"    except Exception as err:\r\n",
-					"        print(\"Error Occured \", str(err))\r\n",
-					"amr_Filename = 'abfss://rawdata@rawdevstorage.dfs.core.windows.net/%s/P6523_Verbruiken_AMR_GEMEENTE_%s.csv' % (FolderName, FolderName_Without_Separator)\r\n",
-					"amr_delimiter_type = (f_get_delimiter(amr_Filename))"
+					"# Read Delta table into a DataFrame\r\n",
+					"reference_table = spark.read.format(\"delta\").load(delta_table_path)"
 				],
-				"execution_count": 58
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"\r\n",
-					"# Reading the first File (Analogue Reading File)\r\n",
-					"FileName = 'abfss://rawdata@rawdevstorage.dfs.core.windows.net/%s/P6523_Verbruiken_AMR_GEMEENTE_%s.csv' % (FolderName,FolderName_Without_Separator)\r\n",
-					"df1 = spark.read.load(FileName, format='csv', header=True,delimiter=amr_delimiter_type,inferSchema=True)\r\n",
-					"\r\n",
-					"# Remove duplicates\r\n",
-					"df1 = df1.dropDuplicates()\r\n",
-					"\r\n",
-					"# Selecting the required columns\r\n",
-					"selected_df1 = df1.select('Trekkingsdatum', 'Peildatum', 'Markt', 'Leveringsadres_Postcode', 'Leveringsadres_Gemeente'\\\r\n",
-					", 'WerkelijkVerbruik_RM_2017', 'BenaderendVerbruik_VM_2017', 'AantalToegangspunten_2017'\\\r\n",
-					", 'WerkelijkVerbruik_RM_2018', 'BenaderendVerbruik_VM_2018', 'AantalToegangspunten_2018'\\\r\n",
-					", 'WerkelijkVerbruik_RM_2019', 'BenaderendVerbruik_VM_2019', 'AantalToegangspunten_2019'\\\r\n",
-					", 'WerkelijkVerbruik_RM_2020', 'BenaderendVerbruik_VM_2020', 'AantalToegangspunten_2020'\\\r\n",
-					", 'WerkelijkVerbruik_RM_2021', 'BenaderendVerbruik_VM_2021', 'AantalToegangspunten_2021')\r\n",
-					"\r\n",
-					"# Adding the additional calculated/custom columns\r\n",
-					"selected_df1 = selected_df1.withColumn(\"MeasurementType\", lit(\"Digital\"))\r\n",
-					"#selected_df1 = selected_df1.withColumn(\"MeasurementYear\", lit(year))\r\n",
-					"#selected_df1 = selected_df1.withColumn(\"MeasurementMonth\", lit(month))\r\n",
-					"selected_df1 = selected_df1.withColumn(\"MeasurementDate\", to_date(selected_df1[\"Peildatum\"], \"dd/MMM/yy\").cast(DateType()))\r\n",
-					"\r\n",
-					"# Select the first row of the DataFrame and extract the last column value\r\n",
-					"last_value = selected_df1.first()[-1]\r\n",
-					"\r\n",
-					"# Print the last column value to the console\r\n",
-					"if last_value==None:\r\n",
-					"    selected_df1 = selected_df1.drop(\"MeasurementDate\")\r\n",
-					"    selected_df1 = selected_df1.withColumn(\"MeasurementDate\", to_date(selected_df1[\"Peildatum\"], \"MM/dd/yy\").cast(DateType()))\r\n",
-					"\r\n",
-					"last_value = selected_df1.first()[-1]\r\n",
-					"if last_value==None:\r\n",
-					"    selected_df1 = selected_df1.drop(\"MeasurementDate\")\r\n",
-					"    selected_df1 = selected_df1.withColumn(\"MeasurementDate\", to_date(selected_df1[\"Peildatum\"], \"dd-MMM-yy\").cast(DateType()))\r\n",
-					"\r\n",
-					"# Drop the original col2 column\r\n",
-					"selected_df1 = selected_df1.drop(\"Peildatum\")\r\n",
-					"\r\n",
-					"# Rename the new_col column to col2\r\n",
-					"selected_df1 = selected_df1.withColumnRenamed(\"MeasurementDate\", \"Peildatum\")\r\n",
-					"\r\n",
-					"selected_df1 = selected_df1.withColumn(\"BenaderendVerbruik_VM_2017_Norm\", col(\"BenaderendVerbruik_VM_2017\"))\r\n",
-					"selected_df1 = selected_df1.withColumn(\"BenaderendVerbruik_VM_2018_Norm\", col(\"BenaderendVerbruik_VM_2018\"))\r\n",
-					"selected_df1 = selected_df1.withColumn(\"BenaderendVerbruik_VM_2019_Norm\", col(\"BenaderendVerbruik_VM_2019\"))\r\n",
-					"selected_df1 = selected_df1.withColumn(\"BenaderendVerbruik_VM_2020_Norm\", col(\"BenaderendVerbruik_VM_2020\"))\r\n",
-					"selected_df1 = selected_df1.withColumn(\"BenaderendVerbruik_VM_2021_Norm\", col(\"BenaderendVerbruik_VM_2021\"))\r\n",
-					"\r\n",
-					"selected_df1 = selected_df1.withColumn('WerkelijkVerbruik_RM_2017', regexp_replace(selected_df1['WerkelijkVerbruik_RM_2017'], ',', '.'))\r\n",
-					"selected_df1 = selected_df1.withColumn('WerkelijkVerbruik_RM_2018', regexp_replace(selected_df1['WerkelijkVerbruik_RM_2018'], ',', '.'))\r\n",
-					"selected_df1 = selected_df1.withColumn('WerkelijkVerbruik_RM_2019', regexp_replace(selected_df1['WerkelijkVerbruik_RM_2019'], ',', '.'))\r\n",
-					"selected_df1 = selected_df1.withColumn('WerkelijkVerbruik_RM_2020', regexp_replace(selected_df1['WerkelijkVerbruik_RM_2020'], ',', '.'))\r\n",
-					"selected_df1 = selected_df1.withColumn('WerkelijkVerbruik_RM_2021', regexp_replace(selected_df1['WerkelijkVerbruik_RM_2021'], ',', '.'))\r\n",
-					"selected_df1 = selected_df1.withColumn('Gemiddeld_WerkelijkVerbruik', ((selected_df1['WerkelijkVerbruik_RM_2017']\\\r\n",
-					"+ selected_df1['WerkelijkVerbruik_RM_2018'] + selected_df1['WerkelijkVerbruik_RM_2019'] + selected_df1['WerkelijkVerbruik_RM_2020']\\\r\n",
-					"+ selected_df1['WerkelijkVerbruik_RM_2021'])/5))\r\n",
-					"\r\n",
-					"selected_df1 = selected_df1.withColumn('BenaderendVerbruik_VM_2017', regexp_replace(selected_df1['BenaderendVerbruik_VM_2017'], ',', '.'))\r\n",
-					"selected_df1 = selected_df1.withColumn('BenaderendVerbruik_VM_2018', regexp_replace(selected_df1['BenaderendVerbruik_VM_2018'], ',', '.'))\r\n",
-					"selected_df1 = selected_df1.withColumn('BenaderendVerbruik_VM_2019', regexp_replace(selected_df1['BenaderendVerbruik_VM_2019'], ',', '.'))\r\n",
-					"selected_df1 = selected_df1.withColumn('BenaderendVerbruik_VM_2020', regexp_replace(selected_df1['BenaderendVerbruik_VM_2020'], ',', '.'))\r\n",
-					"selected_df1 = selected_df1.withColumn('BenaderendVerbruik_VM_2021', regexp_replace(selected_df1['BenaderendVerbruik_VM_2021'], ',', '.'))\r\n",
-					"selected_df1 = selected_df1.withColumn('Gemiddeld_BenaderendVerbruik', ((selected_df1['BenaderendVerbruik_VM_2017']\\\r\n",
-					"+ selected_df1['BenaderendVerbruik_VM_2018'] + selected_df1['BenaderendVerbruik_VM_2019'] + selected_df1['BenaderendVerbruik_VM_2020']\\\r\n",
-					"+ selected_df1['BenaderendVerbruik_VM_2021'])/5))\r\n",
-					"\r\n",
-					"selected_df1 = selected_df1.withColumn('BenaderendVerbruik_VM_2017_Norm', regexp_replace(selected_df1['BenaderendVerbruik_VM_2017_Norm'], ',', '.'))\r\n",
-					"selected_df1 = selected_df1.withColumn('BenaderendVerbruik_VM_2018_Norm', regexp_replace(selected_df1['BenaderendVerbruik_VM_2018_Norm'], ',', '.'))\r\n",
-					"selected_df1 = selected_df1.withColumn('BenaderendVerbruik_VM_2019_Norm', regexp_replace(selected_df1['BenaderendVerbruik_VM_2019_Norm'], ',', '.'))\r\n",
-					"selected_df1 = selected_df1.withColumn('BenaderendVerbruik_VM_2020_Norm', regexp_replace(selected_df1['BenaderendVerbruik_VM_2020_Norm'], ',', '.'))\r\n",
-					"selected_df1 = selected_df1.withColumn('BenaderendVerbruik_VM_2021_Norm', regexp_replace(selected_df1['BenaderendVerbruik_VM_2021_Norm'], ',', '.'))\r\n",
-					"selected_df1 = selected_df1.withColumn('Gemiddeld_BenaderendVerbruik_Norm', ((selected_df1['BenaderendVerbruik_VM_2017_Norm']\\\r\n",
-					"+ selected_df1['BenaderendVerbruik_VM_2018_Norm'] + selected_df1['BenaderendVerbruik_VM_2019_Norm'] + selected_df1['BenaderendVerbruik_VM_2020_Norm']\\\r\n",
-					"+ selected_df1['BenaderendVerbruik_VM_2021_Norm'])/5))\r\n",
-					"\r\n",
-					"selected_df1 = selected_df1.withColumn('Total_AantalToegangspunten', selected_df1['AantalToegangspunten_2017']\\\r\n",
-					"+ selected_df1['AantalToegangspunten_2018'] + selected_df1['AantalToegangspunten_2019'] + selected_df1['AantalToegangspunten_2020']\\\r\n",
-					"+ selected_df1['AantalToegangspunten_2021'])\r\n",
-					"\r\n",
-					"\r\n",
-					"# Rearrange the columns\r\n",
-					"selected_df1 = selected_df1.select('Trekkingsdatum', 'Peildatum', 'Markt', 'Leveringsadres_Postcode', 'Leveringsadres_Gemeente', 'WerkelijkVerbruik_RM_2017'\\\r\n",
-					", 'BenaderendVerbruik_VM_2017', 'BenaderendVerbruik_VM_2017_Norm', 'AantalToegangspunten_2017', 'WerkelijkVerbruik_RM_2018', 'BenaderendVerbruik_VM_2018'\\\r\n",
-					", 'BenaderendVerbruik_VM_2018_Norm', 'AantalToegangspunten_2018', 'WerkelijkVerbruik_RM_2019', 'BenaderendVerbruik_VM_2019', 'BenaderendVerbruik_VM_2019_Norm'\\\r\n",
-					", 'AantalToegangspunten_2019', 'WerkelijkVerbruik_RM_2020', 'BenaderendVerbruik_VM_2020', 'BenaderendVerbruik_VM_2020_Norm', 'AantalToegangspunten_2020'\\\r\n",
-					", 'WerkelijkVerbruik_RM_2021', 'BenaderendVerbruik_VM_2021', 'BenaderendVerbruik_VM_2021_Norm', 'AantalToegangspunten_2021'\\\r\n",
-					",'Gemiddeld_WerkelijkVerbruik','Gemiddeld_BenaderendVerbruik','Gemiddeld_BenaderendVerbruik_Norm','Total_AantalToegangspunten'\\\r\n",
-					", 'MeasurementType') #, 'MeasurementYear', 'MeasurementMonth'"
-				],
-				"execution_count": 59
+				"execution_count": 66
 			},
 			{
 				"cell_type": "code",
@@ -227,15 +117,10 @@
 					"collapsed": false
 				},
 				"source": [
-					"# Checking the column name\r\n",
-					"print(selected_df1.columns)\r\n",
-					"\r\n",
-					"spark.sql(\"set spark.sql.legacy.timeParserPolicy=LEGACY\")\r\n",
-					"\r\n",
-					"# Displaying the top 5 rows\r\n",
-					"display(selected_df1.limit(5))"
+					"# Show the contents of the DataFrame\r\n",
+					"display(reference_table.limit(5))"
 				],
-				"execution_count": 60
+				"execution_count": 69
 			},
 			{
 				"cell_type": "code",
@@ -251,21 +136,26 @@
 					}
 				},
 				"source": [
-					"# Create a dynamic column delimiter using regex for DM\r\n",
-					"import re\r\n",
-					"def f_get_delimiter (source_path):\r\n",
-					"    try:\r\n",
-					"        headerlist = spark.sparkContext.textFile(source_path).take(1)\r\n",
-					"        header_str = ''.join(headerlist)\r\n",
+					"# Creating a group by for Markt dimension\r\n",
+					"grouped_reference_table_markt_dimension = reference_table.groupBy(\"DM_Markt\")\r\n",
+					"markt_dimension = grouped_reference_table_markt_dimension.agg(count(\"DM_Trekkingsdatum\"))\r\n",
 					"\r\n",
-					"        results= re.search(\"(,|;|\\\\|)\",header_str)\r\n",
-					"        return results.group()\r\n",
-					"    except Exception as err:\r\n",
-					"        print(\"Error Occured \", str(err))\r\n",
-					"amr_Filename = 'abfss://rawdata@rawdevstorage.dfs.core.windows.net/%s/P6523_Verbruiken_DM_GEMEENTE_%s.csv' % (FolderName, FolderName_Without_Separator)\r\n",
-					"amr_delimiter_type = (f_get_delimiter(amr_Filename))"
+					"grouped_reference_table_date_dimension_1 = reference_table.groupBy(\"DM_Trekkingsdatum\")\r\n",
+					"date_dimension_1 = grouped_reference_table_date_dimension_1.agg(count(\"DM_Trekkingsdatum\"))\r\n",
+					"\r\n",
+					"grouped_reference_table_date_dimension_2 = reference_table.groupBy(\"DM_Peildatum\")\r\n",
+					"date_dimension_2 = grouped_reference_table_date_dimension_2.agg(count(\"DM_Trekkingsdatum\"))\r\n",
+					"\r\n",
+					"# Exclude the undefined/null value\r\n",
+					"markt_dimension = markt_dimension.filter(col(\"DM_Markt\").isNotNull())\r\n",
+					"date_dimension_1 = date_dimension_1.filter(col(\"DM_Trekkingsdatum\").isNotNull())\r\n",
+					"date_dimension_2 = date_dimension_2.filter(col(\"DM_Peildatum\").isNotNull())\r\n",
+					"\r\n",
+					"# Rename columns\r\n",
+					"markt_dimension = markt_dimension.withColumnRenamed(\"DM_Markt\", \"Markt_Name\") \\\r\n",
+					".withColumnRenamed(\"count(DM_Trekkingsdatum)\", \"count\")"
 				],
-				"execution_count": 61
+				"execution_count": 70
 			},
 			{
 				"cell_type": "code",
@@ -278,93 +168,13 @@
 						"transient": {
 							"deleting": false
 						}
-					},
-					"collapsed": false,
-					"tags": []
+					}
 				},
 				"source": [
-					"# Reading the second File (Digital Reading File)\r\n",
-					"FileName = 'abfss://rawdata@rawdevstorage.dfs.core.windows.net/%s/P6523_Verbruiken_DM_GEMEENTE_%s.csv' % (FolderName,FolderName_Without_Separator)\r\n",
-					"df2 = spark.read.load(FileName, format='csv', header=True,delimiter=amr_delimiter_type,inferSchema=True)\r\n",
-					"\r\n",
-					"# Remove duplicates\r\n",
-					"df2 = df2.dropDuplicates()\r\n",
-					"\r\n",
-					"# Selecting the required columns\r\n",
-					"selected_df2 = df2.select('Trekkingsdatum', 'Peildatum', 'Markt', 'Leveringsadres_Postcode', 'Leveringsadres_Gemeente'\\\r\n",
-					", 'WerkelijkVerbruik_RM_2017', 'BenaderendVerbruik_VM_2017', 'BenaderendVerbruik_VM_2017_Norm', 'AantalToegangspunten_2017'\\\r\n",
-					", 'WerkelijkVerbruik_RM_2018', 'BenaderendVerbruik_VM_2018', 'BenaderendVerbruik_VM_2018_Norm', 'AantalToegangspunten_2018'\\\r\n",
-					", 'WerkelijkVerbruik_RM_2019', 'BenaderendVerbruik_VM_2019', 'BenaderendVerbruik_VM_2019_Norm', 'AantalToegangspunten_2019'\\\r\n",
-					", 'WerkelijkVerbruik_RM_2020', 'BenaderendVerbruik_VM_2020', 'BenaderendVerbruik_VM_2020_Norm', 'AantalToegangspunten_2020'\\\r\n",
-					", 'WerkelijkVerbruik_RM_2021', 'BenaderendVerbruik_VM_2021', 'BenaderendVerbruik_VM_2021_Norm', 'AantalToegangspunten_2021')\r\n",
-					"\r\n",
-					"# Adding the additional calculated/custom columns\r\n",
-					"selected_df2 = selected_df2.withColumn(\"MeasurementType\", lit(\"Digital\"))\r\n",
-					"#selected_df2 = selected_df2.withColumn(\"MeasurementYear\", lit(year))\r\n",
-					"#selected_df2 = selected_df2.withColumn(\"MeasurementMonth\", lit(month))\r\n",
-					"selected_df2 = selected_df2.withColumn(\"MeasurementDate\", to_date(selected_df2[\"Peildatum\"], \"dd/MMM/yy\").cast(DateType()))\r\n",
-					"\r\n",
-					"# Select the first row of the DataFrame and extract the last column value\r\n",
-					"last_value = selected_df2.first()[-1]\r\n",
-					"\r\n",
-					"# Print the last column value to the console\r\n",
-					"if last_value==None:\r\n",
-					"    selected_df2 = selected_df2.drop(\"MeasurementDate\")\r\n",
-					"    selected_df2 = selected_df2.withColumn(\"MeasurementDate\", to_date(selected_df2[\"Peildatum\"], \"MM/dd/yy\").cast(DateType()))\r\n",
-					"\r\n",
-					"last_value = selected_df2.first()[-1]\r\n",
-					"if last_value==None:\r\n",
-					"    selected_df2 = selected_df2.drop(\"MeasurementDate\")\r\n",
-					"    selected_df2 = selected_df2.withColumn(\"MeasurementDate\", to_date(selected_df2[\"Peildatum\"], \"dd-MMM-yy\").cast(DateType()))\r\n",
-					"\r\n",
-					"# Drop the original col2 column\r\n",
-					"selected_df2 = selected_df2.drop(\"Peildatum\")\r\n",
-					"\r\n",
-					"# Rename the new_col column to col2\r\n",
-					"selected_df2 = selected_df2.withColumnRenamed(\"MeasurementDate\", \"Peildatum\")\r\n",
-					"\r\n",
-					"selected_df2 = selected_df2.withColumn('WerkelijkVerbruik_RM_2017', regexp_replace(selected_df2['WerkelijkVerbruik_RM_2017'], ',', '.'))\r\n",
-					"selected_df2 = selected_df2.withColumn('WerkelijkVerbruik_RM_2018', regexp_replace(selected_df2['WerkelijkVerbruik_RM_2018'], ',', '.'))\r\n",
-					"selected_df2 = selected_df2.withColumn('WerkelijkVerbruik_RM_2019', regexp_replace(selected_df2['WerkelijkVerbruik_RM_2019'], ',', '.'))\r\n",
-					"selected_df2 = selected_df2.withColumn('WerkelijkVerbruik_RM_2020', regexp_replace(selected_df2['WerkelijkVerbruik_RM_2020'], ',', '.'))\r\n",
-					"selected_df2 = selected_df2.withColumn('WerkelijkVerbruik_RM_2021', regexp_replace(selected_df2['WerkelijkVerbruik_RM_2021'], ',', '.'))\r\n",
-					"selected_df2 = selected_df2.withColumn('Gemiddeld_WerkelijkVerbruik', ((selected_df2['WerkelijkVerbruik_RM_2017']\\\r\n",
-					"+ selected_df2['WerkelijkVerbruik_RM_2018'] + selected_df2['WerkelijkVerbruik_RM_2019'] + selected_df2['WerkelijkVerbruik_RM_2020']\\\r\n",
-					"+ selected_df2['WerkelijkVerbruik_RM_2021'])/5))\r\n",
-					"\r\n",
-					"selected_df2 = selected_df2.withColumn('BenaderendVerbruik_VM_2017', regexp_replace(selected_df2['BenaderendVerbruik_VM_2017'], ',', '.'))\r\n",
-					"selected_df2 = selected_df2.withColumn('BenaderendVerbruik_VM_2018', regexp_replace(selected_df2['BenaderendVerbruik_VM_2018'], ',', '.'))\r\n",
-					"selected_df2 = selected_df2.withColumn('BenaderendVerbruik_VM_2019', regexp_replace(selected_df2['BenaderendVerbruik_VM_2019'], ',', '.'))\r\n",
-					"selected_df2 = selected_df2.withColumn('BenaderendVerbruik_VM_2020', regexp_replace(selected_df2['BenaderendVerbruik_VM_2020'], ',', '.'))\r\n",
-					"selected_df2 = selected_df2.withColumn('BenaderendVerbruik_VM_2021', regexp_replace(selected_df2['BenaderendVerbruik_VM_2021'], ',', '.'))\r\n",
-					"selected_df2 = selected_df2.withColumn('Gemiddeld_BenaderendVerbruik', ((selected_df2['BenaderendVerbruik_VM_2017']\\\r\n",
-					"+ selected_df2['BenaderendVerbruik_VM_2018'] + selected_df2['BenaderendVerbruik_VM_2019'] + selected_df2['BenaderendVerbruik_VM_2020']\\\r\n",
-					"+ selected_df2['BenaderendVerbruik_VM_2021'])/5))\r\n",
-					"\r\n",
-					"selected_df2 = selected_df2.withColumn('BenaderendVerbruik_VM_2017_Norm', regexp_replace(selected_df2['BenaderendVerbruik_VM_2017_Norm'], ',', '.'))\r\n",
-					"selected_df2 = selected_df2.withColumn('BenaderendVerbruik_VM_2018_Norm', regexp_replace(selected_df2['BenaderendVerbruik_VM_2018_Norm'], ',', '.'))\r\n",
-					"selected_df2 = selected_df2.withColumn('BenaderendVerbruik_VM_2019_Norm', regexp_replace(selected_df2['BenaderendVerbruik_VM_2019_Norm'], ',', '.'))\r\n",
-					"selected_df2 = selected_df2.withColumn('BenaderendVerbruik_VM_2020_Norm', regexp_replace(selected_df2['BenaderendVerbruik_VM_2020_Norm'], ',', '.'))\r\n",
-					"selected_df2 = selected_df2.withColumn('BenaderendVerbruik_VM_2021_Norm', regexp_replace(selected_df2['BenaderendVerbruik_VM_2021_Norm'], ',', '.'))\r\n",
-					"selected_df2 = selected_df2.withColumn('Gemiddeld_BenaderendVerbruik_Norm', ((selected_df2['BenaderendVerbruik_VM_2017_Norm']\\\r\n",
-					"+ selected_df2['BenaderendVerbruik_VM_2018_Norm'] + selected_df2['BenaderendVerbruik_VM_2019_Norm'] + selected_df2['BenaderendVerbruik_VM_2020_Norm']\\\r\n",
-					"+ selected_df2['BenaderendVerbruik_VM_2021_Norm'])/5))\r\n",
-					"\r\n",
-					"selected_df2 = selected_df2.withColumn('Total_AantalToegangspunten', selected_df2['AantalToegangspunten_2017']\\\r\n",
-					"+ selected_df2['AantalToegangspunten_2018'] + selected_df2['AantalToegangspunten_2019'] + selected_df2['AantalToegangspunten_2020']\\\r\n",
-					"+ selected_df2['AantalToegangspunten_2021'])\r\n",
-					"\r\n",
-					"\r\n",
-					"# Rearrange the columns\r\n",
-					"selected_df2 = selected_df2.select('Trekkingsdatum', 'Peildatum', 'Markt', 'Leveringsadres_Postcode', 'Leveringsadres_Gemeente', 'WerkelijkVerbruik_RM_2017'\\\r\n",
-					", 'BenaderendVerbruik_VM_2017', 'BenaderendVerbruik_VM_2017_Norm', 'AantalToegangspunten_2017', 'WerkelijkVerbruik_RM_2018', 'BenaderendVerbruik_VM_2018'\\\r\n",
-					", 'BenaderendVerbruik_VM_2018_Norm', 'AantalToegangspunten_2018', 'WerkelijkVerbruik_RM_2019', 'BenaderendVerbruik_VM_2019', 'BenaderendVerbruik_VM_2019_Norm'\\\r\n",
-					", 'AantalToegangspunten_2019', 'WerkelijkVerbruik_RM_2020', 'BenaderendVerbruik_VM_2020', 'BenaderendVerbruik_VM_2020_Norm', 'AantalToegangspunten_2020'\\\r\n",
-					", 'WerkelijkVerbruik_RM_2021', 'BenaderendVerbruik_VM_2021', 'BenaderendVerbruik_VM_2021_Norm', 'AantalToegangspunten_2021'\\\r\n",
-					",'Gemiddeld_WerkelijkVerbruik','Gemiddeld_BenaderendVerbruik','Gemiddeld_BenaderendVerbruik_Norm','Total_AantalToegangspunten'\\\r\n",
-					", 'MeasurementType') #, 'MeasurementYear', 'MeasurementMonth'"
+					"# Define the window specification for the grouping\r\n",
+					"window_spec = Window.orderBy(markt_dimension[\"Markt_Name\"].desc()) #Window.partitionBy(\"DM_Markt\").orderBy(\"DM_Markt\")"
 				],
-				"execution_count": 62
+				"execution_count": 71
 			},
 			{
 				"cell_type": "code",
@@ -381,13 +191,16 @@
 					"collapsed": false
 				},
 				"source": [
-					"# Checking the column name\r\n",
-					"print(selected_df2.columns)\r\n",
+					"# Add an auto-incrementing column to the DataFrame within the group\r\n",
+					"markt_dimension = markt_dimension.withColumn(\"Markt_ID\", row_number().over(window_spec))\r\n",
 					"\r\n",
-					"# Displaying the top 5 rows\r\n",
-					"display(selected_df2.limit(5))"
+					"# Selecting specific columns and Rearranging the columns\r\n",
+					"markt_dimension =markt_dimension.select(\"Markt_ID\", \"Markt_Name\")\r\n",
+					"\r\n",
+					"# Displaying the Markt markt_dimension\r\n",
+					"display(markt_dimension)"
 				],
-				"execution_count": 63
+				"execution_count": 72
 			},
 			{
 				"cell_type": "code",
@@ -400,15 +213,64 @@
 						"transient": {
 							"deleting": false
 						}
-					}
+					},
+					"collapsed": false
 				},
 				"source": [
-					"# Checking the counts on each data frame\r\n",
-					"print(selected_df1.count()) #Analogue Reading - 2660\r\n",
-					"print(selected_df2.count()) #Digital Reading - 7005\r\n",
-					""
+					"display(date_dimension_1)"
+				],
+				"execution_count": 73
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"# Writing the markt dimension to delta file\r\n",
+					"file_path = 'abfss://goldlayer@rawdevstorage.dfs.core.windows.net/PySparkDimensions/Markt_Dimension'\r\n",
+					"write_format=\"delta\"\r\n",
+					"#partition_by=[\"DM_Peildatum\"]\r\n",
+					"mode_ = \"overwrite\" #append\r\n",
+					"\r\n",
+					"markt_dimension\\\r\n",
+					".write\\\r\n",
+					".option(\"header\", \"true\")\\\r\n",
+					".option(\"overwriteSchema\", \"true\")\\\r\n",
+					".format(write_format)\\\r\n",
+					".mode(mode_)\\\r\n",
+					".save(file_path)\r\n",
+					"\r\n",
+					"#.partitionBy(partition_by)\\"
 				],
 				"execution_count": 64
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					""
+				],
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
