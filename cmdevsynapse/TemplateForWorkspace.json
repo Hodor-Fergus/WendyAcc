@@ -4837,7 +4837,7 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "57757a9c-0e4e-46f8-b4ad-30e5445e3123"
+						"spark.autotune.trackingId": "e1ad47a1-b63f-48e5-bc40-5021e8f2894f"
 					}
 				},
 				"metadata": {
@@ -4890,7 +4890,7 @@
 							"Mode = \"overwrite\""
 						],
 						"outputs": [],
-						"execution_count": 17
+						"execution_count": 1
 					},
 					{
 						"cell_type": "code",
@@ -4912,7 +4912,7 @@
 							"month = FolderName.split('_')[1]"
 						],
 						"outputs": [],
-						"execution_count": 18
+						"execution_count": 2
 					},
 					{
 						"cell_type": "code",
@@ -4930,7 +4930,7 @@
 							"spark.conf.set('fs.azure.sas.%s.%s.blob.core.windows.net' % (blob_container_name, blob_account_name),blob_sas_token)"
 						],
 						"outputs": [],
-						"execution_count": 19
+						"execution_count": 3
 					},
 					{
 						"cell_type": "code",
@@ -4949,7 +4949,7 @@
 							"spark.sql(\"set spark.sql.legacy.timeParserPolicy=LEGACY\")"
 						],
 						"outputs": [],
-						"execution_count": 20
+						"execution_count": 4
 					},
 					{
 						"cell_type": "code",
@@ -4987,7 +4987,7 @@
 							"df1.createOrReplaceTempView(\"AMR_Measurement_Reading\")"
 						],
 						"outputs": [],
-						"execution_count": 21
+						"execution_count": 5
 					},
 					{
 						"cell_type": "code",
@@ -5029,7 +5029,7 @@
 							"display(selected_df1.limit(5))"
 						],
 						"outputs": [],
-						"execution_count": 22
+						"execution_count": 6
 					},
 					{
 						"cell_type": "code",
@@ -5067,7 +5067,7 @@
 							"df2.createOrReplaceTempView(\"DM_Measurement_Reading\")"
 						],
 						"outputs": [],
-						"execution_count": 23
+						"execution_count": 7
 					},
 					{
 						"cell_type": "code",
@@ -5109,7 +5109,7 @@
 							"display(selected_df2.limit(5))"
 						],
 						"outputs": [],
-						"execution_count": 24
+						"execution_count": 8
 					},
 					{
 						"cell_type": "code",
@@ -5201,7 +5201,7 @@
 							"LIMIT 5"
 						],
 						"outputs": [],
-						"execution_count": 25
+						"execution_count": 9
 					},
 					{
 						"cell_type": "code",
@@ -5290,7 +5290,7 @@
 							"display(union_df.limit(5))"
 						],
 						"outputs": [],
-						"execution_count": 26
+						"execution_count": 10
 					},
 					{
 						"cell_type": "code",
@@ -5314,9 +5314,9 @@
 							"\r\n",
 							"with cte_AMR as (\r\n",
 							"SELECT Trekkingsdatum\r\n",
-							",COALESCE(TO_DATE(Peildatum, 'dd/MMM/yy') ,TO_DATE(Peildatum, 'MM/dd/yy'),TO_DATE(Peildatum, 'dd-MMM-yy'),Peildatum) as Peildatum\r\n",
+							",Peildatum --COALESCE(TO_DATE(Peildatum, 'dd/MMM/yy') ,TO_DATE(Peildatum, 'MM/dd/yy'),TO_DATE(Peildatum, 'dd-MMM-yy'),Peildatum) as Peildatum\r\n",
 							", Markt\r\n",
-							", CAST(Leveringsadres_Postcode as INT) Leveringsadres_Postcode\r\n",
+							", Leveringsadres_Postcode --CAST(Leveringsadres_Postcode as INT) Leveringsadres_Postcode\r\n",
 							", Leveringsadres_Gemeente\r\n",
 							",SUM(CAST(REPLACE(WerkelijkVerbruik_RM_2017,',','.') as DECIMAL(16,4))) as WerkelijkVerbruik_RM_2017\r\n",
 							",SUM(CAST(REPLACE(BenaderendVerbruik_VM_2017,',','.') as DECIMAL(16,4))) as BenaderendVerbruik_VM_2017\r\n",
@@ -5340,16 +5340,16 @@
 							",SUM(CAST(REPLACE(AantalToegangspunten_2021,',','.') as DECIMAL(16,4))) as AantalToegangspunten_2021\r\n",
 							"FROM AMR_Measurement_Reading\r\n",
 							"GROUP BY  Trekkingsdatum\r\n",
-							",COALESCE(TO_DATE(Peildatum, 'dd/MMM/yy') ,TO_DATE(Peildatum, 'MM/dd/yy'),TO_DATE(Peildatum, 'dd-MMM-yy'),Peildatum)\r\n",
+							",Peildatum \r\n",
 							", Markt\r\n",
-							", CAST(Leveringsadres_Postcode as INT)\r\n",
+							", Leveringsadres_Postcode \r\n",
 							", Leveringsadres_Gemeente\r\n",
 							")\r\n",
 							",cte_DM as (\r\n",
 							"SELECT Trekkingsdatum\r\n",
-							",COALESCE(TO_DATE(Peildatum, 'dd/MMM/yy') ,TO_DATE(Peildatum, 'MM/dd/yy'),TO_DATE(Peildatum, 'dd-MMM-yy'),Peildatum) as Peildatum\r\n",
+							",Peildatum --COALESCE(TO_DATE(Peildatum, 'dd/MMM/yy') ,TO_DATE(Peildatum, 'MM/dd/yy'),TO_DATE(Peildatum, 'dd-MMM-yy'),Peildatum) as Peildatum\r\n",
 							", Markt\r\n",
-							", CAST(Leveringsadres_Postcode as INT) Leveringsadres_Postcode\r\n",
+							", Leveringsadres_Postcode --CAST(Leveringsadres_Postcode as INT) Leveringsadres_Postcode\r\n",
 							", Leveringsadres_Gemeente\r\n",
 							",SUM(CAST(REPLACE(WerkelijkVerbruik_RM_2017,',','.') as DECIMAL(16,4))) as WerkelijkVerbruik_RM_2017\r\n",
 							",SUM(CAST(REPLACE(BenaderendVerbruik_VM_2017,',','.') as DECIMAL(16,4))) as BenaderendVerbruik_VM_2017\r\n",
@@ -5373,9 +5373,9 @@
 							",SUM(CAST(REPLACE(AantalToegangspunten_2021,',','.') as DECIMAL(16,4))) as AantalToegangspunten_2021\r\n",
 							"FROM DM_Measurement_Reading\r\n",
 							"GROUP BY  Trekkingsdatum\r\n",
-							",COALESCE(TO_DATE(Peildatum, 'dd/MMM/yy') ,TO_DATE(Peildatum, 'MM/dd/yy'),TO_DATE(Peildatum, 'dd-MMM-yy'),Peildatum)\r\n",
+							",Peildatum \r\n",
 							", Markt\r\n",
-							", CAST(Leveringsadres_Postcode as INT)\r\n",
+							", Leveringsadres_Postcode \r\n",
 							", Leveringsadres_Gemeente\r\n",
 							")\r\n",
 							",CTE_JOIN as (\r\n",
@@ -5449,7 +5449,7 @@
 							"LIMIT 5"
 						],
 						"outputs": [],
-						"execution_count": 41
+						"execution_count": 11
 					},
 					{
 						"cell_type": "code",
@@ -5944,6 +5944,31 @@
 				"sparkVersion": "3.3",
 				"isComputeIsolationEnabled": false,
 				"sessionLevelPackagesEnabled": true,
+				"annotations": []
+			},
+			"dependsOn": [],
+			"location": "northeurope"
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/sanzpool')]",
+			"type": "Microsoft.Synapse/workspaces/bigDataPools",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"autoPause": {
+					"enabled": true,
+					"delayInMinutes": 15
+				},
+				"autoScale": {
+					"enabled": true,
+					"maxNodeCount": 4,
+					"minNodeCount": 3
+				},
+				"nodeCount": 10,
+				"nodeSize": "Small",
+				"nodeSizeFamily": "MemoryOptimized",
+				"sparkVersion": "3.3",
+				"isComputeIsolationEnabled": false,
+				"sessionLevelPackagesEnabled": false,
 				"annotations": []
 			},
 			"dependsOn": [],
