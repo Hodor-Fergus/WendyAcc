@@ -22,7 +22,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "76507b1a-e315-4b5b-b013-821ca26bd1cd"
+				"spark.autotune.trackingId": "fd6d14ab-2208-4820-8054-65f4188d8c88"
 			}
 		},
 		"metadata": {
@@ -74,7 +74,7 @@
 					"FolderName = \"2022_10\"\r\n",
 					"Mode = \"overwrite\""
 				],
-				"execution_count": 17
+				"execution_count": 1
 			},
 			{
 				"cell_type": "code",
@@ -95,7 +95,7 @@
 					"year = FolderName.split('_')[0]\r\n",
 					"month = FolderName.split('_')[1]"
 				],
-				"execution_count": 18
+				"execution_count": 2
 			},
 			{
 				"cell_type": "code",
@@ -111,7 +111,7 @@
 					"blob_sas_token = token_library.getConnectionString(\"cmdevsynapse-WorkspaceDefaultStorage\")\r\n",
 					"spark.conf.set('fs.azure.sas.%s.%s.blob.core.windows.net' % (blob_container_name, blob_account_name),blob_sas_token)"
 				],
-				"execution_count": 19
+				"execution_count": 3
 			},
 			{
 				"cell_type": "code",
@@ -129,7 +129,7 @@
 				"source": [
 					"spark.sql(\"set spark.sql.legacy.timeParserPolicy=LEGACY\")"
 				],
-				"execution_count": 20
+				"execution_count": 4
 			},
 			{
 				"cell_type": "code",
@@ -166,7 +166,7 @@
 					"# Create a temporary view: To run SQL queries on a PySpark DataFrame, you need to create a temporary view using the createOrReplaceTempView method.\r\n",
 					"df1.createOrReplaceTempView(\"AMR_Measurement_Reading\")"
 				],
-				"execution_count": 21
+				"execution_count": 5
 			},
 			{
 				"cell_type": "code",
@@ -207,7 +207,7 @@
 					"# Display the result: To display the result of the SQL query, you can use the show method.\r\n",
 					"display(selected_df1.limit(5))"
 				],
-				"execution_count": 22
+				"execution_count": 6
 			},
 			{
 				"cell_type": "code",
@@ -244,7 +244,7 @@
 					"# Create a temporary view: To run SQL queries on a PySpark DataFrame, you need to create a temporary view using the createOrReplaceTempView method.\r\n",
 					"df2.createOrReplaceTempView(\"DM_Measurement_Reading\")"
 				],
-				"execution_count": 23
+				"execution_count": 7
 			},
 			{
 				"cell_type": "code",
@@ -285,7 +285,7 @@
 					"# Display the result: To display the result of the SQL query, you can use the show method.\r\n",
 					"display(selected_df2.limit(5))"
 				],
-				"execution_count": 24
+				"execution_count": 8
 			},
 			{
 				"cell_type": "code",
@@ -376,7 +376,7 @@
 					"FROM cte_union\r\n",
 					"LIMIT 5"
 				],
-				"execution_count": 25
+				"execution_count": 9
 			},
 			{
 				"cell_type": "code",
@@ -464,7 +464,7 @@
 					"union_df.createOrReplaceTempView(\"Measurement_Reading_union\")\r\n",
 					"display(union_df.limit(5))"
 				],
-				"execution_count": 26
+				"execution_count": 10
 			},
 			{
 				"cell_type": "code",
@@ -488,9 +488,9 @@
 					"\r\n",
 					"with cte_AMR as (\r\n",
 					"SELECT Trekkingsdatum\r\n",
-					",COALESCE(TO_DATE(Peildatum, 'dd/MMM/yy') ,TO_DATE(Peildatum, 'MM/dd/yy'),TO_DATE(Peildatum, 'dd-MMM-yy'),Peildatum) as Peildatum\r\n",
+					",Peildatum --COALESCE(TO_DATE(Peildatum, 'dd/MMM/yy') ,TO_DATE(Peildatum, 'MM/dd/yy'),TO_DATE(Peildatum, 'dd-MMM-yy'),Peildatum) as Peildatum\r\n",
 					", Markt\r\n",
-					", CAST(Leveringsadres_Postcode as INT) Leveringsadres_Postcode\r\n",
+					", Leveringsadres_Postcode --CAST(Leveringsadres_Postcode as INT) Leveringsadres_Postcode\r\n",
 					", Leveringsadres_Gemeente\r\n",
 					",SUM(CAST(REPLACE(WerkelijkVerbruik_RM_2017,',','.') as DECIMAL(16,4))) as WerkelijkVerbruik_RM_2017\r\n",
 					",SUM(CAST(REPLACE(BenaderendVerbruik_VM_2017,',','.') as DECIMAL(16,4))) as BenaderendVerbruik_VM_2017\r\n",
@@ -514,16 +514,16 @@
 					",SUM(CAST(REPLACE(AantalToegangspunten_2021,',','.') as DECIMAL(16,4))) as AantalToegangspunten_2021\r\n",
 					"FROM AMR_Measurement_Reading\r\n",
 					"GROUP BY  Trekkingsdatum\r\n",
-					",COALESCE(TO_DATE(Peildatum, 'dd/MMM/yy') ,TO_DATE(Peildatum, 'MM/dd/yy'),TO_DATE(Peildatum, 'dd-MMM-yy'),Peildatum)\r\n",
+					",Peildatum \r\n",
 					", Markt\r\n",
-					", CAST(Leveringsadres_Postcode as INT)\r\n",
+					", Leveringsadres_Postcode \r\n",
 					", Leveringsadres_Gemeente\r\n",
 					")\r\n",
 					",cte_DM as (\r\n",
 					"SELECT Trekkingsdatum\r\n",
-					",COALESCE(TO_DATE(Peildatum, 'dd/MMM/yy') ,TO_DATE(Peildatum, 'MM/dd/yy'),TO_DATE(Peildatum, 'dd-MMM-yy'),Peildatum) as Peildatum\r\n",
+					",Peildatum --COALESCE(TO_DATE(Peildatum, 'dd/MMM/yy') ,TO_DATE(Peildatum, 'MM/dd/yy'),TO_DATE(Peildatum, 'dd-MMM-yy'),Peildatum) as Peildatum\r\n",
 					", Markt\r\n",
-					", CAST(Leveringsadres_Postcode as INT) Leveringsadres_Postcode\r\n",
+					", Leveringsadres_Postcode --CAST(Leveringsadres_Postcode as INT) Leveringsadres_Postcode\r\n",
 					", Leveringsadres_Gemeente\r\n",
 					",SUM(CAST(REPLACE(WerkelijkVerbruik_RM_2017,',','.') as DECIMAL(16,4))) as WerkelijkVerbruik_RM_2017\r\n",
 					",SUM(CAST(REPLACE(BenaderendVerbruik_VM_2017,',','.') as DECIMAL(16,4))) as BenaderendVerbruik_VM_2017\r\n",
@@ -547,9 +547,9 @@
 					",SUM(CAST(REPLACE(AantalToegangspunten_2021,',','.') as DECIMAL(16,4))) as AantalToegangspunten_2021\r\n",
 					"FROM DM_Measurement_Reading\r\n",
 					"GROUP BY  Trekkingsdatum\r\n",
-					",COALESCE(TO_DATE(Peildatum, 'dd/MMM/yy') ,TO_DATE(Peildatum, 'MM/dd/yy'),TO_DATE(Peildatum, 'dd-MMM-yy'),Peildatum)\r\n",
+					",Peildatum \r\n",
 					", Markt\r\n",
-					", CAST(Leveringsadres_Postcode as INT)\r\n",
+					", Leveringsadres_Postcode \r\n",
 					", Leveringsadres_Gemeente\r\n",
 					")\r\n",
 					",CTE_JOIN as (\r\n",
@@ -622,7 +622,7 @@
 					"FROM CTE_AMR\r\n",
 					"LIMIT 5"
 				],
-				"execution_count": 41
+				"execution_count": 11
 			},
 			{
 				"cell_type": "code",
