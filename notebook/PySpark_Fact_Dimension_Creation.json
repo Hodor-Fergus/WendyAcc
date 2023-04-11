@@ -22,7 +22,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "95b0acd5-adf6-4281-a3a3-b651ed6d19f1"
+				"spark.autotune.trackingId": "63d54760-737c-484c-9aa4-26ef877b9a10"
 			}
 		},
 		"metadata": {
@@ -153,9 +153,23 @@
 					"\r\n",
 					"# Rename columns\r\n",
 					"markt_dimension = markt_dimension.withColumnRenamed(\"DM_Markt\", \"Markt_Name\") \\\r\n",
-					".withColumnRenamed(\"count(DM_Trekkingsdatum)\", \"count\")"
+					".withColumnRenamed(\"count(DM_Trekkingsdatum)\", \"count\")\r\n",
+					"\r\n",
+					"date_dimension_1 = date_dimension_1.withColumnRenamed(\"DM_Trekkingsdatum\", \"Date\") \\\r\n",
+					".withColumnRenamed(\"count(DM_Trekkingsdatum)\", \"count\")\r\n",
+					"\r\n",
+					"date_dimension_2 = date_dimension_2.withColumnRenamed(\"DM_Peildatum\", \"Date\") \\\r\n",
+					".withColumnRenamed(\"count(DM_Trekkingsdatum)\", \"count\")\r\n",
+					"\r\n",
+					"# Selecting specific columns\r\n",
+					"date_dimension_1 =date_dimension_1.select(\"Date\")\r\n",
+					"date_dimension_2 =date_dimension_2.select(\"Date\")\r\n",
+					"\r\n",
+					"\r\n",
+					"# Unioning the date dimension and removing the duplicates\r\n",
+					"date_dimension = date_dimension_1.union(date_dimension_2).distinct()"
 				],
-				"execution_count": 70
+				"execution_count": 90
 			},
 			{
 				"cell_type": "code",
@@ -172,9 +186,10 @@
 				},
 				"source": [
 					"# Define the window specification for the grouping\r\n",
-					"window_spec = Window.orderBy(markt_dimension[\"Markt_Name\"].desc()) #Window.partitionBy(\"DM_Markt\").orderBy(\"DM_Markt\")"
+					"markt_dimension_window_spec = Window.orderBy(markt_dimension[\"Markt_Name\"].desc()) #Window.partitionBy(\"DM_Markt\").orderBy(\"DM_Markt\")\r\n",
+					"date_dimension_window_spec = Window.orderBy(date_dimension[\"Date\"].desc())"
 				],
-				"execution_count": 71
+				"execution_count": 91
 			},
 			{
 				"cell_type": "code",
@@ -192,7 +207,8 @@
 				},
 				"source": [
 					"# Add an auto-incrementing column to the DataFrame within the group\r\n",
-					"markt_dimension = markt_dimension.withColumn(\"Markt_ID\", row_number().over(window_spec))\r\n",
+					"markt_dimension = markt_dimension.withColumn(\"Markt_ID\", row_number().over(markt_dimension_window_spec))\r\n",
+					"date_dimension = date_dimension.withColumn(\"Date_ID\", row_number().over(date_dimension_window_spec))\r\n",
 					"\r\n",
 					"# Selecting specific columns and Rearranging the columns\r\n",
 					"markt_dimension =markt_dimension.select(\"Markt_ID\", \"Markt_Name\")\r\n",
@@ -200,7 +216,7 @@
 					"# Displaying the Markt markt_dimension\r\n",
 					"display(markt_dimension)"
 				],
-				"execution_count": 72
+				"execution_count": 92
 			},
 			{
 				"cell_type": "code",
@@ -217,9 +233,9 @@
 					"collapsed": false
 				},
 				"source": [
-					"display(date_dimension_1)"
+					"display(date_dimension)"
 				],
-				"execution_count": 73
+				"execution_count": 93
 			},
 			{
 				"cell_type": "code",
