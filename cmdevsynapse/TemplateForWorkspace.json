@@ -30,7 +30,7 @@
 				"activities": [
 					{
 						"name": "Execute Pyspark Pipeline",
-						"description": "Execute Pyspark Pipeline",
+						"description": "Execute Pyspark Pipeline which also populate fact and dimension tables",
 						"type": "ExecutePipeline",
 						"dependsOn": [],
 						"userProperties": [],
