@@ -357,7 +357,7 @@
 										},
 										"snapshot": true,
 										"sparkPool": {
-											"referenceName": "devpool",
+											"referenceName": "sanzpool",
 											"type": "BigDataPoolReference"
 										},
 										"executorSize": "Small",
@@ -404,7 +404,7 @@
 			"dependsOn": [
 				"[concat(variables('workspaceId'), '/datasets/ADLS_Container_rawdata')]",
 				"[concat(variables('workspaceId'), '/notebooks/PySpark_Load_Data_From_Blob_To_Synapse_SQL_Pool')]",
-				"[concat(variables('workspaceId'), '/bigDataPools/devpool')]"
+				"[concat(variables('workspaceId'), '/bigDataPools/sanzpool')]"
 			]
 		},
 		{
@@ -3620,7 +3620,7 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "33fbe900-8dde-4bee-8f15-91aac78cad27"
+						"spark.autotune.trackingId": "9e5adf14-55eb-4f8c-af42-dfc709ad96a0"
 					}
 				},
 				"metadata": {
@@ -4003,7 +4003,7 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "6591788a-78cc-476c-b9fc-5d8858f64263"
+						"spark.autotune.trackingId": "b49a12b7-f2b8-4ed9-a75e-29fa1ce879fb"
 					}
 				},
 				"metadata": {
