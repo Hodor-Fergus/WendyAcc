@@ -22,7 +22,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "09779663-5069-439e-a4e6-e80c568782d1"
+				"spark.autotune.trackingId": "01407b6f-c5e8-41a9-99a1-b943ad731ce0"
 			}
 		},
 		"metadata": {
@@ -64,7 +64,7 @@
 					"%%pyspark\r\n",
 					"# Imporing the libraries\r\n",
 					"from pyspark.sql import SparkSession\r\n",
-					"from pyspark.sql.functions import lit,col,sum,mean,regexp_replace,to_date,count,row_number,unix_timestamp\r\n",
+					"from pyspark.sql.functions import lit,col,sum,mean,regexp_replace,to_date,count,row_number,unix_timestamp,date_format,quarter,expr,weekofyear\r\n",
 					"from pyspark.sql.types import DateType,TimestampType\r\n",
 					"from pyspark.sql.window import Window\r\n",
 					"\r\n",
@@ -82,7 +82,7 @@
 					"    blob_sas_token)\r\n",
 					""
 				],
-				"execution_count": 1
+				"execution_count": 63
 			},
 			{
 				"cell_type": "code",
@@ -104,7 +104,7 @@
 					"# Read Delta table into a DataFrame\r\n",
 					"reference_table = spark.read.format(\"delta\").load(delta_table_path)"
 				],
-				"execution_count": 2
+				"execution_count": 57
 			},
 			{
 				"cell_type": "code",
@@ -124,7 +124,7 @@
 					"# Show the contents of the DataFrame\r\n",
 					"display(reference_table.limit(5))"
 				],
-				"execution_count": 3
+				"execution_count": 58
 			},
 			{
 				"cell_type": "code",
@@ -171,9 +171,9 @@
 					"date_dimension_2 = date_dimension_2.select(\"Date\")\r\n",
 					"\r\n",
 					"# Unioning the date dimension and removing the duplicates\r\n",
-					"date_dimension = date_dimension_1.union(date_dimension_2).distinct().orderBy(\"Date\", ascending=False)"
+					"date_dimension = date_dimension_1.union(date_dimension_2).distinct().orderBy(\"Date\")"
 				],
-				"execution_count": 19
+				"execution_count": 59
 			},
 			{
 				"cell_type": "code",
@@ -193,7 +193,7 @@
 					"markt_dimension_window_spec = Window.orderBy(markt_dimension[\"Markt_Name\"].desc()) #Window.partitionBy(\"DM_Markt\").orderBy(\"DM_Markt\")\r\n",
 					"date_dimension_window_spec = Window.orderBy(date_dimension[\"Date\"].desc())"
 				],
-				"execution_count": 20
+				"execution_count": 60
 			},
 			{
 				"cell_type": "code",
@@ -214,15 +214,23 @@
 					"markt_dimension = markt_dimension.withColumn(\"Markt_ID\", row_number().over(markt_dimension_window_spec))\r\n",
 					"date_dimension = date_dimension.withColumn(\"Date_ID\", row_number().over(date_dimension_window_spec))\r\n",
 					"\r\n",
+					"# Adding additional columns for the date_dimension_window_spec\r\n",
+					"date_dimension = date_dimension.withColumn(\"Day\", date_format(date_dimension[\"Date\"], \"d\").cast(\"integer\"))\r\n",
+					"date_dimension = date_dimension.withColumn(\"Month\", date_format(date_dimension[\"Date\"], \"M\").cast(\"integer\"))\r\n",
+					"date_dimension = date_dimension.withColumn(\"Year\", date_format(date_dimension[\"Date\"], \"y\").cast(\"integer\"))\r\n",
+					"date_dimension = date_dimension.withColumn(\"Quarter\", quarter(date_dimension[\"Date\"]))\r\n",
+					"date_dimension = date_dimension.withColumn(\"Day_Of_Year\", expr(\"dayofyear(Date)\"))\r\n",
+					"date_dimension = date_dimension.withColumn(\"Week_Number\", weekofyear(date_dimension[\"Date\"]))\r\n",
+					"\r\n",
 					"# Selecting specific columns and Rearranging the columns\r\n",
 					"markt_dimension = markt_dimension.select(\"Markt_ID\", \"Markt_Name\")\r\n",
-					"date_dimension = date_dimension.select(\"Date_ID\",\"Date\")\r\n",
+					"date_dimension = date_dimension.select(\"Date_ID\",\"Date\",\"Day\",\"Month\",\"Year\",\"Quarter\",\"Day_Of_Year\",\"Week_Number\")\r\n",
 					"\r\n",
 					"# Displaying the Markt markt_dimension\r\n",
 					"display(markt_dimension)\r\n",
 					"display(date_dimension)"
 				],
-				"execution_count": 21
+				"execution_count": 64
 			},
 			{
 				"cell_type": "code",
@@ -255,7 +263,7 @@
 					"\r\n",
 					"#.partitionBy(partition_by)\\"
 				],
-				"execution_count": 64
+				"execution_count": 65
 			},
 			{
 				"cell_type": "code",
@@ -271,9 +279,23 @@
 					}
 				},
 				"source": [
-					""
+					"# Writing the date dimension to delta file\r\n",
+					"file_path = 'abfss://goldlayer@rawdevstorage.dfs.core.windows.net/PySparkDimensions/Date_Dimension'\r\n",
+					"write_format=\"delta\"\r\n",
+					"#partition_by=[\"DM_Peildatum\"]\r\n",
+					"mode_ = \"overwrite\" #append\r\n",
+					"\r\n",
+					"date_dimension\\\r\n",
+					".write\\\r\n",
+					".option(\"header\", \"true\")\\\r\n",
+					".option(\"overwriteSchema\", \"true\")\\\r\n",
+					".format(write_format)\\\r\n",
+					".mode(mode_)\\\r\n",
+					".save(file_path)\r\n",
+					"\r\n",
+					"#.partitionBy(partition_by)\\"
 				],
-				"execution_count": null
+				"execution_count": 66
 			},
 			{
 				"cell_type": "code",
