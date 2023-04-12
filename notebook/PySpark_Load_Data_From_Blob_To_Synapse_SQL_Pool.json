@@ -22,7 +22,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "a75cf2ff-8d3b-4c1f-a58e-4a41475ca735"
+				"spark.autotune.trackingId": "602dacd7-5d7c-4040-9109-3ce0b0da2bb1"
 			}
 		},
 		"metadata": {
@@ -71,10 +71,10 @@
 				},
 				"source": [
 					"# Getiing the parameter value from the pipeline \r\n",
-					"FolderName = \"2022_10\"\r\n",
+					"FolderName = \"2022_08\"\r\n",
 					"Mode = \"overwrite\""
 				],
-				"execution_count": 73
+				"execution_count": 59
 			},
 			{
 				"cell_type": "code",
@@ -95,7 +95,7 @@
 					"year = FolderName.split('_')[0]\r\n",
 					"month = FolderName.split('_')[1]"
 				],
-				"execution_count": null
+				"execution_count": 60
 			},
 			{
 				"cell_type": "code",
@@ -110,7 +110,7 @@
 					"blob_account_name = \"rawdevstorage\"\r\n",
 					"blob_container_name = \"rawdata\"\r\n",
 					"from pyspark.sql import SparkSession\r\n",
-					"from pyspark.sql.functions import lit,col,sum,mean,regexp_replace,to_date\r\n",
+					"from pyspark.sql.functions import lit,col,sum,mean,regexp_replace,to_date,coalesce,expr\r\n",
 					"from pyspark.sql.types import DateType\r\n",
 					"\r\n",
 					"sc = SparkSession.builder.getOrCreate()\r\n",
@@ -120,7 +120,7 @@
 					"    'fs.azure.sas.%s.%s.blob.core.windows.net' % (blob_container_name, blob_account_name),\r\n",
 					"    blob_sas_token)"
 				],
-				"execution_count": 57
+				"execution_count": 61
 			},
 			{
 				"cell_type": "code",
@@ -136,9 +136,10 @@
 					}
 				},
 				"source": [
+					"# Set this flag to deal with different date format issues\r\n",
 					"spark.sql(\"set spark.sql.legacy.timeParserPolicy=LEGACY\")"
 				],
-				"execution_count": null
+				"execution_count": 62
 			},
 			{
 				"cell_type": "code",
@@ -168,7 +169,7 @@
 					"amr_Filename = 'abfss://rawdata@rawdevstorage.dfs.core.windows.net/%s/P6523_Verbruiken_AMR_GEMEENTE_%s.csv' % (FolderName, FolderName_Without_Separator)\r\n",
 					"amr_delimiter_type = (f_get_delimiter(amr_Filename))"
 				],
-				"execution_count": 58
+				"execution_count": 63
 			},
 			{
 				"cell_type": "code",
@@ -184,7 +185,6 @@
 					}
 				},
 				"source": [
-					"\r\n",
 					"# Reading the first File (Analogue Reading File)\r\n",
 					"FileName = 'abfss://rawdata@rawdevstorage.dfs.core.windows.net/%s/P6523_Verbruiken_AMR_GEMEENTE_%s.csv' % (FolderName,FolderName_Without_Separator)\r\n",
 					"df1 = spark.read.load(FileName, format='csv', header=True,delimiter=amr_delimiter_type,inferSchema=True)\r\n",
@@ -203,28 +203,121 @@
 					"# Adding the additional calculated/custom columns\r\n",
 					"selected_df1 = selected_df1.withColumn(\"MeasurementType\", lit(\"Digital\"))\r\n",
 					"#selected_df1 = selected_df1.withColumn(\"MeasurementYear\", lit(year))\r\n",
-					"#selected_df1 = selected_df1.withColumn(\"MeasurementMonth\", lit(month))\r\n",
-					"selected_df1 = selected_df1.withColumn(\"MeasurementDate\", to_date(selected_df1[\"Peildatum\"], \"dd/MMM/yy\").cast(DateType()))\r\n",
+					"#selected_df1 = selected_df1.withColumn(\"MeasurementMonth\", lit(month))"
+				],
+				"execution_count": 64
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Convert the string column to date data type, regardless of the date format\r\n",
+					"date_formats = [\"dd/MMM/yy\", \"MM/dd/yy\", \"dd-MMM-yy\",\"dd/MMM/yyyy\"]\r\n",
 					"\r\n",
-					"# Select the first row of the DataFrame and extract the last column value\r\n",
-					"last_value = selected_df1.first()[-1]\r\n",
+					"parsed_date = coalesce(*[expr(\"to_date(Peildatum, '{0}')\".format(date_format)).cast(\"date\") for date_format in date_formats])\r\n",
 					"\r\n",
-					"# Print the last column value to the console\r\n",
-					"if last_value==None:\r\n",
-					"    selected_df1 = selected_df1.drop(\"MeasurementDate\")\r\n",
-					"    selected_df1 = selected_df1.withColumn(\"MeasurementDate\", to_date(selected_df1[\"Peildatum\"], \"MM/dd/yy\").cast(DateType()))\r\n",
+					"# Add the parsed date as a new column in the DataFrame\r\n",
+					"selected_df1 = selected_df1.withColumn(\"MeasurementDate\", parsed_date)\r\n",
 					"\r\n",
-					"last_value = selected_df1.first()[-1]\r\n",
-					"if last_value==None:\r\n",
-					"    selected_df1 = selected_df1.drop(\"MeasurementDate\")\r\n",
-					"    selected_df1 = selected_df1.withColumn(\"MeasurementDate\", to_date(selected_df1[\"Peildatum\"], \"dd-MMM-yy\").cast(DateType()))\r\n",
+					"#-------------- Old Code begins -----------------------\r\n",
+					"# selected_df1 = selected_df1.withColumn(\"MeasurementDate\", to_date(selected_df1[\"Peildatum\"], \"dd/MMM/yy\").cast(DateType()))\r\n",
+					"# # Select the first row of the DataFrame and extract the last column value\r\n",
+					"# last_value = selected_df1.first()[-1]\r\n",
+					"# # Print the last column value to the console\r\n",
+					"# if last_value==None:\r\n",
+					"#     selected_df1 = selected_df1.drop(\"MeasurementDate\")\r\n",
+					"#     selected_df1 = selected_df1.withColumn(\"MeasurementDate\", to_date(selected_df1[\"Peildatum\"], \"MM/dd/yy\").cast(DateType()))\r\n",
+					"# last_value = selected_df1.first()[-1]\r\n",
+					"# if last_value==None:\r\n",
+					"#     selected_df1 = selected_df1.drop(\"MeasurementDate\")\r\n",
+					"#     selected_df1 = selected_df1.withColumn(\"MeasurementDate\", to_date(selected_df1[\"Peildatum\"], \"dd-MMM-yy\").cast(DateType()))\r\n",
+					"# last_value = selected_df1.first()[-1]\r\n",
+					"# if last_value==None:\r\n",
+					"#     selected_df1 = selected_df1.drop(\"MeasurementDate\")\r\n",
+					"#     selected_df1 = selected_df1.withColumn(\"MeasurementDate\", to_date(selected_df1[\"Peildatum\"], \"dd/MMM/yyyy\").cast(DateType()))\r\n",
+					"#-------------- Old Code ends -----------------------\r\n",
 					"\r\n",
 					"# Drop the original col2 column\r\n",
 					"selected_df1 = selected_df1.drop(\"Peildatum\")\r\n",
 					"\r\n",
 					"# Rename the new_col column to col2\r\n",
-					"selected_df1 = selected_df1.withColumnRenamed(\"MeasurementDate\", \"Peildatum\")\r\n",
+					"selected_df1 = selected_df1.withColumnRenamed(\"MeasurementDate\", \"Peildatum\")"
+				],
+				"execution_count": 65
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Convert the string column to date data type, regardless of the date format\r\n",
+					"date_formats = [\"dd/MMM/yy\", \"MM/dd/yy\", \"dd-MMM-yy\",\"dd/MMM/yyyy\"]\r\n",
 					"\r\n",
+					"parsed_date = coalesce(*[expr(\"to_date(Trekkingsdatum, '{0}')\".format(date_format)).cast(\"date\") for date_format in date_formats])\r\n",
+					"\r\n",
+					"# Add the parsed date as a new column in the DataFrame\r\n",
+					"selected_df1 = selected_df1.withColumn(\"MeasurementDate\", parsed_date)\r\n",
+					"\r\n",
+					"#-------------- Old Code begins -----------------------\r\n",
+					"# selected_df1 = selected_df1.withColumn(\"MeasurementDate\", to_date(selected_df1[\"Peildatum\"], \"dd/MMM/yy\").cast(DateType()))\r\n",
+					"# # Select the first row of the DataFrame and extract the last column value\r\n",
+					"# last_value = selected_df1.first()[-1]\r\n",
+					"# # Print the last column value to the console\r\n",
+					"# if last_value==None:\r\n",
+					"#     selected_df1 = selected_df1.drop(\"MeasurementDate\")\r\n",
+					"#     selected_df1 = selected_df1.withColumn(\"MeasurementDate\", to_date(selected_df1[\"Peildatum\"], \"MM/dd/yy\").cast(DateType()))\r\n",
+					"# last_value = selected_df1.first()[-1]\r\n",
+					"# if last_value==None:\r\n",
+					"#     selected_df1 = selected_df1.drop(\"MeasurementDate\")\r\n",
+					"#     selected_df1 = selected_df1.withColumn(\"MeasurementDate\", to_date(selected_df1[\"Peildatum\"], \"dd-MMM-yy\").cast(DateType()))\r\n",
+					"# last_value = selected_df1.first()[-1]\r\n",
+					"# if last_value==None:\r\n",
+					"#     selected_df1 = selected_df1.drop(\"MeasurementDate\")\r\n",
+					"#     selected_df1 = selected_df1.withColumn(\"MeasurementDate\", to_date(selected_df1[\"Peildatum\"], \"dd/MMM/yyyy\").cast(DateType()))\r\n",
+					"#-------------- Old Code ends -----------------------\r\n",
+					"\r\n",
+					"# Drop the original col2 column\r\n",
+					"selected_df1 = selected_df1.drop(\"Trekkingsdatum\")\r\n",
+					"\r\n",
+					"# Rename the new_col column to col2\r\n",
+					"selected_df1 = selected_df1.withColumnRenamed(\"MeasurementDate\", \"Trekkingsdatum\")"
+				],
+				"execution_count": 67
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Adding the additional calculated/custom columns\r\n",
 					"selected_df1 = selected_df1.withColumn(\"BenaderendVerbruik_VM_2017_Norm\", col(\"BenaderendVerbruik_VM_2017\"))\r\n",
 					"selected_df1 = selected_df1.withColumn(\"BenaderendVerbruik_VM_2018_Norm\", col(\"BenaderendVerbruik_VM_2018\"))\r\n",
 					"selected_df1 = selected_df1.withColumn(\"BenaderendVerbruik_VM_2019_Norm\", col(\"BenaderendVerbruik_VM_2019\"))\r\n",
@@ -272,7 +365,7 @@
 					",'Gemiddeld_WerkelijkVerbruik','Gemiddeld_BenaderendVerbruik','Gemiddeld_BenaderendVerbruik_Norm','Total_AantalToegangspunten'\\\r\n",
 					", 'MeasurementType') #, 'MeasurementYear', 'MeasurementMonth'"
 				],
-				"execution_count": 59
+				"execution_count": 69
 			},
 			{
 				"cell_type": "code",
@@ -297,7 +390,7 @@
 					"# Displaying the top 5 rows\r\n",
 					"display(selected_df1.limit(5))"
 				],
-				"execution_count": 60
+				"execution_count": 70
 			},
 			{
 				"cell_type": "code",
@@ -327,7 +420,7 @@
 					"amr_Filename = 'abfss://rawdata@rawdevstorage.dfs.core.windows.net/%s/P6523_Verbruiken_DM_GEMEENTE_%s.csv' % (FolderName, FolderName_Without_Separator)\r\n",
 					"amr_delimiter_type = (f_get_delimiter(amr_Filename))"
 				],
-				"execution_count": 61
+				"execution_count": 71
 			},
 			{
 				"cell_type": "code",
@@ -340,9 +433,7 @@
 						"transient": {
 							"deleting": false
 						}
-					},
-					"collapsed": false,
-					"tags": []
+					}
 				},
 				"source": [
 					"# Reading the second File (Digital Reading File)\r\n",
@@ -363,28 +454,123 @@
 					"# Adding the additional calculated/custom columns\r\n",
 					"selected_df2 = selected_df2.withColumn(\"MeasurementType\", lit(\"Digital\"))\r\n",
 					"#selected_df2 = selected_df2.withColumn(\"MeasurementYear\", lit(year))\r\n",
-					"#selected_df2 = selected_df2.withColumn(\"MeasurementMonth\", lit(month))\r\n",
-					"selected_df2 = selected_df2.withColumn(\"MeasurementDate\", to_date(selected_df2[\"Peildatum\"], \"dd/MMM/yy\").cast(DateType()))\r\n",
+					"#selected_df2 = selected_df2.withColumn(\"MeasurementMonth\", lit(month))"
+				],
+				"execution_count": 72
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Convert the string column to date data type, regardless of the date format\r\n",
+					"date_formats = [\"dd/MMM/yy\", \"MM/dd/yy\", \"dd-MMM-yy\",\"dd/MMM/yyyy\"]\r\n",
 					"\r\n",
-					"# Select the first row of the DataFrame and extract the last column value\r\n",
-					"last_value = selected_df2.first()[-1]\r\n",
+					"parsed_date = coalesce(*[expr(\"to_date(Peildatum, '{0}')\".format(date_format)).cast(\"date\") for date_format in date_formats])\r\n",
 					"\r\n",
-					"# Print the last column value to the console\r\n",
-					"if last_value==None:\r\n",
-					"    selected_df2 = selected_df2.drop(\"MeasurementDate\")\r\n",
-					"    selected_df2 = selected_df2.withColumn(\"MeasurementDate\", to_date(selected_df2[\"Peildatum\"], \"MM/dd/yy\").cast(DateType()))\r\n",
+					"# Add the parsed date as a new column in the DataFrame\r\n",
+					"selected_df2 = selected_df2.withColumn(\"MeasurementDate\", parsed_date)\r\n",
 					"\r\n",
-					"last_value = selected_df2.first()[-1]\r\n",
-					"if last_value==None:\r\n",
-					"    selected_df2 = selected_df2.drop(\"MeasurementDate\")\r\n",
-					"    selected_df2 = selected_df2.withColumn(\"MeasurementDate\", to_date(selected_df2[\"Peildatum\"], \"dd-MMM-yy\").cast(DateType()))\r\n",
+					"#-------------- Old Code begins -----------------------\r\n",
+					"# selected_df2 = selected_df2.withColumn(\"MeasurementDate\", to_date(selected_df2[\"Peildatum\"], \"dd/MMM/yy\").cast(DateType()))\r\n",
+					"# # Select the first row of the DataFrame and extract the last column value\r\n",
+					"# last_value = selected_df2.first()[-1]\r\n",
+					"# # Print the last column value to the console\r\n",
+					"# if last_value==None:\r\n",
+					"#     selected_df2 = selected_df2.drop(\"MeasurementDate\")\r\n",
+					"#     selected_df2 = selected_df2.withColumn(\"MeasurementDate\", to_date(selected_df2[\"Peildatum\"], \"MM/dd/yy\").cast(DateType()))\r\n",
+					"# last_value = selected_df2.first()[-1]\r\n",
+					"# if last_value==None:\r\n",
+					"#     selected_df2 = selected_df2.drop(\"MeasurementDate\")\r\n",
+					"#     selected_df2 = selected_df2.withColumn(\"MeasurementDate\", to_date(selected_df2[\"Peildatum\"], \"dd-MMM-yy\").cast(DateType()))\r\n",
+					"# last_value = selected_df2.first()[-1]\r\n",
+					"# if last_value==None:\r\n",
+					"#     selected_df2 = selected_df2.drop(\"MeasurementDate\")\r\n",
+					"#     selected_df2 = selected_df2.withColumn(\"MeasurementDate\", to_date(selected_df2[\"Peildatum\"], \"dd/MMM/yyyy\").cast(DateType()))\r\n",
+					"#-------------- Old Code ends -----------------------\r\n",
 					"\r\n",
 					"# Drop the original col2 column\r\n",
 					"selected_df2 = selected_df2.drop(\"Peildatum\")\r\n",
 					"\r\n",
 					"# Rename the new_col column to col2\r\n",
-					"selected_df2 = selected_df2.withColumnRenamed(\"MeasurementDate\", \"Peildatum\")\r\n",
+					"selected_df2 = selected_df2.withColumnRenamed(\"MeasurementDate\", \"Peildatum\")"
+				],
+				"execution_count": 73
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Convert the string column to date data type, regardless of the date format\r\n",
+					"date_formats = [\"dd/MMM/yy\", \"MM/dd/yy\", \"dd-MMM-yy\",\"dd/MMM/yyyy\"]\r\n",
 					"\r\n",
+					"parsed_date = coalesce(*[expr(\"to_date(Trekkingsdatum, '{0}')\".format(date_format)).cast(\"date\") for date_format in date_formats])\r\n",
+					"\r\n",
+					"# Add the parsed date as a new column in the DataFrame\r\n",
+					"selected_df2 = selected_df2.withColumn(\"MeasurementDate\", parsed_date)\r\n",
+					"\r\n",
+					"#-------------- Old Code begins -----------------------\r\n",
+					"# selected_df2 = selected_df2.withColumn(\"MeasurementDate\", to_date(selected_df2[\"Peildatum\"], \"dd/MMM/yy\").cast(DateType()))\r\n",
+					"# # Select the first row of the DataFrame and extract the last column value\r\n",
+					"# last_value = selected_df2.first()[-1]\r\n",
+					"# # Print the last column value to the console\r\n",
+					"# if last_value==None:\r\n",
+					"#     selected_df2 = selected_df2.drop(\"MeasurementDate\")\r\n",
+					"#     selected_df2 = selected_df2.withColumn(\"MeasurementDate\", to_date(selected_df2[\"Peildatum\"], \"MM/dd/yy\").cast(DateType()))\r\n",
+					"# last_value = selected_df2.first()[-1]\r\n",
+					"# if last_value==None:\r\n",
+					"#     selected_df2 = selected_df2.drop(\"MeasurementDate\")\r\n",
+					"#     selected_df2 = selected_df2.withColumn(\"MeasurementDate\", to_date(selected_df2[\"Peildatum\"], \"dd-MMM-yy\").cast(DateType()))\r\n",
+					"# last_value = selected_df2.first()[-1]\r\n",
+					"# if last_value==None:\r\n",
+					"#     selected_df2 = selected_df2.drop(\"MeasurementDate\")\r\n",
+					"#     selected_df2 = selected_df2.withColumn(\"MeasurementDate\", to_date(selected_df2[\"Peildatum\"], \"dd/MMM/yyyy\").cast(DateType()))\r\n",
+					"#-------------- Old Code ends -----------------------\r\n",
+					"\r\n",
+					"# Drop the original col2 column\r\n",
+					"selected_df2 = selected_df2.drop(\"Trekkingsdatum\")\r\n",
+					"\r\n",
+					"# Rename the new_col column to col2\r\n",
+					"selected_df2 = selected_df2.withColumnRenamed(\"MeasurementDate\", \"Trekkingsdatum\")"
+				],
+				"execution_count": 74
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false,
+					"tags": []
+				},
+				"source": [
+					"# Adding the additional calculated/custom columns\r\n",
 					"selected_df2 = selected_df2.withColumn('WerkelijkVerbruik_RM_2017', regexp_replace(selected_df2['WerkelijkVerbruik_RM_2017'], ',', '.'))\r\n",
 					"selected_df2 = selected_df2.withColumn('WerkelijkVerbruik_RM_2018', regexp_replace(selected_df2['WerkelijkVerbruik_RM_2018'], ',', '.'))\r\n",
 					"selected_df2 = selected_df2.withColumn('WerkelijkVerbruik_RM_2019', regexp_replace(selected_df2['WerkelijkVerbruik_RM_2019'], ',', '.'))\r\n",
@@ -426,7 +612,7 @@
 					",'Gemiddeld_WerkelijkVerbruik','Gemiddeld_BenaderendVerbruik','Gemiddeld_BenaderendVerbruik_Norm','Total_AantalToegangspunten'\\\r\n",
 					", 'MeasurementType') #, 'MeasurementYear', 'MeasurementMonth'"
 				],
-				"execution_count": 62
+				"execution_count": 75
 			},
 			{
 				"cell_type": "code",
@@ -449,7 +635,7 @@
 					"# Displaying the top 5 rows\r\n",
 					"display(selected_df2.limit(5))"
 				],
-				"execution_count": 63
+				"execution_count": 76
 			},
 			{
 				"cell_type": "code",
@@ -470,7 +656,7 @@
 					"print(selected_df2.count()) #Digital Reading - 7005\r\n",
 					""
 				],
-				"execution_count": 64
+				"execution_count": 77
 			},
 			{
 				"cell_type": "code",
@@ -495,7 +681,7 @@
 					"count_group_by2 = grouped_data2.agg(count(\"WerkelijkVerbruik_RM_2017\"))\r\n",
 					"count_group_by2.show() #Digital Reading Group By"
 				],
-				"execution_count": 65
+				"execution_count": 78
 			},
 			{
 				"cell_type": "code",
@@ -514,7 +700,7 @@
 					"# Doing union operation to get a single dataframe combining Analogue and Digital measurement data\r\n",
 					"df = selected_df2.unionAll(selected_df1)"
 				],
-				"execution_count": 66
+				"execution_count": 79
 			},
 			{
 				"cell_type": "code",
@@ -537,7 +723,7 @@
 					"# Checking the datatypes of the column\r\n",
 					"df.dtypes"
 				],
-				"execution_count": 67
+				"execution_count": 80
 			},
 			{
 				"cell_type": "code",
@@ -567,7 +753,7 @@
 					".mode(mode_)\\\r\n",
 					".save(file_path)"
 				],
-				"execution_count": 68
+				"execution_count": 81
 			},
 			{
 				"cell_type": "code",
@@ -589,7 +775,7 @@
 					"new_column_names = [\"DM_\" + col_name for col_name in df.columns]\r\n",
 					"selected_df2 = selected_df2.select([col(col_name).alias(new_col_name) for col_name, new_col_name in zip(df.columns, new_column_names)])"
 				],
-				"execution_count": 69
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -625,7 +811,7 @@
 					"# , 'AM_Gemiddeld_WerkelijkVerbruik','AM_Gemiddeld_BenaderendVerbruik','AM_Gemiddeld_BenaderendVerbruik_Norm','AM_Total_AantalToegangspunten'\r\n",
 					"# , 'DM_MeasurementType') #, 'DM_MeasurementYear', 'DM_MeasurementMonth'"
 				],
-				"execution_count": 70
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -648,7 +834,7 @@
 					"# Displaying the top 5 rows\r\n",
 					"display(join_df.limit(5))"
 				],
-				"execution_count": 71
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -678,7 +864,7 @@
 					".mode(mode_)\\\r\n",
 					".save(file_path)"
 				],
-				"execution_count": 72
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
