@@ -22,7 +22,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "602dacd7-5d7c-4040-9109-3ce0b0da2bb1"
+				"spark.autotune.trackingId": "fd5dc94b-0435-46f7-bfe2-2c0dd2398fe3"
 			}
 		},
 		"metadata": {
@@ -71,10 +71,10 @@
 				},
 				"source": [
 					"# Getiing the parameter value from the pipeline \r\n",
-					"FolderName = \"2022_08\"\r\n",
+					"FolderName = \"2022_11\"\r\n",
 					"Mode = \"overwrite\""
 				],
-				"execution_count": 59
+				"execution_count": 106
 			},
 			{
 				"cell_type": "code",
@@ -95,7 +95,7 @@
 					"year = FolderName.split('_')[0]\r\n",
 					"month = FolderName.split('_')[1]"
 				],
-				"execution_count": 60
+				"execution_count": 107
 			},
 			{
 				"cell_type": "code",
@@ -120,7 +120,7 @@
 					"    'fs.azure.sas.%s.%s.blob.core.windows.net' % (blob_container_name, blob_account_name),\r\n",
 					"    blob_sas_token)"
 				],
-				"execution_count": 61
+				"execution_count": 108
 			},
 			{
 				"cell_type": "code",
@@ -139,7 +139,7 @@
 					"# Set this flag to deal with different date format issues\r\n",
 					"spark.sql(\"set spark.sql.legacy.timeParserPolicy=LEGACY\")"
 				],
-				"execution_count": 62
+				"execution_count": 109
 			},
 			{
 				"cell_type": "code",
@@ -169,7 +169,7 @@
 					"amr_Filename = 'abfss://rawdata@rawdevstorage.dfs.core.windows.net/%s/P6523_Verbruiken_AMR_GEMEENTE_%s.csv' % (FolderName, FolderName_Without_Separator)\r\n",
 					"amr_delimiter_type = (f_get_delimiter(amr_Filename))"
 				],
-				"execution_count": 63
+				"execution_count": 110
 			},
 			{
 				"cell_type": "code",
@@ -205,7 +205,7 @@
 					"#selected_df1 = selected_df1.withColumn(\"MeasurementYear\", lit(year))\r\n",
 					"#selected_df1 = selected_df1.withColumn(\"MeasurementMonth\", lit(month))"
 				],
-				"execution_count": 64
+				"execution_count": 111
 			},
 			{
 				"cell_type": "code",
@@ -253,7 +253,7 @@
 					"# Rename the new_col column to col2\r\n",
 					"selected_df1 = selected_df1.withColumnRenamed(\"MeasurementDate\", \"Peildatum\")"
 				],
-				"execution_count": 65
+				"execution_count": 112
 			},
 			{
 				"cell_type": "code",
@@ -301,7 +301,7 @@
 					"# Rename the new_col column to col2\r\n",
 					"selected_df1 = selected_df1.withColumnRenamed(\"MeasurementDate\", \"Trekkingsdatum\")"
 				],
-				"execution_count": 67
+				"execution_count": 113
 			},
 			{
 				"cell_type": "code",
@@ -365,7 +365,7 @@
 					",'Gemiddeld_WerkelijkVerbruik','Gemiddeld_BenaderendVerbruik','Gemiddeld_BenaderendVerbruik_Norm','Total_AantalToegangspunten'\\\r\n",
 					", 'MeasurementType') #, 'MeasurementYear', 'MeasurementMonth'"
 				],
-				"execution_count": 69
+				"execution_count": 114
 			},
 			{
 				"cell_type": "code",
@@ -390,7 +390,7 @@
 					"# Displaying the top 5 rows\r\n",
 					"display(selected_df1.limit(5))"
 				],
-				"execution_count": 70
+				"execution_count": 115
 			},
 			{
 				"cell_type": "code",
@@ -775,7 +775,7 @@
 					"new_column_names = [\"DM_\" + col_name for col_name in df.columns]\r\n",
 					"selected_df2 = selected_df2.select([col(col_name).alias(new_col_name) for col_name, new_col_name in zip(df.columns, new_column_names)])"
 				],
-				"execution_count": null
+				"execution_count": 82
 			},
 			{
 				"cell_type": "code",
@@ -811,7 +811,7 @@
 					"# , 'AM_Gemiddeld_WerkelijkVerbruik','AM_Gemiddeld_BenaderendVerbruik','AM_Gemiddeld_BenaderendVerbruik_Norm','AM_Total_AantalToegangspunten'\r\n",
 					"# , 'DM_MeasurementType') #, 'DM_MeasurementYear', 'DM_MeasurementMonth'"
 				],
-				"execution_count": null
+				"execution_count": 83
 			},
 			{
 				"cell_type": "code",
@@ -834,7 +834,7 @@
 					"# Displaying the top 5 rows\r\n",
 					"display(join_df.limit(5))"
 				],
-				"execution_count": null
+				"execution_count": 84
 			},
 			{
 				"cell_type": "code",
@@ -864,7 +864,7 @@
 					".mode(mode_)\\\r\n",
 					".save(file_path)"
 				],
-				"execution_count": null
+				"execution_count": 85
 			},
 			{
 				"cell_type": "code",
