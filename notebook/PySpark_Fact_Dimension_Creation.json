@@ -22,7 +22,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "c775ec94-56d2-4975-80da-d792cb32cbba"
+				"spark.autotune.trackingId": "9136e542-c7b2-4561-9ee6-dc55f9b3ebe1"
 			}
 		},
 		"metadata": {
@@ -82,7 +82,7 @@
 					"    blob_sas_token)\r\n",
 					""
 				],
-				"execution_count": 124
+				"execution_count": 179
 			},
 			{
 				"cell_type": "code",
@@ -104,7 +104,7 @@
 					"# Read Delta table into a DataFrame\r\n",
 					"reference_table = spark.read.format(\"delta\").load(delta_table_path)"
 				],
-				"execution_count": 125
+				"execution_count": 180
 			},
 			{
 				"cell_type": "code",
@@ -124,7 +124,7 @@
 					"# Show the contents of the DataFrame\r\n",
 					"display(reference_table.limit(5))"
 				],
-				"execution_count": 126
+				"execution_count": 181
 			},
 			{
 				"cell_type": "code",
@@ -147,7 +147,7 @@
 					"# Displaying a geo location file\r\n",
 					"display(geo_location.limit(5))"
 				],
-				"execution_count": 127
+				"execution_count": 182
 			},
 			{
 				"cell_type": "code",
@@ -217,12 +217,12 @@
 					"geo_location_dimension = geo_location_dimension.select(\"Leveringsadres_Postcode\",\"Leveringsadres_Gemeente\").distinct().orderBy(\"Leveringsadres_Postcode\")\r\n",
 					"\r\n",
 					"# joinigng the dataframe to get all the column for geo location dimension\r\n",
-					"geo_location_dimension = geo_location.join(geo_location_dimension, geo_location[\"postcode\"] == geo_location_dimension[\"Leveringsadres_Postcode\"], \"left\")\r\n",
+					"geo_location_dimension = geo_location.join(geo_location_dimension, geo_location[\"postcode\"] == geo_location_dimension[\"Leveringsadres_Postcode\"], \"inner\")\r\n",
 					"\r\n",
 					"# Unioning the date dimension and removing the duplicates\r\n",
 					"date_dimension = date_dimension_1.union(date_dimension_2).distinct().orderBy(\"Date\")"
 				],
-				"execution_count": 128
+				"execution_count": 183
 			},
 			{
 				"cell_type": "code",
@@ -242,7 +242,7 @@
 					"markt_dimension_window_spec = Window.orderBy(markt_dimension[\"Markt_Name\"].desc()) #Window.partitionBy(\"DM_Markt\").orderBy(\"DM_Markt\")\r\n",
 					"date_dimension_window_spec = Window.orderBy(date_dimension[\"Date\"].desc())"
 				],
-				"execution_count": 129
+				"execution_count": 184
 			},
 			{
 				"cell_type": "code",
@@ -279,11 +279,168 @@
 					"'arrondissement', 'huidig_arrondissement', 'niscode', 'huidige_niscode',)\r\n",
 					"\r\n",
 					"# Displaying the Markt markt_dimension\r\n",
-					"display(markt_dimension)\r\n",
-					"display(date_dimension)\r\n",
-					"display(geo_location_dimension)"
+					"display(markt_dimension.limit(5))\r\n",
+					"display(date_dimension.limit(5))\r\n",
+					"display(geo_location_dimension.limit(5))"
 				],
-				"execution_count": 130
+				"execution_count": 185
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Create a Fact delta_table_path by joining the reference table with dimensions\r\n",
+					"fact_table = reference_table.join(geo_location_dimension, (reference_table[\"DM_Leveringsadres_Postcode\"] == geo_location_dimension[\"Leveringsadres_Postcode\"]) | (reference_table[\"AM_Leveringsadres_Postcode\"] == geo_location_dimension[\"Leveringsadres_Postcode\"]), \"left\")\r\n",
+					"fact_table = fact_table.join(markt_dimension, (fact_table[\"DM_Markt\"] == markt_dimension[\"Markt_Name\"]) | (fact_table[\"AM_Markt\"] == markt_dimension[\"Markt_Name\"]), \"left\")\r\n",
+					"fact_table = fact_table.join(date_dimension, (fact_table[\"DM_Peildatum\"] == date_dimension[\"Date\"]) | (fact_table[\"AM_Peildatum\"] == date_dimension[\"Date\"]), \"left\")\r\n",
+					"\r\n",
+					"# Selecting the required columns\r\n",
+					"fact_table = fact_table.select( 'Date_ID','Markt_ID','DM_Trekkingsdatum','dwh_id',\r\n",
+					" 'DM_WerkelijkVerbruik_RM_2017',\r\n",
+					" 'DM_BenaderendVerbruik_VM_2017',\r\n",
+					" 'DM_BenaderendVerbruik_VM_2017_Norm',\r\n",
+					" 'DM_AantalToegangspunten_2017',\r\n",
+					" 'DM_WerkelijkVerbruik_RM_2018',\r\n",
+					" 'DM_BenaderendVerbruik_VM_2018',\r\n",
+					" 'DM_BenaderendVerbruik_VM_2018_Norm',\r\n",
+					" 'DM_AantalToegangspunten_2018',\r\n",
+					" 'DM_WerkelijkVerbruik_RM_2019',\r\n",
+					" 'DM_BenaderendVerbruik_VM_2019',\r\n",
+					" 'DM_BenaderendVerbruik_VM_2019_Norm',\r\n",
+					" 'DM_AantalToegangspunten_2019',\r\n",
+					" 'DM_WerkelijkVerbruik_RM_2020',\r\n",
+					" 'DM_BenaderendVerbruik_VM_2020',\r\n",
+					" 'DM_BenaderendVerbruik_VM_2020_Norm',\r\n",
+					" 'DM_AantalToegangspunten_2020',\r\n",
+					" 'DM_WerkelijkVerbruik_RM_2021',\r\n",
+					" 'DM_BenaderendVerbruik_VM_2021',\r\n",
+					" 'DM_BenaderendVerbruik_VM_2021_Norm',\r\n",
+					" 'DM_AantalToegangspunten_2021',\r\n",
+					" 'DM_Gemiddeld_WerkelijkVerbruik',\r\n",
+					" 'DM_Gemiddeld_BenaderendVerbruik',\r\n",
+					" 'DM_Gemiddeld_BenaderendVerbruik_Norm',\r\n",
+					" 'DM_Total_AantalToegangspunten',\r\n",
+					" 'AM_Trekkingsdatum',\r\n",
+					" 'AM_WerkelijkVerbruik_RM_2017',\r\n",
+					" 'AM_BenaderendVerbruik_VM_2017',\r\n",
+					" 'AM_BenaderendVerbruik_VM_2017_Norm',\r\n",
+					" 'AM_AantalToegangspunten_2017',\r\n",
+					" 'AM_WerkelijkVerbruik_RM_2018',\r\n",
+					" 'AM_BenaderendVerbruik_VM_2018',\r\n",
+					" 'AM_BenaderendVerbruik_VM_2018_Norm',\r\n",
+					" 'AM_AantalToegangspunten_2018',\r\n",
+					" 'AM_WerkelijkVerbruik_RM_2019',\r\n",
+					" 'AM_BenaderendVerbruik_VM_2019',\r\n",
+					" 'AM_BenaderendVerbruik_VM_2019_Norm',\r\n",
+					" 'AM_AantalToegangspunten_2019',\r\n",
+					" 'AM_WerkelijkVerbruik_RM_2020',\r\n",
+					" 'AM_BenaderendVerbruik_VM_2020',\r\n",
+					" 'AM_BenaderendVerbruik_VM_2020_Norm',\r\n",
+					" 'AM_AantalToegangspunten_2020',\r\n",
+					" 'AM_WerkelijkVerbruik_RM_2021',\r\n",
+					" 'AM_BenaderendVerbruik_VM_2021',\r\n",
+					" 'AM_BenaderendVerbruik_VM_2021_Norm',\r\n",
+					" 'AM_AantalToegangspunten_2021',\r\n",
+					" 'AM_Gemiddeld_WerkelijkVerbruik',\r\n",
+					" 'AM_Gemiddeld_BenaderendVerbruik',\r\n",
+					" 'AM_Gemiddeld_BenaderendVerbruik_Norm',\r\n",
+					" 'AM_Total_AantalToegangspunten')\r\n",
+					"\r\n",
+					"# Renaming the columns\r\n",
+					"fact_table = fact_table.withColumnRenamed(\"Date_ID\", \"Peildatum_ID\")\\\r\n",
+					".withColumnRenamed(\"dwh_id\", \"Geo_Location_ID\")\\\r\n",
+					"\r\n",
+					"# Making more Join Operation\r\n",
+					"fact_table = fact_table.join(date_dimension, (fact_table[\"DM_Trekkingsdatum\"] == date_dimension[\"Date\"]) | (fact_table[\"AM_Trekkingsdatum\"] == date_dimension[\"Date\"]), \"left\")\r\n",
+					"\r\n",
+					"\r\n",
+					"# Selecting the required columns\r\n",
+					"fact_table = fact_table.select( 'Peildatum_ID','Date_ID',\r\n",
+					" 'Markt_ID',\r\n",
+					" 'Geo_Location_ID',\r\n",
+					" 'DM_WerkelijkVerbruik_RM_2017',\r\n",
+					" 'DM_BenaderendVerbruik_VM_2017',\r\n",
+					" 'DM_BenaderendVerbruik_VM_2017_Norm',\r\n",
+					" 'DM_AantalToegangspunten_2017',\r\n",
+					" 'DM_WerkelijkVerbruik_RM_2018',\r\n",
+					" 'DM_BenaderendVerbruik_VM_2018',\r\n",
+					" 'DM_BenaderendVerbruik_VM_2018_Norm',\r\n",
+					" 'DM_AantalToegangspunten_2018',\r\n",
+					" 'DM_WerkelijkVerbruik_RM_2019',\r\n",
+					" 'DM_BenaderendVerbruik_VM_2019',\r\n",
+					" 'DM_BenaderendVerbruik_VM_2019_Norm',\r\n",
+					" 'DM_AantalToegangspunten_2019',\r\n",
+					" 'DM_WerkelijkVerbruik_RM_2020',\r\n",
+					" 'DM_BenaderendVerbruik_VM_2020',\r\n",
+					" 'DM_BenaderendVerbruik_VM_2020_Norm',\r\n",
+					" 'DM_AantalToegangspunten_2020',\r\n",
+					" 'DM_WerkelijkVerbruik_RM_2021',\r\n",
+					" 'DM_BenaderendVerbruik_VM_2021',\r\n",
+					" 'DM_BenaderendVerbruik_VM_2021_Norm',\r\n",
+					" 'DM_AantalToegangspunten_2021',\r\n",
+					" 'DM_Gemiddeld_WerkelijkVerbruik',\r\n",
+					" 'DM_Gemiddeld_BenaderendVerbruik',\r\n",
+					" 'DM_Gemiddeld_BenaderendVerbruik_Norm',\r\n",
+					" 'DM_Total_AantalToegangspunten',\r\n",
+					" 'AM_WerkelijkVerbruik_RM_2017',\r\n",
+					" 'AM_BenaderendVerbruik_VM_2017',\r\n",
+					" 'AM_BenaderendVerbruik_VM_2017_Norm',\r\n",
+					" 'AM_AantalToegangspunten_2017',\r\n",
+					" 'AM_WerkelijkVerbruik_RM_2018',\r\n",
+					" 'AM_BenaderendVerbruik_VM_2018',\r\n",
+					" 'AM_BenaderendVerbruik_VM_2018_Norm',\r\n",
+					" 'AM_AantalToegangspunten_2018',\r\n",
+					" 'AM_WerkelijkVerbruik_RM_2019',\r\n",
+					" 'AM_BenaderendVerbruik_VM_2019',\r\n",
+					" 'AM_BenaderendVerbruik_VM_2019_Norm',\r\n",
+					" 'AM_AantalToegangspunten_2019',\r\n",
+					" 'AM_WerkelijkVerbruik_RM_2020',\r\n",
+					" 'AM_BenaderendVerbruik_VM_2020',\r\n",
+					" 'AM_BenaderendVerbruik_VM_2020_Norm',\r\n",
+					" 'AM_AantalToegangspunten_2020',\r\n",
+					" 'AM_WerkelijkVerbruik_RM_2021',\r\n",
+					" 'AM_BenaderendVerbruik_VM_2021',\r\n",
+					" 'AM_BenaderendVerbruik_VM_2021_Norm',\r\n",
+					" 'AM_AantalToegangspunten_2021',\r\n",
+					" 'AM_Gemiddeld_WerkelijkVerbruik',\r\n",
+					" 'AM_Gemiddeld_BenaderendVerbruik',\r\n",
+					" 'AM_Gemiddeld_BenaderendVerbruik_Norm',\r\n",
+					" 'AM_Total_AantalToegangspunten')\r\n",
+					"\r\n",
+					" \r\n",
+					"# Renaming the columns\r\n",
+					"fact_table = fact_table.withColumnRenamed(\"Date_ID\", \"Trekkingsdatum_ID\")"
+				],
+				"execution_count": 186
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(fact_table.limit(5))"
+				],
+				"execution_count": 187
 			},
 			{
 				"cell_type": "code",
@@ -316,7 +473,7 @@
 					"\r\n",
 					"#.partitionBy(partition_by)\\"
 				],
-				"execution_count": 131
+				"execution_count": 188
 			},
 			{
 				"cell_type": "code",
@@ -348,7 +505,7 @@
 					"\r\n",
 					"#.partitionBy(partition_by)\\"
 				],
-				"execution_count": 132
+				"execution_count": 189
 			},
 			{
 				"cell_type": "code",
@@ -380,7 +537,39 @@
 					"\r\n",
 					"#.partitionBy(partition_by)\\"
 				],
-				"execution_count": 133
+				"execution_count": 190
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Writing the fact table to delta file\r\n",
+					"file_path = 'abfss://goldlayer@rawdevstorage.dfs.core.windows.net/PySparkDimensions/Fact_Table'\r\n",
+					"write_format=\"delta\"\r\n",
+					"#partition_by=[\"DM_Peildatum\"]\r\n",
+					"mode_ = \"overwrite\" #append\r\n",
+					"\r\n",
+					"fact_table\\\r\n",
+					".write\\\r\n",
+					".option(\"header\", \"true\")\\\r\n",
+					".option(\"overwriteSchema\", \"true\")\\\r\n",
+					".format(write_format)\\\r\n",
+					".mode(mode_)\\\r\n",
+					".save(file_path)\r\n",
+					"\r\n",
+					"#.partitionBy(partition_by)\\"
+				],
+				"execution_count": 191
 			},
 			{
 				"cell_type": "code",
