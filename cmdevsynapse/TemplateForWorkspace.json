@@ -3595,6 +3595,389 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/PySpark_Fact_Dimension_Creation')]",
+			"type": "Microsoft.Synapse/workspaces/notebooks",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"description": "Load Data From Blob To Synapse SQL Pool",
+				"folder": {
+					"name": "Master Pipeline Notebooks"
+				},
+				"nbformat": 4,
+				"nbformat_minor": 2,
+				"bigDataPool": {
+					"referenceName": "devpool",
+					"type": "BigDataPoolReference"
+				},
+				"sessionProperties": {
+					"driverMemory": "28g",
+					"driverCores": 4,
+					"executorMemory": "28g",
+					"executorCores": 4,
+					"numExecutors": 2,
+					"runAsWorkspaceSystemIdentity": false,
+					"conf": {
+						"spark.dynamicAllocation.enabled": "false",
+						"spark.dynamicAllocation.minExecutors": "2",
+						"spark.dynamicAllocation.maxExecutors": "2",
+						"spark.autotune.trackingId": "33fbe900-8dde-4bee-8f15-91aac78cad27"
+					}
+				},
+				"metadata": {
+					"saveOutput": true,
+					"enableDebugMode": false,
+					"kernelspec": {
+						"name": "synapse_pyspark",
+						"display_name": "Synapse PySpark"
+					},
+					"language_info": {
+						"name": "python"
+					},
+					"a365ComputeOptions": {
+						"id": "/subscriptions/87083017-2c2b-47c8-8ea7-b4d36686fc97/resourceGroups/Dev_ResourceGroup/providers/Microsoft.Synapse/workspaces/cmdevsynapse/bigDataPools/devpool",
+						"name": "devpool",
+						"type": "Spark",
+						"endpoint": "https://cmdevsynapse.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/devpool",
+						"auth": {
+							"type": "AAD",
+							"authResource": "https://dev.azuresynapse.net"
+						},
+						"sparkVersion": "3.3",
+						"nodeCount": 3,
+						"cores": 4,
+						"memory": 28,
+						"automaticScaleJobs": false
+					},
+					"sessionKeepAliveTimeout": 30
+				},
+				"cells": [
+					{
+						"cell_type": "code",
+						"metadata": {
+							"microsoft": {
+								"language": "python"
+							}
+						},
+						"source": [
+							"%%pyspark\r\n",
+							"# Imporing the libraries\r\n",
+							"from pyspark.sql import SparkSession\r\n",
+							"from pyspark.sql.functions import lit,col,sum,mean,regexp_replace,to_date,count,row_number,unix_timestamp\r\n",
+							"from pyspark.sql.types import DateType,TimestampType\r\n",
+							"from pyspark.sql.window import Window\r\n",
+							"\r\n",
+							"# Setting the flag to handle the date formats\r\n",
+							"spark.sql(\"set spark.sql.legacy.timeParserPolicy=LEGACY\")\r\n",
+							"\r\n",
+							"# Creating a spark session and connection to blob storage account\r\n",
+							"blob_account_name = \"rawdevstorage\"\r\n",
+							"blob_container_name = \"output\"\r\n",
+							"sc = SparkSession.builder.getOrCreate()\r\n",
+							"token_library = sc._jvm.com.microsoft.azure.synapse.tokenlibrary.TokenLibrary\r\n",
+							"blob_sas_token = token_library.getConnectionString(\"cmdevsynapse-WorkspaceDefaultStorage\")\r\n",
+							"spark.conf.set(\r\n",
+							"    'fs.azure.sas.%s.%s.blob.core.windows.net' % (blob_container_name, blob_account_name),\r\n",
+							"    blob_sas_token)\r\n",
+							""
+						],
+						"outputs": [],
+						"execution_count": 124
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Define the path to the Delta table\r\n",
+							"delta_table_path = 'abfss://output@rawdevstorage.dfs.core.windows.net/Electricity_Measurement_pyspark_join'\r\n",
+							"\r\n",
+							"# Read Delta table into a DataFrame\r\n",
+							"reference_table = spark.read.format(\"delta\").load(delta_table_path)"
+						],
+						"outputs": [],
+						"execution_count": 125
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"collapsed": false
+						},
+						"source": [
+							"# Show the contents of the DataFrame\r\n",
+							"display(reference_table.limit(5))"
+						],
+						"outputs": [],
+						"execution_count": 126
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Creating a group by for Markt dimension\r\n",
+							"grouped_reference_table_markt_dimension = reference_table.groupBy(\"DM_Markt\")\r\n",
+							"markt_dimension = grouped_reference_table_markt_dimension.agg(count(\"DM_Trekkingsdatum\"))\r\n",
+							"\r\n",
+							"grouped_reference_table_date_dimension_1 = reference_table.groupBy(\"DM_Trekkingsdatum\")\r\n",
+							"date_dimension_1 = grouped_reference_table_date_dimension_1.agg(count(\"DM_Trekkingsdatum\"))\r\n",
+							"\r\n",
+							"grouped_reference_table_date_dimension_2 = reference_table.groupBy(\"DM_Peildatum\")\r\n",
+							"date_dimension_2 = grouped_reference_table_date_dimension_2.agg(count(\"DM_Trekkingsdatum\"))\r\n",
+							"\r\n",
+							"# Exclude the undefined/null value\r\n",
+							"markt_dimension = markt_dimension.filter(col(\"DM_Markt\").isNotNull())\r\n",
+							"date_dimension_1 = date_dimension_1.filter(col(\"DM_Trekkingsdatum\").isNotNull())\r\n",
+							"date_dimension_2 = date_dimension_2.filter(col(\"DM_Peildatum\").isNotNull())\r\n",
+							"\r\n",
+							"# Rename columns\r\n",
+							"markt_dimension = markt_dimension.withColumnRenamed(\"DM_Markt\", \"Markt_Name\") \\\r\n",
+							".withColumnRenamed(\"count(DM_Trekkingsdatum)\", \"count\")\r\n",
+							"\r\n",
+							"date_dimension_1 = date_dimension_1.withColumnRenamed(\"DM_Trekkingsdatum\", \"Date\") \\\r\n",
+							".withColumnRenamed(\"count(DM_Trekkingsdatum)\", \"count\")\r\n",
+							"\r\n",
+							"date_dimension_2 = date_dimension_2.withColumnRenamed(\"DM_Peildatum\", \"Date\") \\\r\n",
+							".withColumnRenamed(\"count(DM_Trekkingsdatum)\", \"count\")\r\n",
+							"\r\n",
+							"# Selecting specific columns\r\n",
+							"date_dimension_1 =date_dimension_1.select(\"Date\")\r\n",
+							"date_dimension_2 =date_dimension_2.select(\"Date\")\r\n",
+							"\r\n",
+							"# Unioning the date dimension and removing the duplicates\r\n",
+							"date_dimension = date_dimension_1.union(date_dimension_2).distinct()"
+						],
+						"outputs": [],
+						"execution_count": 127
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# convert the date column to datetime\r\n",
+							"date_dimension = date_dimension.withColumn(\"Date_Standard\", to_date(date_dimension[\"Date\"], \"tryFormats\").cast(DateType()))\r\n",
+							"\r\n",
+							"# Example date pattern: \"yyyy-MM-dd HH:mm:ss\"\r\n",
+							"date_pattern = \"yyyy-MM-dd HH:mm:ss\"\r\n",
+							"\r\n",
+							"date_dimension = date_dimension.withColumn(\"timestamp_col\", unix_timestamp(\"Date_Standard\", date_pattern).cast(TimestampType()))\r\n",
+							"date_dimension = date_dimension.drop(\"Date_Standard\")\r\n",
+							"\r\n",
+							"# Select the first row of the DataFrame and extract the last column value\r\n",
+							"# last_value = date_dimension.first()[-1]\r\n",
+							"# # Print the last column value to the console\r\n",
+							"# if last_value==None:\r\n",
+							"#     date_dimension = date_dimension.withColumn(\"Date_Standard\", to_date(date_dimension[\"Date\"], \"MM/dd/yy\").cast(DateType()))\r\n",
+							"# last_value = date_dimension.first()[-1]\r\n",
+							"# if last_value==None:\r\n",
+							"#     date_dimension = date_dimension.withColumn(\"Date_Standard\", to_date(date_dimension[\"Date\"], \"dd-MMM-yy\").cast(DateType()))\r\n",
+							""
+						],
+						"outputs": [],
+						"execution_count": 128
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"collapsed": false
+						},
+						"source": [
+							"date_dimension.show()"
+						],
+						"outputs": [],
+						"execution_count": 130
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Define the window specification for the grouping\r\n",
+							"markt_dimension_window_spec = Window.orderBy(markt_dimension[\"Markt_Name\"].desc()) #Window.partitionBy(\"DM_Markt\").orderBy(\"DM_Markt\")\r\n",
+							"date_dimension_window_spec = Window.orderBy(date_dimension[\"Date\"].desc())"
+						],
+						"outputs": [],
+						"execution_count": 91
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"collapsed": false
+						},
+						"source": [
+							"# Add an auto-incrementing column to the DataFrame within the group\r\n",
+							"markt_dimension = markt_dimension.withColumn(\"Markt_ID\", row_number().over(markt_dimension_window_spec))\r\n",
+							"date_dimension = date_dimension.withColumn(\"Date_ID\", row_number().over(date_dimension_window_spec))\r\n",
+							"\r\n",
+							"# Selecting specific columns and Rearranging the columns\r\n",
+							"markt_dimension =markt_dimension.select(\"Markt_ID\", \"Markt_Name\")\r\n",
+							"\r\n",
+							"# Displaying the Markt markt_dimension\r\n",
+							"display(markt_dimension)"
+						],
+						"outputs": [],
+						"execution_count": 92
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"collapsed": false
+						},
+						"source": [
+							"display(date_dimension)"
+						],
+						"outputs": [],
+						"execution_count": 93
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"collapsed": false
+						},
+						"source": [
+							"# Writing the markt dimension to delta file\r\n",
+							"file_path = 'abfss://goldlayer@rawdevstorage.dfs.core.windows.net/PySparkDimensions/Markt_Dimension'\r\n",
+							"write_format=\"delta\"\r\n",
+							"#partition_by=[\"DM_Peildatum\"]\r\n",
+							"mode_ = \"overwrite\" #append\r\n",
+							"\r\n",
+							"markt_dimension\\\r\n",
+							".write\\\r\n",
+							".option(\"header\", \"true\")\\\r\n",
+							".option(\"overwriteSchema\", \"true\")\\\r\n",
+							".format(write_format)\\\r\n",
+							".mode(mode_)\\\r\n",
+							".save(file_path)\r\n",
+							"\r\n",
+							"#.partitionBy(partition_by)\\"
+						],
+						"outputs": [],
+						"execution_count": 64
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							""
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							""
+						],
+						"outputs": [],
+						"execution_count": null
+					}
+				]
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/PySpark_Load_Data_From_Blob_To_Synapse_SQL_Pool')]",
 			"type": "Microsoft.Synapse/workspaces/notebooks",
 			"apiVersion": "2019-06-01-preview",
@@ -3620,7 +4003,7 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "7eb3d156-3b26-4103-bd57-05799f3caf6e"
+						"spark.autotune.trackingId": "6591788a-78cc-476c-b9fc-5d8858f64263"
 					}
 				},
 				"metadata": {
@@ -3669,11 +4052,11 @@
 						},
 						"source": [
 							"# Getiing the parameter value from the pipeline \r\n",
-							"FolderName = \"2022_10\"\r\n",
+							"FolderName = \"2023_02\"\r\n",
 							"Mode = \"overwrite\""
 						],
 						"outputs": [],
-						"execution_count": 73
+						"execution_count": 116
 					},
 					{
 						"cell_type": "code",
@@ -3695,7 +4078,7 @@
 							"month = FolderName.split('_')[1]"
 						],
 						"outputs": [],
-						"execution_count": null
+						"execution_count": 117
 					},
 					{
 						"cell_type": "code",
@@ -3710,7 +4093,7 @@
 							"blob_account_name = \"rawdevstorage\"\r\n",
 							"blob_container_name = \"rawdata\"\r\n",
 							"from pyspark.sql import SparkSession\r\n",
-							"from pyspark.sql.functions import lit,col,sum,mean,regexp_replace,to_date\r\n",
+							"from pyspark.sql.functions import lit,col,sum,mean,regexp_replace,to_date,coalesce,expr\r\n",
 							"from pyspark.sql.types import DateType\r\n",
 							"\r\n",
 							"sc = SparkSession.builder.getOrCreate()\r\n",
@@ -3721,7 +4104,7 @@
 							"    blob_sas_token)"
 						],
 						"outputs": [],
-						"execution_count": 57
+						"execution_count": 118
 					},
 					{
 						"cell_type": "code",
@@ -3737,10 +4120,11 @@
 							}
 						},
 						"source": [
+							"# Set this flag to deal with different date format issues\r\n",
 							"spark.sql(\"set spark.sql.legacy.timeParserPolicy=LEGACY\")"
 						],
 						"outputs": [],
-						"execution_count": null
+						"execution_count": 119
 					},
 					{
 						"cell_type": "code",
@@ -3771,7 +4155,7 @@
 							"amr_delimiter_type = (f_get_delimiter(amr_Filename))"
 						],
 						"outputs": [],
-						"execution_count": 58
+						"execution_count": 120
 					},
 					{
 						"cell_type": "code",
@@ -3787,7 +4171,6 @@
 							}
 						},
 						"source": [
-							"\r\n",
 							"# Reading the first File (Analogue Reading File)\r\n",
 							"FileName = 'abfss://rawdata@rawdevstorage.dfs.core.windows.net/%s/P6523_Verbruiken_AMR_GEMEENTE_%s.csv' % (FolderName,FolderName_Without_Separator)\r\n",
 							"df1 = spark.read.load(FileName, format='csv', header=True,delimiter=amr_delimiter_type,inferSchema=True)\r\n",
@@ -3806,28 +4189,124 @@
 							"# Adding the additional calculated/custom columns\r\n",
 							"selected_df1 = selected_df1.withColumn(\"MeasurementType\", lit(\"Digital\"))\r\n",
 							"#selected_df1 = selected_df1.withColumn(\"MeasurementYear\", lit(year))\r\n",
-							"#selected_df1 = selected_df1.withColumn(\"MeasurementMonth\", lit(month))\r\n",
-							"selected_df1 = selected_df1.withColumn(\"MeasurementDate\", to_date(selected_df1[\"Peildatum\"], \"dd/MMM/yy\").cast(DateType()))\r\n",
+							"#selected_df1 = selected_df1.withColumn(\"MeasurementMonth\", lit(month))"
+						],
+						"outputs": [],
+						"execution_count": 121
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Convert the string column to date data type, regardless of the date format\r\n",
+							"date_formats = [\"dd/MMM/yy\", \"MM/dd/yy\", \"dd-MMM-yy\",\"dd/MMM/yyyy\"]\r\n",
 							"\r\n",
-							"# Select the first row of the DataFrame and extract the last column value\r\n",
-							"last_value = selected_df1.first()[-1]\r\n",
+							"parsed_date = coalesce(*[expr(\"to_date(Peildatum, '{0}')\".format(date_format)).cast(\"date\") for date_format in date_formats])\r\n",
 							"\r\n",
-							"# Print the last column value to the console\r\n",
-							"if last_value==None:\r\n",
-							"    selected_df1 = selected_df1.drop(\"MeasurementDate\")\r\n",
-							"    selected_df1 = selected_df1.withColumn(\"MeasurementDate\", to_date(selected_df1[\"Peildatum\"], \"MM/dd/yy\").cast(DateType()))\r\n",
+							"# Add the parsed date as a new column in the DataFrame\r\n",
+							"selected_df1 = selected_df1.withColumn(\"MeasurementDate\", parsed_date)\r\n",
 							"\r\n",
-							"last_value = selected_df1.first()[-1]\r\n",
-							"if last_value==None:\r\n",
-							"    selected_df1 = selected_df1.drop(\"MeasurementDate\")\r\n",
-							"    selected_df1 = selected_df1.withColumn(\"MeasurementDate\", to_date(selected_df1[\"Peildatum\"], \"dd-MMM-yy\").cast(DateType()))\r\n",
+							"#-------------- Old Code begins -----------------------\r\n",
+							"# selected_df1 = selected_df1.withColumn(\"MeasurementDate\", to_date(selected_df1[\"Peildatum\"], \"dd/MMM/yy\").cast(DateType()))\r\n",
+							"# # Select the first row of the DataFrame and extract the last column value\r\n",
+							"# last_value = selected_df1.first()[-1]\r\n",
+							"# # Print the last column value to the console\r\n",
+							"# if last_value==None:\r\n",
+							"#     selected_df1 = selected_df1.drop(\"MeasurementDate\")\r\n",
+							"#     selected_df1 = selected_df1.withColumn(\"MeasurementDate\", to_date(selected_df1[\"Peildatum\"], \"MM/dd/yy\").cast(DateType()))\r\n",
+							"# last_value = selected_df1.first()[-1]\r\n",
+							"# if last_value==None:\r\n",
+							"#     selected_df1 = selected_df1.drop(\"MeasurementDate\")\r\n",
+							"#     selected_df1 = selected_df1.withColumn(\"MeasurementDate\", to_date(selected_df1[\"Peildatum\"], \"dd-MMM-yy\").cast(DateType()))\r\n",
+							"# last_value = selected_df1.first()[-1]\r\n",
+							"# if last_value==None:\r\n",
+							"#     selected_df1 = selected_df1.drop(\"MeasurementDate\")\r\n",
+							"#     selected_df1 = selected_df1.withColumn(\"MeasurementDate\", to_date(selected_df1[\"Peildatum\"], \"dd/MMM/yyyy\").cast(DateType()))\r\n",
+							"#-------------- Old Code ends -----------------------\r\n",
 							"\r\n",
 							"# Drop the original col2 column\r\n",
 							"selected_df1 = selected_df1.drop(\"Peildatum\")\r\n",
 							"\r\n",
 							"# Rename the new_col column to col2\r\n",
-							"selected_df1 = selected_df1.withColumnRenamed(\"MeasurementDate\", \"Peildatum\")\r\n",
+							"selected_df1 = selected_df1.withColumnRenamed(\"MeasurementDate\", \"Peildatum\")"
+						],
+						"outputs": [],
+						"execution_count": 122
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Convert the string column to date data type, regardless of the date format\r\n",
+							"date_formats = [\"dd/MMM/yy\", \"MM/dd/yy\", \"dd-MMM-yy\",\"dd/MMM/yyyy\"]\r\n",
 							"\r\n",
+							"parsed_date = coalesce(*[expr(\"to_date(Trekkingsdatum, '{0}')\".format(date_format)).cast(\"date\") for date_format in date_formats])\r\n",
+							"\r\n",
+							"# Add the parsed date as a new column in the DataFrame\r\n",
+							"selected_df1 = selected_df1.withColumn(\"MeasurementDate\", parsed_date)\r\n",
+							"\r\n",
+							"#-------------- Old Code begins -----------------------\r\n",
+							"# selected_df1 = selected_df1.withColumn(\"MeasurementDate\", to_date(selected_df1[\"Peildatum\"], \"dd/MMM/yy\").cast(DateType()))\r\n",
+							"# # Select the first row of the DataFrame and extract the last column value\r\n",
+							"# last_value = selected_df1.first()[-1]\r\n",
+							"# # Print the last column value to the console\r\n",
+							"# if last_value==None:\r\n",
+							"#     selected_df1 = selected_df1.drop(\"MeasurementDate\")\r\n",
+							"#     selected_df1 = selected_df1.withColumn(\"MeasurementDate\", to_date(selected_df1[\"Peildatum\"], \"MM/dd/yy\").cast(DateType()))\r\n",
+							"# last_value = selected_df1.first()[-1]\r\n",
+							"# if last_value==None:\r\n",
+							"#     selected_df1 = selected_df1.drop(\"MeasurementDate\")\r\n",
+							"#     selected_df1 = selected_df1.withColumn(\"MeasurementDate\", to_date(selected_df1[\"Peildatum\"], \"dd-MMM-yy\").cast(DateType()))\r\n",
+							"# last_value = selected_df1.first()[-1]\r\n",
+							"# if last_value==None:\r\n",
+							"#     selected_df1 = selected_df1.drop(\"MeasurementDate\")\r\n",
+							"#     selected_df1 = selected_df1.withColumn(\"MeasurementDate\", to_date(selected_df1[\"Peildatum\"], \"dd/MMM/yyyy\").cast(DateType()))\r\n",
+							"#-------------- Old Code ends -----------------------\r\n",
+							"\r\n",
+							"# Drop the original col2 column\r\n",
+							"selected_df1 = selected_df1.drop(\"Trekkingsdatum\")\r\n",
+							"\r\n",
+							"# Rename the new_col column to col2\r\n",
+							"selected_df1 = selected_df1.withColumnRenamed(\"MeasurementDate\", \"Trekkingsdatum\")"
+						],
+						"outputs": [],
+						"execution_count": 123
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Adding the additional calculated/custom columns\r\n",
 							"selected_df1 = selected_df1.withColumn(\"BenaderendVerbruik_VM_2017_Norm\", col(\"BenaderendVerbruik_VM_2017\"))\r\n",
 							"selected_df1 = selected_df1.withColumn(\"BenaderendVerbruik_VM_2018_Norm\", col(\"BenaderendVerbruik_VM_2018\"))\r\n",
 							"selected_df1 = selected_df1.withColumn(\"BenaderendVerbruik_VM_2019_Norm\", col(\"BenaderendVerbruik_VM_2019\"))\r\n",
@@ -3876,7 +4355,7 @@
 							", 'MeasurementType') #, 'MeasurementYear', 'MeasurementMonth'"
 						],
 						"outputs": [],
-						"execution_count": 59
+						"execution_count": 124
 					},
 					{
 						"cell_type": "code",
@@ -3902,7 +4381,7 @@
 							"display(selected_df1.limit(5))"
 						],
 						"outputs": [],
-						"execution_count": 60
+						"execution_count": 125
 					},
 					{
 						"cell_type": "code",
@@ -3933,7 +4412,7 @@
 							"amr_delimiter_type = (f_get_delimiter(amr_Filename))"
 						],
 						"outputs": [],
-						"execution_count": 61
+						"execution_count": 71
 					},
 					{
 						"cell_type": "code",
@@ -3946,9 +4425,7 @@
 								"transient": {
 									"deleting": false
 								}
-							},
-							"collapsed": false,
-							"tags": []
+							}
 						},
 						"source": [
 							"# Reading the second File (Digital Reading File)\r\n",
@@ -3969,28 +4446,126 @@
 							"# Adding the additional calculated/custom columns\r\n",
 							"selected_df2 = selected_df2.withColumn(\"MeasurementType\", lit(\"Digital\"))\r\n",
 							"#selected_df2 = selected_df2.withColumn(\"MeasurementYear\", lit(year))\r\n",
-							"#selected_df2 = selected_df2.withColumn(\"MeasurementMonth\", lit(month))\r\n",
-							"selected_df2 = selected_df2.withColumn(\"MeasurementDate\", to_date(selected_df2[\"Peildatum\"], \"dd/MMM/yy\").cast(DateType()))\r\n",
+							"#selected_df2 = selected_df2.withColumn(\"MeasurementMonth\", lit(month))"
+						],
+						"outputs": [],
+						"execution_count": 72
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Convert the string column to date data type, regardless of the date format\r\n",
+							"date_formats = [\"dd/MMM/yy\", \"MM/dd/yy\", \"dd-MMM-yy\",\"dd/MMM/yyyy\"]\r\n",
 							"\r\n",
-							"# Select the first row of the DataFrame and extract the last column value\r\n",
-							"last_value = selected_df2.first()[-1]\r\n",
+							"parsed_date = coalesce(*[expr(\"to_date(Peildatum, '{0}')\".format(date_format)).cast(\"date\") for date_format in date_formats])\r\n",
 							"\r\n",
-							"# Print the last column value to the console\r\n",
-							"if last_value==None:\r\n",
-							"    selected_df2 = selected_df2.drop(\"MeasurementDate\")\r\n",
-							"    selected_df2 = selected_df2.withColumn(\"MeasurementDate\", to_date(selected_df2[\"Peildatum\"], \"MM/dd/yy\").cast(DateType()))\r\n",
+							"# Add the parsed date as a new column in the DataFrame\r\n",
+							"selected_df2 = selected_df2.withColumn(\"MeasurementDate\", parsed_date)\r\n",
 							"\r\n",
-							"last_value = selected_df2.first()[-1]\r\n",
-							"if last_value==None:\r\n",
-							"    selected_df2 = selected_df2.drop(\"MeasurementDate\")\r\n",
-							"    selected_df2 = selected_df2.withColumn(\"MeasurementDate\", to_date(selected_df2[\"Peildatum\"], \"dd-MMM-yy\").cast(DateType()))\r\n",
+							"#-------------- Old Code begins -----------------------\r\n",
+							"# selected_df2 = selected_df2.withColumn(\"MeasurementDate\", to_date(selected_df2[\"Peildatum\"], \"dd/MMM/yy\").cast(DateType()))\r\n",
+							"# # Select the first row of the DataFrame and extract the last column value\r\n",
+							"# last_value = selected_df2.first()[-1]\r\n",
+							"# # Print the last column value to the console\r\n",
+							"# if last_value==None:\r\n",
+							"#     selected_df2 = selected_df2.drop(\"MeasurementDate\")\r\n",
+							"#     selected_df2 = selected_df2.withColumn(\"MeasurementDate\", to_date(selected_df2[\"Peildatum\"], \"MM/dd/yy\").cast(DateType()))\r\n",
+							"# last_value = selected_df2.first()[-1]\r\n",
+							"# if last_value==None:\r\n",
+							"#     selected_df2 = selected_df2.drop(\"MeasurementDate\")\r\n",
+							"#     selected_df2 = selected_df2.withColumn(\"MeasurementDate\", to_date(selected_df2[\"Peildatum\"], \"dd-MMM-yy\").cast(DateType()))\r\n",
+							"# last_value = selected_df2.first()[-1]\r\n",
+							"# if last_value==None:\r\n",
+							"#     selected_df2 = selected_df2.drop(\"MeasurementDate\")\r\n",
+							"#     selected_df2 = selected_df2.withColumn(\"MeasurementDate\", to_date(selected_df2[\"Peildatum\"], \"dd/MMM/yyyy\").cast(DateType()))\r\n",
+							"#-------------- Old Code ends -----------------------\r\n",
 							"\r\n",
 							"# Drop the original col2 column\r\n",
 							"selected_df2 = selected_df2.drop(\"Peildatum\")\r\n",
 							"\r\n",
 							"# Rename the new_col column to col2\r\n",
-							"selected_df2 = selected_df2.withColumnRenamed(\"MeasurementDate\", \"Peildatum\")\r\n",
+							"selected_df2 = selected_df2.withColumnRenamed(\"MeasurementDate\", \"Peildatum\")"
+						],
+						"outputs": [],
+						"execution_count": 73
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Convert the string column to date data type, regardless of the date format\r\n",
+							"date_formats = [\"dd/MMM/yy\", \"MM/dd/yy\", \"dd-MMM-yy\",\"dd/MMM/yyyy\"]\r\n",
 							"\r\n",
+							"parsed_date = coalesce(*[expr(\"to_date(Trekkingsdatum, '{0}')\".format(date_format)).cast(\"date\") for date_format in date_formats])\r\n",
+							"\r\n",
+							"# Add the parsed date as a new column in the DataFrame\r\n",
+							"selected_df2 = selected_df2.withColumn(\"MeasurementDate\", parsed_date)\r\n",
+							"\r\n",
+							"#-------------- Old Code begins -----------------------\r\n",
+							"# selected_df2 = selected_df2.withColumn(\"MeasurementDate\", to_date(selected_df2[\"Peildatum\"], \"dd/MMM/yy\").cast(DateType()))\r\n",
+							"# # Select the first row of the DataFrame and extract the last column value\r\n",
+							"# last_value = selected_df2.first()[-1]\r\n",
+							"# # Print the last column value to the console\r\n",
+							"# if last_value==None:\r\n",
+							"#     selected_df2 = selected_df2.drop(\"MeasurementDate\")\r\n",
+							"#     selected_df2 = selected_df2.withColumn(\"MeasurementDate\", to_date(selected_df2[\"Peildatum\"], \"MM/dd/yy\").cast(DateType()))\r\n",
+							"# last_value = selected_df2.first()[-1]\r\n",
+							"# if last_value==None:\r\n",
+							"#     selected_df2 = selected_df2.drop(\"MeasurementDate\")\r\n",
+							"#     selected_df2 = selected_df2.withColumn(\"MeasurementDate\", to_date(selected_df2[\"Peildatum\"], \"dd-MMM-yy\").cast(DateType()))\r\n",
+							"# last_value = selected_df2.first()[-1]\r\n",
+							"# if last_value==None:\r\n",
+							"#     selected_df2 = selected_df2.drop(\"MeasurementDate\")\r\n",
+							"#     selected_df2 = selected_df2.withColumn(\"MeasurementDate\", to_date(selected_df2[\"Peildatum\"], \"dd/MMM/yyyy\").cast(DateType()))\r\n",
+							"#-------------- Old Code ends -----------------------\r\n",
+							"\r\n",
+							"# Drop the original col2 column\r\n",
+							"selected_df2 = selected_df2.drop(\"Trekkingsdatum\")\r\n",
+							"\r\n",
+							"# Rename the new_col column to col2\r\n",
+							"selected_df2 = selected_df2.withColumnRenamed(\"MeasurementDate\", \"Trekkingsdatum\")"
+						],
+						"outputs": [],
+						"execution_count": 74
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"collapsed": false,
+							"tags": []
+						},
+						"source": [
+							"# Adding the additional calculated/custom columns\r\n",
 							"selected_df2 = selected_df2.withColumn('WerkelijkVerbruik_RM_2017', regexp_replace(selected_df2['WerkelijkVerbruik_RM_2017'], ',', '.'))\r\n",
 							"selected_df2 = selected_df2.withColumn('WerkelijkVerbruik_RM_2018', regexp_replace(selected_df2['WerkelijkVerbruik_RM_2018'], ',', '.'))\r\n",
 							"selected_df2 = selected_df2.withColumn('WerkelijkVerbruik_RM_2019', regexp_replace(selected_df2['WerkelijkVerbruik_RM_2019'], ',', '.'))\r\n",
@@ -4033,7 +4608,7 @@
 							", 'MeasurementType') #, 'MeasurementYear', 'MeasurementMonth'"
 						],
 						"outputs": [],
-						"execution_count": 62
+						"execution_count": 75
 					},
 					{
 						"cell_type": "code",
@@ -4057,7 +4632,7 @@
 							"display(selected_df2.limit(5))"
 						],
 						"outputs": [],
-						"execution_count": 63
+						"execution_count": 76
 					},
 					{
 						"cell_type": "code",
@@ -4079,7 +4654,7 @@
 							""
 						],
 						"outputs": [],
-						"execution_count": 64
+						"execution_count": 77
 					},
 					{
 						"cell_type": "code",
@@ -4105,7 +4680,7 @@
 							"count_group_by2.show() #Digital Reading Group By"
 						],
 						"outputs": [],
-						"execution_count": 65
+						"execution_count": 78
 					},
 					{
 						"cell_type": "code",
@@ -4125,7 +4700,7 @@
 							"df = selected_df2.unionAll(selected_df1)"
 						],
 						"outputs": [],
-						"execution_count": 66
+						"execution_count": 79
 					},
 					{
 						"cell_type": "code",
@@ -4149,7 +4724,7 @@
 							"df.dtypes"
 						],
 						"outputs": [],
-						"execution_count": 67
+						"execution_count": 80
 					},
 					{
 						"cell_type": "code",
@@ -4180,7 +4755,7 @@
 							".save(file_path)"
 						],
 						"outputs": [],
-						"execution_count": 68
+						"execution_count": 81
 					},
 					{
 						"cell_type": "code",
@@ -4203,7 +4778,7 @@
 							"selected_df2 = selected_df2.select([col(col_name).alias(new_col_name) for col_name, new_col_name in zip(df.columns, new_column_names)])"
 						],
 						"outputs": [],
-						"execution_count": 69
+						"execution_count": 82
 					},
 					{
 						"cell_type": "code",
@@ -4240,7 +4815,7 @@
 							"# , 'DM_MeasurementType') #, 'DM_MeasurementYear', 'DM_MeasurementMonth'"
 						],
 						"outputs": [],
-						"execution_count": 70
+						"execution_count": 83
 					},
 					{
 						"cell_type": "code",
@@ -4264,7 +4839,7 @@
 							"display(join_df.limit(5))"
 						],
 						"outputs": [],
-						"execution_count": 71
+						"execution_count": 84
 					},
 					{
 						"cell_type": "code",
@@ -4295,7 +4870,7 @@
 							".save(file_path)"
 						],
 						"outputs": [],
-						"execution_count": 72
+						"execution_count": 85
 					},
 					{
 						"cell_type": "code",
@@ -4838,7 +5413,7 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "e1ad47a1-b63f-48e5-bc40-5021e8f2894f"
+						"spark.autotune.trackingId": "fd6d14ab-2208-4820-8054-65f4188d8c88"
 					}
 				},
 				"metadata": {
@@ -4863,8 +5438,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 4,
-						"memory": 28,
-						"automaticScaleJobs": false
+						"memory": 28
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -4917,7 +5491,6 @@
 					},
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							"from pyspark.sql import SparkSession\r\n",
 							"from pyspark.sql.functions import lit,col\r\n",
@@ -5936,7 +6509,7 @@
 				},
 				"autoScale": {
 					"enabled": true,
-					"maxNodeCount": 3,
+					"maxNodeCount": 4,
 					"minNodeCount": 3
 				},
 				"nodeCount": 3,
@@ -5974,389 +6547,6 @@
 			},
 			"dependsOn": [],
 			"location": "northeurope"
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/PySpark_Fact_Dimension_Creation')]",
-			"type": "Microsoft.Synapse/workspaces/notebooks",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"description": "Load Data From Blob To Synapse SQL Pool",
-				"folder": {
-					"name": "Master Pipeline Notebooks"
-				},
-				"nbformat": 4,
-				"nbformat_minor": 2,
-				"bigDataPool": {
-					"referenceName": "devpool",
-					"type": "BigDataPoolReference"
-				},
-				"sessionProperties": {
-					"driverMemory": "28g",
-					"driverCores": 4,
-					"executorMemory": "28g",
-					"executorCores": 4,
-					"numExecutors": 2,
-					"runAsWorkspaceSystemIdentity": false,
-					"conf": {
-						"spark.dynamicAllocation.enabled": "false",
-						"spark.dynamicAllocation.minExecutors": "2",
-						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "55e41e66-a7e3-41b8-88c4-6f40bacf13ba"
-					}
-				},
-				"metadata": {
-					"saveOutput": true,
-					"enableDebugMode": false,
-					"kernelspec": {
-						"name": "synapse_pyspark",
-						"display_name": "Synapse PySpark"
-					},
-					"language_info": {
-						"name": "python"
-					},
-					"a365ComputeOptions": {
-						"id": "/subscriptions/87083017-2c2b-47c8-8ea7-b4d36686fc97/resourceGroups/Dev_ResourceGroup/providers/Microsoft.Synapse/workspaces/cmdevsynapse/bigDataPools/devpool",
-						"name": "devpool",
-						"type": "Spark",
-						"endpoint": "https://cmdevsynapse.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/devpool",
-						"auth": {
-							"type": "AAD",
-							"authResource": "https://dev.azuresynapse.net"
-						},
-						"sparkVersion": "3.3",
-						"nodeCount": 3,
-						"cores": 4,
-						"memory": 28,
-						"automaticScaleJobs": false
-					},
-					"sessionKeepAliveTimeout": 30
-				},
-				"cells": [
-					{
-						"cell_type": "code",
-						"metadata": {
-							"microsoft": {
-								"language": "python"
-							}
-						},
-						"source": [
-							"%%pyspark\r\n",
-							"# Imporing the libraries\r\n",
-							"from pyspark.sql import SparkSession\r\n",
-							"from pyspark.sql.functions import lit,col,sum,mean,regexp_replace,to_date,count,row_number,unix_timestamp\r\n",
-							"from pyspark.sql.types import DateType,TimestampType\r\n",
-							"from pyspark.sql.window import Window\r\n",
-							"\r\n",
-							"# Setting the flag to handle the date formats\r\n",
-							"spark.sql(\"set spark.sql.legacy.timeParserPolicy=LEGACY\")\r\n",
-							"\r\n",
-							"# Creating a spark session and connection to blob storage account\r\n",
-							"blob_account_name = \"rawdevstorage\"\r\n",
-							"blob_container_name = \"output\"\r\n",
-							"sc = SparkSession.builder.getOrCreate()\r\n",
-							"token_library = sc._jvm.com.microsoft.azure.synapse.tokenlibrary.TokenLibrary\r\n",
-							"blob_sas_token = token_library.getConnectionString(\"cmdevsynapse-WorkspaceDefaultStorage\")\r\n",
-							"spark.conf.set(\r\n",
-							"    'fs.azure.sas.%s.%s.blob.core.windows.net' % (blob_container_name, blob_account_name),\r\n",
-							"    blob_sas_token)\r\n",
-							""
-						],
-						"outputs": [],
-						"execution_count": 124
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"# Define the path to the Delta table\r\n",
-							"delta_table_path = 'abfss://output@rawdevstorage.dfs.core.windows.net/Electricity_Measurement_pyspark_join'\r\n",
-							"\r\n",
-							"# Read Delta table into a DataFrame\r\n",
-							"reference_table = spark.read.format(\"delta\").load(delta_table_path)"
-						],
-						"outputs": [],
-						"execution_count": 125
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							},
-							"collapsed": false
-						},
-						"source": [
-							"# Show the contents of the DataFrame\r\n",
-							"display(reference_table.limit(5))"
-						],
-						"outputs": [],
-						"execution_count": 126
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"# Creating a group by for Markt dimension\r\n",
-							"grouped_reference_table_markt_dimension = reference_table.groupBy(\"DM_Markt\")\r\n",
-							"markt_dimension = grouped_reference_table_markt_dimension.agg(count(\"DM_Trekkingsdatum\"))\r\n",
-							"\r\n",
-							"grouped_reference_table_date_dimension_1 = reference_table.groupBy(\"DM_Trekkingsdatum\")\r\n",
-							"date_dimension_1 = grouped_reference_table_date_dimension_1.agg(count(\"DM_Trekkingsdatum\"))\r\n",
-							"\r\n",
-							"grouped_reference_table_date_dimension_2 = reference_table.groupBy(\"DM_Peildatum\")\r\n",
-							"date_dimension_2 = grouped_reference_table_date_dimension_2.agg(count(\"DM_Trekkingsdatum\"))\r\n",
-							"\r\n",
-							"# Exclude the undefined/null value\r\n",
-							"markt_dimension = markt_dimension.filter(col(\"DM_Markt\").isNotNull())\r\n",
-							"date_dimension_1 = date_dimension_1.filter(col(\"DM_Trekkingsdatum\").isNotNull())\r\n",
-							"date_dimension_2 = date_dimension_2.filter(col(\"DM_Peildatum\").isNotNull())\r\n",
-							"\r\n",
-							"# Rename columns\r\n",
-							"markt_dimension = markt_dimension.withColumnRenamed(\"DM_Markt\", \"Markt_Name\") \\\r\n",
-							".withColumnRenamed(\"count(DM_Trekkingsdatum)\", \"count\")\r\n",
-							"\r\n",
-							"date_dimension_1 = date_dimension_1.withColumnRenamed(\"DM_Trekkingsdatum\", \"Date\") \\\r\n",
-							".withColumnRenamed(\"count(DM_Trekkingsdatum)\", \"count\")\r\n",
-							"\r\n",
-							"date_dimension_2 = date_dimension_2.withColumnRenamed(\"DM_Peildatum\", \"Date\") \\\r\n",
-							".withColumnRenamed(\"count(DM_Trekkingsdatum)\", \"count\")\r\n",
-							"\r\n",
-							"# Selecting specific columns\r\n",
-							"date_dimension_1 =date_dimension_1.select(\"Date\")\r\n",
-							"date_dimension_2 =date_dimension_2.select(\"Date\")\r\n",
-							"\r\n",
-							"# Unioning the date dimension and removing the duplicates\r\n",
-							"date_dimension = date_dimension_1.union(date_dimension_2).distinct()"
-						],
-						"outputs": [],
-						"execution_count": 127
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"# convert the date column to datetime\r\n",
-							"date_dimension = date_dimension.withColumn(\"Date_Standard\", to_date(date_dimension[\"Date\"], \"tryFormats\").cast(DateType()))\r\n",
-							"\r\n",
-							"# Example date pattern: \"yyyy-MM-dd HH:mm:ss\"\r\n",
-							"date_pattern = \"yyyy-MM-dd HH:mm:ss\"\r\n",
-							"\r\n",
-							"date_dimension = date_dimension.withColumn(\"timestamp_col\", unix_timestamp(\"Date_Standard\", date_pattern).cast(TimestampType()))\r\n",
-							"date_dimension = date_dimension.drop(\"Date_Standard\")\r\n",
-							"\r\n",
-							"# Select the first row of the DataFrame and extract the last column value\r\n",
-							"# last_value = date_dimension.first()[-1]\r\n",
-							"# # Print the last column value to the console\r\n",
-							"# if last_value==None:\r\n",
-							"#     date_dimension = date_dimension.withColumn(\"Date_Standard\", to_date(date_dimension[\"Date\"], \"MM/dd/yy\").cast(DateType()))\r\n",
-							"# last_value = date_dimension.first()[-1]\r\n",
-							"# if last_value==None:\r\n",
-							"#     date_dimension = date_dimension.withColumn(\"Date_Standard\", to_date(date_dimension[\"Date\"], \"dd-MMM-yy\").cast(DateType()))\r\n",
-							""
-						],
-						"outputs": [],
-						"execution_count": 128
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							},
-							"collapsed": false
-						},
-						"source": [
-							"date_dimension.show()"
-						],
-						"outputs": [],
-						"execution_count": 130
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"# Define the window specification for the grouping\r\n",
-							"markt_dimension_window_spec = Window.orderBy(markt_dimension[\"Markt_Name\"].desc()) #Window.partitionBy(\"DM_Markt\").orderBy(\"DM_Markt\")\r\n",
-							"date_dimension_window_spec = Window.orderBy(date_dimension[\"Date\"].desc())"
-						],
-						"outputs": [],
-						"execution_count": 91
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							},
-							"collapsed": false
-						},
-						"source": [
-							"# Add an auto-incrementing column to the DataFrame within the group\r\n",
-							"markt_dimension = markt_dimension.withColumn(\"Markt_ID\", row_number().over(markt_dimension_window_spec))\r\n",
-							"date_dimension = date_dimension.withColumn(\"Date_ID\", row_number().over(date_dimension_window_spec))\r\n",
-							"\r\n",
-							"# Selecting specific columns and Rearranging the columns\r\n",
-							"markt_dimension =markt_dimension.select(\"Markt_ID\", \"Markt_Name\")\r\n",
-							"\r\n",
-							"# Displaying the Markt markt_dimension\r\n",
-							"display(markt_dimension)"
-						],
-						"outputs": [],
-						"execution_count": 92
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							},
-							"collapsed": false
-						},
-						"source": [
-							"display(date_dimension)"
-						],
-						"outputs": [],
-						"execution_count": 93
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							},
-							"collapsed": false
-						},
-						"source": [
-							"# Writing the markt dimension to delta file\r\n",
-							"file_path = 'abfss://goldlayer@rawdevstorage.dfs.core.windows.net/PySparkDimensions/Markt_Dimension'\r\n",
-							"write_format=\"delta\"\r\n",
-							"#partition_by=[\"DM_Peildatum\"]\r\n",
-							"mode_ = \"overwrite\" #append\r\n",
-							"\r\n",
-							"markt_dimension\\\r\n",
-							".write\\\r\n",
-							".option(\"header\", \"true\")\\\r\n",
-							".option(\"overwriteSchema\", \"true\")\\\r\n",
-							".format(write_format)\\\r\n",
-							".mode(mode_)\\\r\n",
-							".save(file_path)\r\n",
-							"\r\n",
-							"#.partitionBy(partition_by)\\"
-						],
-						"outputs": [],
-						"execution_count": 64
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							""
-						],
-						"outputs": [],
-						"execution_count": null
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							""
-						],
-						"outputs": [],
-						"execution_count": null
-					}
-				]
-			},
-			"dependsOn": []
 		}
 	]
 }
