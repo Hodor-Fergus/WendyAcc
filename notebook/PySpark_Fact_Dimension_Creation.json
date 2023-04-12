@@ -8,7 +8,7 @@
 		"nbformat": 4,
 		"nbformat_minor": 2,
 		"bigDataPool": {
-			"referenceName": "devpool",
+			"referenceName": "sanzpool",
 			"type": "BigDataPoolReference"
 		},
 		"sessionProperties": {
@@ -22,7 +22,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "9bbf566e-6c1f-48b4-affa-b291be325632"
+				"spark.autotune.trackingId": "09779663-5069-439e-a4e6-e80c568782d1"
 			}
 		},
 		"metadata": {
@@ -36,16 +36,16 @@
 				"name": "python"
 			},
 			"a365ComputeOptions": {
-				"id": "/subscriptions/87083017-2c2b-47c8-8ea7-b4d36686fc97/resourceGroups/Dev_ResourceGroup/providers/Microsoft.Synapse/workspaces/cmdevsynapse/bigDataPools/devpool",
-				"name": "devpool",
+				"id": "/subscriptions/87083017-2c2b-47c8-8ea7-b4d36686fc97/resourceGroups/Dev_ResourceGroup/providers/Microsoft.Synapse/workspaces/cmdevsynapse/bigDataPools/sanzpool",
+				"name": "sanzpool",
 				"type": "Spark",
-				"endpoint": "https://cmdevsynapse.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/devpool",
+				"endpoint": "https://cmdevsynapse.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sanzpool",
 				"auth": {
 					"type": "AAD",
 					"authResource": "https://dev.azuresynapse.net"
 				},
 				"sparkVersion": "3.3",
-				"nodeCount": 3,
+				"nodeCount": 10,
 				"cores": 4,
 				"memory": 28,
 				"automaticScaleJobs": false
@@ -82,7 +82,7 @@
 					"    blob_sas_token)\r\n",
 					""
 				],
-				"execution_count": 124
+				"execution_count": 1
 			},
 			{
 				"cell_type": "code",
@@ -104,7 +104,7 @@
 					"# Read Delta table into a DataFrame\r\n",
 					"reference_table = spark.read.format(\"delta\").load(delta_table_path)"
 				],
-				"execution_count": 125
+				"execution_count": 2
 			},
 			{
 				"cell_type": "code",
@@ -124,7 +124,7 @@
 					"# Show the contents of the DataFrame\r\n",
 					"display(reference_table.limit(5))"
 				],
-				"execution_count": 126
+				"execution_count": 3
 			},
 			{
 				"cell_type": "code",
@@ -166,67 +166,14 @@
 					".withColumnRenamed(\"count(DM_Trekkingsdatum)\", \"count\")\r\n",
 					"\r\n",
 					"# Selecting specific columns\r\n",
-					"date_dimension_1 =date_dimension_1.select(\"Date\")\r\n",
-					"date_dimension_2 =date_dimension_2.select(\"Date\")\r\n",
+					"markt_dimension = markt_dimension.select('Markt_Name')\r\n",
+					"date_dimension_1 = date_dimension_1.select(\"Date\")\r\n",
+					"date_dimension_2 = date_dimension_2.select(\"Date\")\r\n",
 					"\r\n",
 					"# Unioning the date dimension and removing the duplicates\r\n",
-					"date_dimension = date_dimension_1.union(date_dimension_2).distinct()"
+					"date_dimension = date_dimension_1.union(date_dimension_2).distinct().orderBy(\"Date\", ascending=False)"
 				],
-				"execution_count": 127
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"# convert the date column to datetime\r\n",
-					"date_dimension = date_dimension.withColumn(\"Date_Standard\", to_date(date_dimension[\"Date\"], \"tryFormats\").cast(DateType()))\r\n",
-					"\r\n",
-					"# Example date pattern: \"yyyy-MM-dd HH:mm:ss\"\r\n",
-					"date_pattern = \"yyyy-MM-dd HH:mm:ss\"\r\n",
-					"\r\n",
-					"date_dimension = date_dimension.withColumn(\"timestamp_col\", unix_timestamp(\"Date_Standard\", date_pattern).cast(TimestampType()))\r\n",
-					"date_dimension = date_dimension.drop(\"Date_Standard\")\r\n",
-					"\r\n",
-					"# Select the first row of the DataFrame and extract the last column value\r\n",
-					"# last_value = date_dimension.first()[-1]\r\n",
-					"# # Print the last column value to the console\r\n",
-					"# if last_value==None:\r\n",
-					"#     date_dimension = date_dimension.withColumn(\"Date_Standard\", to_date(date_dimension[\"Date\"], \"MM/dd/yy\").cast(DateType()))\r\n",
-					"# last_value = date_dimension.first()[-1]\r\n",
-					"# if last_value==None:\r\n",
-					"#     date_dimension = date_dimension.withColumn(\"Date_Standard\", to_date(date_dimension[\"Date\"], \"dd-MMM-yy\").cast(DateType()))\r\n",
-					""
-				],
-				"execution_count": 128
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"date_dimension.show()"
-				],
-				"execution_count": 130
+				"execution_count": 19
 			},
 			{
 				"cell_type": "code",
@@ -246,7 +193,7 @@
 					"markt_dimension_window_spec = Window.orderBy(markt_dimension[\"Markt_Name\"].desc()) #Window.partitionBy(\"DM_Markt\").orderBy(\"DM_Markt\")\r\n",
 					"date_dimension_window_spec = Window.orderBy(date_dimension[\"Date\"].desc())"
 				],
-				"execution_count": 91
+				"execution_count": 20
 			},
 			{
 				"cell_type": "code",
@@ -268,31 +215,14 @@
 					"date_dimension = date_dimension.withColumn(\"Date_ID\", row_number().over(date_dimension_window_spec))\r\n",
 					"\r\n",
 					"# Selecting specific columns and Rearranging the columns\r\n",
-					"markt_dimension =markt_dimension.select(\"Markt_ID\", \"Markt_Name\")\r\n",
+					"markt_dimension = markt_dimension.select(\"Markt_ID\", \"Markt_Name\")\r\n",
+					"date_dimension = date_dimension.select(\"Date_ID\",\"Date\")\r\n",
 					"\r\n",
 					"# Displaying the Markt markt_dimension\r\n",
-					"display(markt_dimension)"
-				],
-				"execution_count": 92
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
+					"display(markt_dimension)\r\n",
 					"display(date_dimension)"
 				],
-				"execution_count": 93
+				"execution_count": 21
 			},
 			{
 				"cell_type": "code",
