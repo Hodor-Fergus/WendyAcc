@@ -3606,7 +3606,7 @@
 				"nbformat": 4,
 				"nbformat_minor": 2,
 				"bigDataPool": {
-					"referenceName": "devpool",
+					"referenceName": "sanzpool",
 					"type": "BigDataPoolReference"
 				},
 				"sessionProperties": {
@@ -3620,7 +3620,7 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "9bbf566e-6c1f-48b4-affa-b291be325632"
+						"spark.autotune.trackingId": "18372c0a-93f7-47f1-bdf5-2d0fe4cf282a"
 					}
 				},
 				"metadata": {
@@ -3634,18 +3634,19 @@
 						"name": "python"
 					},
 					"a365ComputeOptions": {
-						"id": "/subscriptions/87083017-2c2b-47c8-8ea7-b4d36686fc97/resourceGroups/Dev_ResourceGroup/providers/Microsoft.Synapse/workspaces/cmdevsynapse/bigDataPools/devpool",
-						"name": "devpool",
+						"id": "/subscriptions/87083017-2c2b-47c8-8ea7-b4d36686fc97/resourceGroups/Dev_ResourceGroup/providers/Microsoft.Synapse/workspaces/cmdevsynapse/bigDataPools/sanzpool",
+						"name": "sanzpool",
 						"type": "Spark",
-						"endpoint": "https://cmdevsynapse.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/devpool",
+						"endpoint": "https://cmdevsynapse.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sanzpool",
 						"auth": {
 							"type": "AAD",
 							"authResource": "https://dev.azuresynapse.net"
 						},
 						"sparkVersion": "3.3",
-						"nodeCount": 3,
+						"nodeCount": 10,
 						"cores": 4,
-						"memory": 28
+						"memory": 28,
+						"automaticScaleJobs": false
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -3661,7 +3662,7 @@
 							"%%pyspark\r\n",
 							"# Imporing the libraries\r\n",
 							"from pyspark.sql import SparkSession\r\n",
-							"from pyspark.sql.functions import lit,col,sum,mean,regexp_replace,to_date,count,row_number,unix_timestamp\r\n",
+							"from pyspark.sql.functions import lit,col,sum,mean,regexp_replace,to_date,count,row_number,unix_timestamp,date_format,quarter,expr,weekofyear\r\n",
 							"from pyspark.sql.types import DateType,TimestampType\r\n",
 							"from pyspark.sql.window import Window\r\n",
 							"\r\n",
@@ -3680,7 +3681,7 @@
 							""
 						],
 						"outputs": [],
-						"execution_count": 124
+						"execution_count": 63
 					},
 					{
 						"cell_type": "code",
@@ -3703,7 +3704,7 @@
 							"reference_table = spark.read.format(\"delta\").load(delta_table_path)"
 						],
 						"outputs": [],
-						"execution_count": 125
+						"execution_count": 57
 					},
 					{
 						"cell_type": "code",
@@ -3724,7 +3725,7 @@
 							"display(reference_table.limit(5))"
 						],
 						"outputs": [],
-						"execution_count": 126
+						"execution_count": 58
 					},
 					{
 						"cell_type": "code",
@@ -3766,70 +3767,15 @@
 							".withColumnRenamed(\"count(DM_Trekkingsdatum)\", \"count\")\r\n",
 							"\r\n",
 							"# Selecting specific columns\r\n",
-							"date_dimension_1 =date_dimension_1.select(\"Date\")\r\n",
-							"date_dimension_2 =date_dimension_2.select(\"Date\")\r\n",
+							"markt_dimension = markt_dimension.select('Markt_Name')\r\n",
+							"date_dimension_1 = date_dimension_1.select(\"Date\")\r\n",
+							"date_dimension_2 = date_dimension_2.select(\"Date\")\r\n",
 							"\r\n",
 							"# Unioning the date dimension and removing the duplicates\r\n",
-							"date_dimension = date_dimension_1.union(date_dimension_2).distinct()"
+							"date_dimension = date_dimension_1.union(date_dimension_2).distinct().orderBy(\"Date\")"
 						],
 						"outputs": [],
-						"execution_count": 127
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"# convert the date column to datetime\r\n",
-							"date_dimension = date_dimension.withColumn(\"Date_Standard\", to_date(date_dimension[\"Date\"], \"tryFormats\").cast(DateType()))\r\n",
-							"\r\n",
-							"# Example date pattern: \"yyyy-MM-dd HH:mm:ss\"\r\n",
-							"date_pattern = \"yyyy-MM-dd HH:mm:ss\"\r\n",
-							"\r\n",
-							"date_dimension = date_dimension.withColumn(\"timestamp_col\", unix_timestamp(\"Date_Standard\", date_pattern).cast(TimestampType()))\r\n",
-							"date_dimension = date_dimension.drop(\"Date_Standard\")\r\n",
-							"\r\n",
-							"# Select the first row of the DataFrame and extract the last column value\r\n",
-							"# last_value = date_dimension.first()[-1]\r\n",
-							"# # Print the last column value to the console\r\n",
-							"# if last_value==None:\r\n",
-							"#     date_dimension = date_dimension.withColumn(\"Date_Standard\", to_date(date_dimension[\"Date\"], \"MM/dd/yy\").cast(DateType()))\r\n",
-							"# last_value = date_dimension.first()[-1]\r\n",
-							"# if last_value==None:\r\n",
-							"#     date_dimension = date_dimension.withColumn(\"Date_Standard\", to_date(date_dimension[\"Date\"], \"dd-MMM-yy\").cast(DateType()))\r\n",
-							""
-						],
-						"outputs": [],
-						"execution_count": 128
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							},
-							"collapsed": false
-						},
-						"source": [
-							"date_dimension.show()"
-						],
-						"outputs": [],
-						"execution_count": 130
+						"execution_count": 59
 					},
 					{
 						"cell_type": "code",
@@ -3850,7 +3796,7 @@
 							"date_dimension_window_spec = Window.orderBy(date_dimension[\"Date\"].desc())"
 						],
 						"outputs": [],
-						"execution_count": 91
+						"execution_count": 60
 					},
 					{
 						"cell_type": "code",
@@ -3871,34 +3817,24 @@
 							"markt_dimension = markt_dimension.withColumn(\"Markt_ID\", row_number().over(markt_dimension_window_spec))\r\n",
 							"date_dimension = date_dimension.withColumn(\"Date_ID\", row_number().over(date_dimension_window_spec))\r\n",
 							"\r\n",
+							"# Adding additional columns for the date_dimension_window_spec\r\n",
+							"date_dimension = date_dimension.withColumn(\"Day\", date_format(date_dimension[\"Date\"], \"d\").cast(\"integer\"))\r\n",
+							"date_dimension = date_dimension.withColumn(\"Month\", date_format(date_dimension[\"Date\"], \"M\").cast(\"integer\"))\r\n",
+							"date_dimension = date_dimension.withColumn(\"Year\", date_format(date_dimension[\"Date\"], \"y\").cast(\"integer\"))\r\n",
+							"date_dimension = date_dimension.withColumn(\"Quarter\", quarter(date_dimension[\"Date\"]))\r\n",
+							"date_dimension = date_dimension.withColumn(\"Day_Of_Year\", expr(\"dayofyear(Date)\"))\r\n",
+							"date_dimension = date_dimension.withColumn(\"Week_Number\", weekofyear(date_dimension[\"Date\"]))\r\n",
+							"\r\n",
 							"# Selecting specific columns and Rearranging the columns\r\n",
-							"markt_dimension =markt_dimension.select(\"Markt_ID\", \"Markt_Name\")\r\n",
+							"markt_dimension = markt_dimension.select(\"Markt_ID\", \"Markt_Name\")\r\n",
+							"date_dimension = date_dimension.select(\"Date_ID\",\"Date\",\"Day\",\"Month\",\"Year\",\"Quarter\",\"Day_Of_Year\",\"Week_Number\")\r\n",
 							"\r\n",
 							"# Displaying the Markt markt_dimension\r\n",
-							"display(markt_dimension)"
-						],
-						"outputs": [],
-						"execution_count": 92
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							},
-							"collapsed": false
-						},
-						"source": [
+							"display(markt_dimension)\r\n",
 							"display(date_dimension)"
 						],
 						"outputs": [],
-						"execution_count": 93
+						"execution_count": 64
 					},
 					{
 						"cell_type": "code",
@@ -3932,7 +3868,7 @@
 							"#.partitionBy(partition_by)\\"
 						],
 						"outputs": [],
-						"execution_count": 64
+						"execution_count": 65
 					},
 					{
 						"cell_type": "code",
@@ -3948,10 +3884,24 @@
 							}
 						},
 						"source": [
-							""
+							"# Writing the date dimension to delta file\r\n",
+							"file_path = 'abfss://goldlayer@rawdevstorage.dfs.core.windows.net/PySparkDimensions/Date_Dimension'\r\n",
+							"write_format=\"delta\"\r\n",
+							"#partition_by=[\"DM_Peildatum\"]\r\n",
+							"mode_ = \"overwrite\" #append\r\n",
+							"\r\n",
+							"date_dimension\\\r\n",
+							".write\\\r\n",
+							".option(\"header\", \"true\")\\\r\n",
+							".option(\"overwriteSchema\", \"true\")\\\r\n",
+							".format(write_format)\\\r\n",
+							".mode(mode_)\\\r\n",
+							".save(file_path)\r\n",
+							"\r\n",
+							"#.partitionBy(partition_by)\\"
 						],
 						"outputs": [],
-						"execution_count": null
+						"execution_count": 66
 					},
 					{
 						"cell_type": "code",
