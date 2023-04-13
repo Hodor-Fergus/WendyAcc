@@ -22,7 +22,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "d7b8c6f9-9342-49b7-bbf1-9e0e3acdc87e"
+				"spark.autotune.trackingId": "f77332cd-2e5d-484b-9e5d-df8b1dc97886"
 			}
 		},
 		"metadata": {
@@ -82,7 +82,7 @@
 					"    blob_sas_token)\r\n",
 					""
 				],
-				"execution_count": 24
+				"execution_count": 40
 			},
 			{
 				"cell_type": "code",
@@ -104,7 +104,7 @@
 					"# Read Delta table into a DataFrame\r\n",
 					"reference_table = spark.read.format(\"delta\").load(delta_table_path)"
 				],
-				"execution_count": 2
+				"execution_count": 41
 			},
 			{
 				"cell_type": "code",
@@ -124,7 +124,7 @@
 					"# Show the contents of the DataFrame\r\n",
 					"display(reference_table.limit(5))"
 				],
-				"execution_count": 3
+				"execution_count": 42
 			},
 			{
 				"cell_type": "code",
@@ -147,7 +147,7 @@
 					"# Displaying a geo location file\r\n",
 					"display(geo_location.limit(5))"
 				],
-				"execution_count": 4
+				"execution_count": 43
 			},
 			{
 				"cell_type": "code",
@@ -172,7 +172,7 @@
 					"# Displaying a date file\r\n",
 					"display(date.limit(5))"
 				],
-				"execution_count": 19
+				"execution_count": 44
 			},
 			{
 				"cell_type": "code",
@@ -210,7 +210,7 @@
 					"\r\n",
 					"display(markt_dimension.limit(5))"
 				],
-				"execution_count": 6
+				"execution_count": 45
 			},
 			{
 				"cell_type": "code",
@@ -242,7 +242,7 @@
 					"\r\n",
 					"#.partitionBy(partition_by)\\"
 				],
-				"execution_count": 7
+				"execution_count": 46
 			},
 			{
 				"cell_type": "code",
@@ -280,7 +280,7 @@
 					"\r\n",
 					"display(geo_location_dimension.limit(5))"
 				],
-				"execution_count": 8
+				"execution_count": 47
 			},
 			{
 				"cell_type": "code",
@@ -312,7 +312,7 @@
 					"\r\n",
 					"#.partitionBy(partition_by)\\"
 				],
-				"execution_count": 9
+				"execution_count": 48
 			},
 			{
 				"cell_type": "code",
@@ -367,7 +367,7 @@
 					"# Displaying top 5 rows\r\n",
 					"display(date_dimension.limit(5))"
 				],
-				"execution_count": 28
+				"execution_count": 49
 			},
 			{
 				"cell_type": "code",
@@ -399,7 +399,7 @@
 					"\r\n",
 					"#.partitionBy(partition_by)\\"
 				],
-				"execution_count": 29
+				"execution_count": 50
 			},
 			{
 				"cell_type": "code",
@@ -493,7 +493,7 @@
 					"\r\n",
 					"display(fact_table.limit(5))"
 				],
-				"execution_count": 38
+				"execution_count": 51
 			},
 			{
 				"cell_type": "code",
@@ -525,7 +525,25 @@
 					"\r\n",
 					"#.partitionBy(partition_by)\\"
 				],
-				"execution_count": 39
+				"execution_count": 52
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					""
+				],
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
