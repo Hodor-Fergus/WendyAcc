@@ -396,7 +396,7 @@
 							{
 								"activity": "ForEach Container",
 								"dependencyConditions": [
-									"Failed"
+									"Succeeded"
 								]
 							}
 						],
