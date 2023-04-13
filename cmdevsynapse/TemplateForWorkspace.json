@@ -3658,7 +3658,7 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "50422a18-e1e4-4081-ac80-2c5cb32fcc4b"
+						"spark.autotune.trackingId": "9136e542-c7b2-4561-9ee6-dc55f9b3ebe1"
 					}
 				},
 				"metadata": {
@@ -3683,8 +3683,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 10,
 						"cores": 4,
-						"memory": 28,
-						"automaticScaleJobs": false
+						"memory": 28
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -4255,7 +4254,7 @@
 				"nbformat": 4,
 				"nbformat_minor": 2,
 				"bigDataPool": {
-					"referenceName": "devpool",
+					"referenceName": "sanzpool",
 					"type": "BigDataPoolReference"
 				},
 				"sessionProperties": {
@@ -4269,7 +4268,7 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "ef576d34-47f5-42fc-9641-04157e4cc0b6"
+						"spark.autotune.trackingId": "bdaffc68-81af-4681-9ba8-695b653cac92"
 					}
 				},
 				"metadata": {
@@ -4283,18 +4282,19 @@
 						"name": "python"
 					},
 					"a365ComputeOptions": {
-						"id": "/subscriptions/87083017-2c2b-47c8-8ea7-b4d36686fc97/resourceGroups/Dev_ResourceGroup/providers/Microsoft.Synapse/workspaces/cmdevsynapse/bigDataPools/devpool",
-						"name": "devpool",
+						"id": "/subscriptions/87083017-2c2b-47c8-8ea7-b4d36686fc97/resourceGroups/Dev_ResourceGroup/providers/Microsoft.Synapse/workspaces/cmdevsynapse/bigDataPools/sanzpool",
+						"name": "sanzpool",
 						"type": "Spark",
-						"endpoint": "https://cmdevsynapse.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/devpool",
+						"endpoint": "https://cmdevsynapse.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sanzpool",
 						"auth": {
 							"type": "AAD",
 							"authResource": "https://dev.azuresynapse.net"
 						},
 						"sparkVersion": "3.3",
-						"nodeCount": 3,
+						"nodeCount": 10,
 						"cores": 4,
-						"memory": 28
+						"memory": 28,
+						"automaticScaleJobs": false
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -4321,7 +4321,7 @@
 							"Mode = \"overwrite\""
 						],
 						"outputs": [],
-						"execution_count": 116
+						"execution_count": 2
 					},
 					{
 						"cell_type": "code",
@@ -4343,7 +4343,7 @@
 							"month = FolderName.split('_')[1]"
 						],
 						"outputs": [],
-						"execution_count": 117
+						"execution_count": 3
 					},
 					{
 						"cell_type": "code",
@@ -4369,7 +4369,7 @@
 							"    blob_sas_token)"
 						],
 						"outputs": [],
-						"execution_count": 118
+						"execution_count": 4
 					},
 					{
 						"cell_type": "code",
@@ -4389,7 +4389,7 @@
 							"spark.sql(\"set spark.sql.legacy.timeParserPolicy=LEGACY\")"
 						],
 						"outputs": [],
-						"execution_count": 119
+						"execution_count": 5
 					},
 					{
 						"cell_type": "code",
@@ -4420,7 +4420,7 @@
 							"amr_delimiter_type = (f_get_delimiter(amr_Filename))"
 						],
 						"outputs": [],
-						"execution_count": 120
+						"execution_count": 6
 					},
 					{
 						"cell_type": "code",
@@ -4457,7 +4457,7 @@
 							"#selected_df1 = selected_df1.withColumn(\"MeasurementMonth\", lit(month))"
 						],
 						"outputs": [],
-						"execution_count": 121
+						"execution_count": 7
 					},
 					{
 						"cell_type": "code",
@@ -4506,7 +4506,7 @@
 							"selected_df1 = selected_df1.withColumnRenamed(\"MeasurementDate\", \"Peildatum\")"
 						],
 						"outputs": [],
-						"execution_count": 122
+						"execution_count": 8
 					},
 					{
 						"cell_type": "code",
@@ -4555,7 +4555,7 @@
 							"selected_df1 = selected_df1.withColumnRenamed(\"MeasurementDate\", \"Trekkingsdatum\")"
 						],
 						"outputs": [],
-						"execution_count": 123
+						"execution_count": 9
 					},
 					{
 						"cell_type": "code",
@@ -4620,7 +4620,7 @@
 							", 'MeasurementType') #, 'MeasurementYear', 'MeasurementMonth'"
 						],
 						"outputs": [],
-						"execution_count": 124
+						"execution_count": 10
 					},
 					{
 						"cell_type": "code",
@@ -4646,7 +4646,7 @@
 							"display(selected_df1.limit(5))"
 						],
 						"outputs": [],
-						"execution_count": 125
+						"execution_count": 11
 					},
 					{
 						"cell_type": "code",
@@ -4677,7 +4677,7 @@
 							"amr_delimiter_type = (f_get_delimiter(amr_Filename))"
 						],
 						"outputs": [],
-						"execution_count": 71
+						"execution_count": 12
 					},
 					{
 						"cell_type": "code",
@@ -4714,7 +4714,7 @@
 							"#selected_df2 = selected_df2.withColumn(\"MeasurementMonth\", lit(month))"
 						],
 						"outputs": [],
-						"execution_count": 72
+						"execution_count": 13
 					},
 					{
 						"cell_type": "code",
@@ -4763,7 +4763,7 @@
 							"selected_df2 = selected_df2.withColumnRenamed(\"MeasurementDate\", \"Peildatum\")"
 						],
 						"outputs": [],
-						"execution_count": 73
+						"execution_count": 14
 					},
 					{
 						"cell_type": "code",
@@ -4812,7 +4812,7 @@
 							"selected_df2 = selected_df2.withColumnRenamed(\"MeasurementDate\", \"Trekkingsdatum\")"
 						],
 						"outputs": [],
-						"execution_count": 74
+						"execution_count": 15
 					},
 					{
 						"cell_type": "code",
@@ -4873,7 +4873,7 @@
 							", 'MeasurementType') #, 'MeasurementYear', 'MeasurementMonth'"
 						],
 						"outputs": [],
-						"execution_count": 75
+						"execution_count": 16
 					},
 					{
 						"cell_type": "code",
@@ -4897,7 +4897,7 @@
 							"display(selected_df2.limit(5))"
 						],
 						"outputs": [],
-						"execution_count": 76
+						"execution_count": 17
 					},
 					{
 						"cell_type": "code",
@@ -4919,7 +4919,7 @@
 							""
 						],
 						"outputs": [],
-						"execution_count": 77
+						"execution_count": 18
 					},
 					{
 						"cell_type": "code",
@@ -4945,7 +4945,7 @@
 							"count_group_by2.show() #Digital Reading Group By"
 						],
 						"outputs": [],
-						"execution_count": 78
+						"execution_count": 19
 					},
 					{
 						"cell_type": "code",
@@ -4965,7 +4965,7 @@
 							"df = selected_df2.unionAll(selected_df1)"
 						],
 						"outputs": [],
-						"execution_count": 79
+						"execution_count": 20
 					},
 					{
 						"cell_type": "code",
@@ -4989,7 +4989,7 @@
 							"df.dtypes"
 						],
 						"outputs": [],
-						"execution_count": 80
+						"execution_count": 21
 					},
 					{
 						"cell_type": "code",
@@ -5020,7 +5020,7 @@
 							".save(file_path)"
 						],
 						"outputs": [],
-						"execution_count": 81
+						"execution_count": 22
 					},
 					{
 						"cell_type": "code",
@@ -5043,7 +5043,7 @@
 							"selected_df2 = selected_df2.select([col(col_name).alias(new_col_name) for col_name, new_col_name in zip(df.columns, new_column_names)])"
 						],
 						"outputs": [],
-						"execution_count": 82
+						"execution_count": 23
 					},
 					{
 						"cell_type": "code",
@@ -5080,7 +5080,7 @@
 							"# , 'DM_MeasurementType') #, 'DM_MeasurementYear', 'DM_MeasurementMonth'"
 						],
 						"outputs": [],
-						"execution_count": 83
+						"execution_count": 24
 					},
 					{
 						"cell_type": "code",
@@ -5104,7 +5104,105 @@
 							"display(join_df.limit(5))"
 						],
 						"outputs": [],
-						"execution_count": 84
+						"execution_count": 28
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Applying coalesce to get one of DM or AM columns\r\n",
+							"join_df = join_df.withColumn(\"Trekkingsdatum\", coalesce(join_df[\"DM_Trekkingsdatum\"], join_df[\"AM_Trekkingsdatum\"]))\\\r\n",
+							".withColumn(\"Peildatum\", coalesce(join_df[\"DM_Peildatum\"], join_df[\"AM_Peildatum\"]))\\\r\n",
+							".withColumn(\"Markt\", coalesce(join_df[\"DM_Markt\"], join_df[\"AM_Markt\"]))\\\r\n",
+							".withColumn(\"Leveringsadres_Postcode\", coalesce(join_df[\"DM_Leveringsadres_Postcode\"], join_df[\"AM_Leveringsadres_Postcode\"]))\\\r\n",
+							".withColumn(\"Leveringsadres_Gemeente\", coalesce(join_df[\"DM_Leveringsadres_Gemeente\"], join_df[\"AM_Leveringsadres_Gemeente\"]))\\\r\n",
+							".withColumn(\"WerkelijkVerbruik_RM_2017\", coalesce(join_df[\"DM_WerkelijkVerbruik_RM_2017\"], join_df[\"AM_WerkelijkVerbruik_RM_2017\"]))\\\r\n",
+							".withColumn(\"BenaderendVerbruik_VM_2017\", coalesce(join_df[\"DM_BenaderendVerbruik_VM_2017\"], join_df[\"AM_BenaderendVerbruik_VM_2017\"]))\\\r\n",
+							".withColumn(\"BenaderendVerbruik_VM_2017_Norm\", coalesce(join_df[\"DM_BenaderendVerbruik_VM_2017_Norm\"], join_df[\"AM_BenaderendVerbruik_VM_2017_Norm\"]))\\\r\n",
+							".withColumn(\"AantalToegangspunten_2017\", coalesce(join_df[\"DM_AantalToegangspunten_2017\"], join_df[\"AM_AantalToegangspunten_2017\"]))\\\r\n",
+							".withColumn(\"WerkelijkVerbruik_RM_2018\", coalesce(join_df[\"DM_WerkelijkVerbruik_RM_2018\"], join_df[\"AM_WerkelijkVerbruik_RM_2018\"]))\\\r\n",
+							".withColumn(\"BenaderendVerbruik_VM_2018\", coalesce(join_df[\"DM_BenaderendVerbruik_VM_2018\"], join_df[\"AM_BenaderendVerbruik_VM_2018\"]))\\\r\n",
+							".withColumn(\"BenaderendVerbruik_VM_2018_Norm\", coalesce(join_df[\"DM_BenaderendVerbruik_VM_2018_Norm\"], join_df[\"AM_BenaderendVerbruik_VM_2018_Norm\"]))\\\r\n",
+							".withColumn(\"AantalToegangspunten_2018\", coalesce(join_df[\"DM_AantalToegangspunten_2018\"], join_df[\"AM_AantalToegangspunten_2018\"]))\\\r\n",
+							".withColumn(\"WerkelijkVerbruik_RM_2019\", coalesce(join_df[\"DM_WerkelijkVerbruik_RM_2019\"], join_df[\"AM_WerkelijkVerbruik_RM_2019\"]))\\\r\n",
+							".withColumn(\"BenaderendVerbruik_VM_2019\", coalesce(join_df[\"DM_BenaderendVerbruik_VM_2019\"], join_df[\"AM_BenaderendVerbruik_VM_2019\"]))\\\r\n",
+							".withColumn(\"BenaderendVerbruik_VM_2019_Norm\", coalesce(join_df[\"DM_BenaderendVerbruik_VM_2019_Norm\"], join_df[\"AM_BenaderendVerbruik_VM_2019_Norm\"]))\\\r\n",
+							".withColumn(\"AantalToegangspunten_2019\", coalesce(join_df[\"DM_AantalToegangspunten_2019\"], join_df[\"AM_AantalToegangspunten_2019\"]))\\\r\n",
+							".withColumn(\"WerkelijkVerbruik_RM_2020\", coalesce(join_df[\"DM_WerkelijkVerbruik_RM_2020\"], join_df[\"AM_WerkelijkVerbruik_RM_2020\"]))\\\r\n",
+							".withColumn(\"BenaderendVerbruik_VM_2020\", coalesce(join_df[\"DM_BenaderendVerbruik_VM_2020\"], join_df[\"AM_BenaderendVerbruik_VM_2020\"]))\\\r\n",
+							".withColumn(\"BenaderendVerbruik_VM_2020_Norm\", coalesce(join_df[\"DM_BenaderendVerbruik_VM_2020_Norm\"], join_df[\"AM_BenaderendVerbruik_VM_2020_Norm\"]))\\\r\n",
+							".withColumn(\"AantalToegangspunten_2020\", coalesce(join_df[\"DM_AantalToegangspunten_2020\"], join_df[\"AM_AantalToegangspunten_2020\"]))\\\r\n",
+							".withColumn(\"WerkelijkVerbruik_RM_2021\", coalesce(join_df[\"DM_WerkelijkVerbruik_RM_2021\"], join_df[\"AM_WerkelijkVerbruik_RM_2021\"]))\\\r\n",
+							".withColumn(\"BenaderendVerbruik_VM_2021\", coalesce(join_df[\"DM_BenaderendVerbruik_VM_2021\"], join_df[\"AM_BenaderendVerbruik_VM_2021\"]))\\\r\n",
+							".withColumn(\"BenaderendVerbruik_VM_2021_Norm\", coalesce(join_df[\"DM_BenaderendVerbruik_VM_2021_Norm\"], join_df[\"AM_BenaderendVerbruik_VM_2021_Norm\"]))\\\r\n",
+							".withColumn(\"AantalToegangspunten_2021\", coalesce(join_df[\"DM_AantalToegangspunten_2021\"], join_df[\"AM_AantalToegangspunten_2021\"]))\\\r\n",
+							".withColumn(\"Gemiddeld_WerkelijkVerbruik\", coalesce(join_df[\"DM_Gemiddeld_WerkelijkVerbruik\"], join_df[\"AM_Gemiddeld_WerkelijkVerbruik\"]))\\\r\n",
+							".withColumn(\"Gemiddeld_BenaderendVerbruik\", coalesce(join_df[\"DM_Gemiddeld_BenaderendVerbruik\"], join_df[\"AM_Gemiddeld_BenaderendVerbruik\"]))\\\r\n",
+							".withColumn(\"Gemiddeld_BenaderendVerbruik_Norm\", coalesce(join_df[\"DM_Gemiddeld_BenaderendVerbruik_Norm\"], join_df[\"AM_Gemiddeld_BenaderendVerbruik_Norm\"]))\\\r\n",
+							".withColumn(\"Total_AantalToegangspunten\", coalesce(join_df[\"DM_Total_AantalToegangspunten\"], join_df[\"AM_Total_AantalToegangspunten\"]))\\\r\n",
+							".withColumn(\"MeasurementType\", coalesce(join_df[\"DM_MeasurementType\"], join_df[\"AM_MeasurementType\"]))"
+						],
+						"outputs": [],
+						"execution_count": 31
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# selecting the required columns\r\n",
+							"join_df = join_df.select('Trekkingsdatum',\r\n",
+							" 'Peildatum',\r\n",
+							" 'Markt',\r\n",
+							" 'Leveringsadres_Postcode',\r\n",
+							" 'Leveringsadres_Gemeente',\r\n",
+							" 'WerkelijkVerbruik_RM_2017',\r\n",
+							" 'BenaderendVerbruik_VM_2017',\r\n",
+							" 'BenaderendVerbruik_VM_2017_Norm',\r\n",
+							" 'AantalToegangspunten_2017',\r\n",
+							" 'WerkelijkVerbruik_RM_2018',\r\n",
+							" 'BenaderendVerbruik_VM_2018',\r\n",
+							" 'BenaderendVerbruik_VM_2018_Norm',\r\n",
+							" 'AantalToegangspunten_2018',\r\n",
+							" 'WerkelijkVerbruik_RM_2019',\r\n",
+							" 'BenaderendVerbruik_VM_2019',\r\n",
+							" 'BenaderendVerbruik_VM_2019_Norm',\r\n",
+							" 'AantalToegangspunten_2019',\r\n",
+							" 'WerkelijkVerbruik_RM_2020',\r\n",
+							" 'BenaderendVerbruik_VM_2020',\r\n",
+							" 'BenaderendVerbruik_VM_2020_Norm',\r\n",
+							" 'AantalToegangspunten_2020',\r\n",
+							" 'WerkelijkVerbruik_RM_2021',\r\n",
+							" 'BenaderendVerbruik_VM_2021',\r\n",
+							" 'BenaderendVerbruik_VM_2021_Norm',\r\n",
+							" 'AantalToegangspunten_2021',\r\n",
+							" 'Gemiddeld_WerkelijkVerbruik',\r\n",
+							" 'Gemiddeld_BenaderendVerbruik',\r\n",
+							" 'Gemiddeld_BenaderendVerbruik_Norm',\r\n",
+							" 'Total_AantalToegangspunten',\r\n",
+							" 'MeasurementType')"
+						],
+						"outputs": [],
+						"execution_count": 33
 					},
 					{
 						"cell_type": "code",
