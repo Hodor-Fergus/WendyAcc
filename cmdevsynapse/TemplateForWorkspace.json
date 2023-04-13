@@ -4268,7 +4268,7 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "bdaffc68-81af-4681-9ba8-695b653cac92"
+						"spark.autotune.trackingId": "5868b977-0807-4b00-9511-206b3a515227"
 					}
 				},
 				"metadata": {
@@ -5220,7 +5220,7 @@
 						"source": [
 							"file_path = 'abfss://output@rawdevstorage.dfs.core.windows.net/Electricity_Measurement_pyspark_join'\r\n",
 							"write_format=\"delta\"\r\n",
-							"partition_by=[\"DM_Peildatum\"]\r\n",
+							"partition_by=[\"Peildatum\"]\r\n",
 							"mode_ = Mode #overwrite #append\r\n",
 							"\r\n",
 							"join_df\\\r\n",
