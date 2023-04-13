@@ -22,7 +22,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "9136e542-c7b2-4561-9ee6-dc55f9b3ebe1"
+				"spark.autotune.trackingId": "6a3863b8-c6e2-4e9f-926a-726372e85179"
 			}
 		},
 		"metadata": {
@@ -82,7 +82,7 @@
 					"    blob_sas_token)\r\n",
 					""
 				],
-				"execution_count": 179
+				"execution_count": 17
 			},
 			{
 				"cell_type": "code",
@@ -104,7 +104,7 @@
 					"# Read Delta table into a DataFrame\r\n",
 					"reference_table = spark.read.format(\"delta\").load(delta_table_path)"
 				],
-				"execution_count": 180
+				"execution_count": 18
 			},
 			{
 				"cell_type": "code",
@@ -124,7 +124,7 @@
 					"# Show the contents of the DataFrame\r\n",
 					"display(reference_table.limit(5))"
 				],
-				"execution_count": 181
+				"execution_count": 19
 			},
 			{
 				"cell_type": "code",
@@ -141,13 +141,74 @@
 					"collapsed": false
 				},
 				"source": [
-					"# Reading the geo location %%file\r\n",
+					"# Reading the geo location file\r\n",
 					"geo_location = spark.read.csv(\"abfss://output@rawdevstorage.dfs.core.windows.net/geo_postcode.csv\", header=True, inferSchema=True)\r\n",
 					"\r\n",
 					"# Displaying a geo location file\r\n",
 					"display(geo_location.limit(5))"
 				],
-				"execution_count": 182
+				"execution_count": 20
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"# Reading the date file\r\n",
+					"date = spark.read.csv(\"abfss://output@rawdevstorage.dfs.core.windows.net/date_dimension.csv\", header=True, inferSchema=True)\r\n",
+					"\r\n",
+					"# Displaying a date file\r\n",
+					"display(date.limit(5))"
+				],
+				"execution_count": 21
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"# Creating a group by for market dimensions\r\n",
+					"grouped_reference_table_markt_dimension = reference_table.groupBy(\"Markt\")\r\n",
+					"markt_dimension = grouped_reference_table_markt_dimension.agg(count(\"Trekkingsdatum\"))\r\n",
+					"\r\n",
+					"# Selecting specific columns\r\n",
+					"markt_dimension = markt_dimension.select('Markt').distinct().orderBy(\"Markt\")\r\n",
+					"\r\n",
+					"# Exclude the undefined/null value\r\n",
+					"markt_dimension = markt_dimension.filter(col(\"Markt\").isNotNull())\r\n",
+					"\r\n",
+					"# Define the window specification for the grouping\r\n",
+					"markt_dimension_window_spec = Window.orderBy(markt_dimension[\"Markt\"].desc())\r\n",
+					"\r\n",
+					"# Add an auto-incrementing column to the DataFrame within the group\r\n",
+					"markt_dimension = markt_dimension.withColumn(\"Markt_ID\", row_number().over(markt_dimension_window_spec))\r\n",
+					"\r\n",
+					"# Selecting specific columns\r\n",
+					"markt_dimension = markt_dimension.select('Markt_ID','Markt')\r\n",
+					"\r\n",
+					"display(markt_dimension.limit(5))"
+				],
+				"execution_count": 22
 			},
 			{
 				"cell_type": "code",
@@ -163,12 +224,164 @@
 					}
 				},
 				"source": [
-					"# Creating a group by for dimensions\r\n",
-					"grouped_reference_table_markt_dimension = reference_table.groupBy(\"DM_Markt\")\r\n",
-					"markt_dimension1 = grouped_reference_table_markt_dimension.agg(count(\"DM_Trekkingsdatum\"))\r\n",
-					"grouped_reference_table_markt_dimension = reference_table.groupBy(\"AM_Markt\")\r\n",
-					"markt_dimension2 = grouped_reference_table_markt_dimension.agg(count(\"AM_Trekkingsdatum\"))\r\n",
-					"markt_dimension = markt_dimension1.union(markt_dimension2).distinct()\r\n",
+					"# Writing the markt dimension to delta file\r\n",
+					"file_path = 'abfss://goldlayer@rawdevstorage.dfs.core.windows.net/PySparkDimensions/Markt_Dimension'\r\n",
+					"write_format=\"delta\"\r\n",
+					"#partition_by=[\"DM_Peildatum\"]\r\n",
+					"mode_ = \"overwrite\" #append\r\n",
+					"\r\n",
+					"markt_dimension\\\r\n",
+					".write\\\r\n",
+					".option(\"header\", \"true\")\\\r\n",
+					".option(\"overwriteSchema\", \"true\")\\\r\n",
+					".format(write_format)\\\r\n",
+					".mode(mode_)\\\r\n",
+					".save(file_path)\r\n",
+					"\r\n",
+					"#.partitionBy(partition_by)\\"
+				],
+				"execution_count": 23
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"# Creating a group by for geo location dimensions\r\n",
+					"grouped_reference_table_geo_location_dimension = reference_table.groupBy(\"Leveringsadres_Postcode\",\"Leveringsadres_Gemeente\")\r\n",
+					"geo_location_dimension = grouped_reference_table_geo_location_dimension.agg(count(\"Trekkingsdatum\"))\r\n",
+					"\r\n",
+					"# Selecting specific columns\r\n",
+					"geo_location_dimension = geo_location_dimension.select('Leveringsadres_Postcode','Leveringsadres_Gemeente').distinct().orderBy(\"Leveringsadres_Postcode\")\r\n",
+					"\r\n",
+					"# Exclude the undefined/null value\r\n",
+					"geo_location_dimension = geo_location_dimension.filter(col(\"Leveringsadres_Postcode\").isNotNull())\r\n",
+					"\r\n",
+					"# joinigng the dataframe to get all the column for geo location dimension\r\n",
+					"geo_location_dimension = geo_location.join(geo_location_dimension, geo_location[\"postcode\"] == geo_location_dimension[\"Leveringsadres_Postcode\"], \"inner\")\r\n",
+					"\r\n",
+					"# Renaming the geo location column\r\n",
+					"geo_location_dimension = geo_location_dimension.withColumnRenamed(\"dwh_id\", \"Geo_ID\") \r\n",
+					"\r\n",
+					"# Selecting specific columns\r\n",
+					"geo_location_dimension = geo_location_dimension.select('Geo_ID','Leveringsadres_Postcode','Leveringsadres_Gemeente','gewest','provincie')\r\n",
+					"\r\n",
+					"display(geo_location_dimension.limit(5))"
+				],
+				"execution_count": 28
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Writing the geo location dimension to delta file\r\n",
+					"file_path = 'abfss://goldlayer@rawdevstorage.dfs.core.windows.net/PySparkDimensions/Geo_Location_Dimension'\r\n",
+					"write_format=\"delta\"\r\n",
+					"#partition_by=[\"DM_Peildatum\"]\r\n",
+					"mode_ = \"overwrite\" #append\r\n",
+					"\r\n",
+					"geo_location_dimension\\\r\n",
+					".write\\\r\n",
+					".option(\"header\", \"true\")\\\r\n",
+					".option(\"overwriteSchema\", \"true\")\\\r\n",
+					".format(write_format)\\\r\n",
+					".mode(mode_)\\\r\n",
+					".save(file_path)\r\n",
+					"\r\n",
+					"#.partitionBy(partition_by)\\"
+				],
+				"execution_count": 33
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Creating a group by for market dimensions\r\n",
+					"grouped_reference_table_geo_location_dimension = reference_table.groupBy(\"Leveringsadres_Postcode\",\"Leveringsadres_Gemeente\")\r\n",
+					"geo_location_dimension = grouped_reference_table_geo_location_dimension.agg(count(\"Trekkingsdatum\"))\r\n",
+					"\r\n",
+					"# Selecting specific columns\r\n",
+					"geo_location_dimension = geo_location_dimension.select('Leveringsadres_Postcode','Leveringsadres_Gemeente').distinct().orderBy(\"Leveringsadres_Postcode\")\r\n",
+					"\r\n",
+					"# Exclude the undefined/null value\r\n",
+					"geo_location_dimension = geo_location_dimension.filter(col(\"Leveringsadres_Postcode\").isNotNull())\r\n",
+					"\r\n",
+					"# joinigng the dataframe to get all the column for geo location dimension\r\n",
+					"geo_location_dimension = geo_location.join(geo_location_dimension, geo_location[\"postcode\"] == geo_location_dimension[\"Leveringsadres_Postcode\"], \"inner\")\r\n",
+					"\r\n",
+					"# Renaming the geo location column\r\n",
+					"geo_location_dimension = geo_location_dimension.withColumnRenamed(\"dwh_id\", \"Geo_ID\") \r\n",
+					"\r\n",
+					"# Selecting specific columns\r\n",
+					"geo_location_dimension = geo_location_dimension.select('Geo_ID','Leveringsadres_Postcode','Leveringsadres_Gemeente','gewest','provincie')\r\n",
+					"\r\n",
+					"display(geo_location_dimension.limit(5))"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					""
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"\r\n",
 					"\r\n",
 					"grouped_reference_table_date_dimension_1 = reference_table.groupBy(\"DM_Trekkingsdatum\")\r\n",
 					"date_dimension_1 = grouped_reference_table_date_dimension_1.agg(count(\"DM_Trekkingsdatum\"))\r\n",
@@ -182,23 +395,15 @@
 					"date_dimension_3 = grouped_reference_table_date_dimension_2.agg(count(\"AM_Trekkingsdatum\"))\r\n",
 					"date_dimension_2 = date_dimension_2.union(date_dimension_3).distinct()\r\n",
 					"\r\n",
-					"grouped_reference_table_geo_location_dimension = reference_table.groupBy(\"DM_Leveringsadres_Postcode\",\"DM_Leveringsadres_Gemeente\")\r\n",
-					"geo_location_dimension1 = grouped_reference_table_geo_location_dimension.agg(count(\"DM_Trekkingsdatum\"))\r\n",
-					"grouped_reference_table_geo_location_dimension = reference_table.groupBy(\"AM_Leveringsadres_Postcode\",\"AM_Leveringsadres_Gemeente\")\r\n",
-					"geo_location_dimension2 = grouped_reference_table_geo_location_dimension.agg(count(\"AM_Trekkingsdatum\"))\r\n",
-					"geo_location_dimension = geo_location_dimension1.union(geo_location_dimension2).distinct()\r\n",
 					"\r\n",
-					"# Exclude the undefined/null value\r\n",
-					"markt_dimension = markt_dimension.filter(col(\"DM_Markt\").isNotNull())\r\n",
+					"\r\n",
+					"\r\n",
 					"\r\n",
 					"date_dimension_1 = date_dimension_1.filter(col(\"DM_Trekkingsdatum\").isNotNull())\r\n",
 					"date_dimension_2 = date_dimension_2.filter(col(\"DM_Peildatum\").isNotNull())\r\n",
-					"geo_location_dimension = geo_location_dimension.filter(col(\"DM_Leveringsadres_Postcode\").isNotNull())\r\n",
-					"geo_location_dimension = geo_location_dimension.filter(col(\"DM_Leveringsadres_Gemeente\").isNotNull())\r\n",
 					"\r\n",
-					"# Rename columns\r\n",
-					"markt_dimension = markt_dimension.withColumnRenamed(\"DM_Markt\", \"Markt_Name\") \\\r\n",
-					".withColumnRenamed(\"count(DM_Trekkingsdatum)\", \"count\")\r\n",
+					"\r\n",
+					"\r\n",
 					"\r\n",
 					"date_dimension_1 = date_dimension_1.withColumnRenamed(\"DM_Trekkingsdatum\", \"Date\") \\\r\n",
 					".withColumnRenamed(\"count(DM_Trekkingsdatum)\", \"count\")\r\n",
@@ -206,18 +411,16 @@
 					"date_dimension_2 = date_dimension_2.withColumnRenamed(\"DM_Peildatum\", \"Date\") \\\r\n",
 					".withColumnRenamed(\"count(DM_Trekkingsdatum)\", \"count\")\r\n",
 					"\r\n",
-					"geo_location_dimension = geo_location_dimension.withColumnRenamed(\"DM_Leveringsadres_Postcode\", \"Leveringsadres_Postcode\") \\\r\n",
-					".withColumnRenamed(\"DM_Leveringsadres_Gemeente\", \"Leveringsadres_Gemeente\")\\\r\n",
-					".withColumnRenamed(\"count(DM_Trekkingsdatum)\", \"count\")\r\n",
+					"# \\\r\n",
+					"# .withColumnRenamed(\"DM_Leveringsadres_Gemeente\", \"Leveringsadres_Gemeente\")\\\r\n",
+					"# .withColumnRenamed(\"count(DM_Trekkingsdatum)\", \"count\")\r\n",
 					"\r\n",
-					"# Selecting specific columns\r\n",
-					"markt_dimension = markt_dimension.select('Markt_Name').distinct().orderBy(\"Markt_Name\")\r\n",
+					"\r\n",
 					"date_dimension_1 = date_dimension_1.select(\"Date\").distinct().orderBy(\"Date\")\r\n",
 					"date_dimension_2 = date_dimension_2.select(\"Date\").distinct().orderBy(\"Date\")\r\n",
-					"geo_location_dimension = geo_location_dimension.select(\"Leveringsadres_Postcode\",\"Leveringsadres_Gemeente\").distinct().orderBy(\"Leveringsadres_Postcode\")\r\n",
+					"#geo_location_dimension = geo_location_dimension.select(\"Leveringsadres_Postcode\",\"Leveringsadres_Gemeente\").distinct().orderBy(\"Leveringsadres_Postcode\")\r\n",
 					"\r\n",
-					"# joinigng the dataframe to get all the column for geo location dimension\r\n",
-					"geo_location_dimension = geo_location.join(geo_location_dimension, geo_location[\"postcode\"] == geo_location_dimension[\"Leveringsadres_Postcode\"], \"inner\")\r\n",
+					"\r\n",
 					"\r\n",
 					"# Unioning the date dimension and removing the duplicates\r\n",
 					"date_dimension = date_dimension_1.union(date_dimension_2).distinct().orderBy(\"Date\")"
@@ -238,8 +441,7 @@
 					}
 				},
 				"source": [
-					"# Define the window specification for the grouping\r\n",
-					"markt_dimension_window_spec = Window.orderBy(markt_dimension[\"Markt_Name\"].desc()) #Window.partitionBy(\"DM_Markt\").orderBy(\"DM_Markt\")\r\n",
+					"#Window.partitionBy(\"DM_Markt\").orderBy(\"DM_Markt\")\r\n",
 					"date_dimension_window_spec = Window.orderBy(date_dimension[\"Date\"].desc())"
 				],
 				"execution_count": 184
@@ -259,8 +461,7 @@
 					"collapsed": false
 				},
 				"source": [
-					"# Add an auto-incrementing column to the DataFrame within the group\r\n",
-					"markt_dimension = markt_dimension.withColumn(\"Markt_ID\", row_number().over(markt_dimension_window_spec))\r\n",
+					"\r\n",
 					"date_dimension = date_dimension.withColumn(\"Date_ID\", row_number().over(date_dimension_window_spec))\r\n",
 					"\r\n",
 					"# Adding additional columns for the date_dimension_window_spec\r\n",
@@ -457,21 +658,7 @@
 					"collapsed": false
 				},
 				"source": [
-					"# Writing the markt dimension to delta file\r\n",
-					"file_path = 'abfss://goldlayer@rawdevstorage.dfs.core.windows.net/PySparkDimensions/Markt_Dimension'\r\n",
-					"write_format=\"delta\"\r\n",
-					"#partition_by=[\"DM_Peildatum\"]\r\n",
-					"mode_ = \"overwrite\" #append\r\n",
-					"\r\n",
-					"markt_dimension\\\r\n",
-					".write\\\r\n",
-					".option(\"header\", \"true\")\\\r\n",
-					".option(\"overwriteSchema\", \"true\")\\\r\n",
-					".format(write_format)\\\r\n",
-					".mode(mode_)\\\r\n",
-					".save(file_path)\r\n",
-					"\r\n",
-					"#.partitionBy(partition_by)\\"
+					""
 				],
 				"execution_count": 188
 			},
@@ -521,21 +708,7 @@
 					}
 				},
 				"source": [
-					"# Writing the geo location dimension to delta file\r\n",
-					"file_path = 'abfss://goldlayer@rawdevstorage.dfs.core.windows.net/PySparkDimensions/Geo_Location_Dimension'\r\n",
-					"write_format=\"delta\"\r\n",
-					"#partition_by=[\"DM_Peildatum\"]\r\n",
-					"mode_ = \"overwrite\" #append\r\n",
-					"\r\n",
-					"geo_location_dimension\\\r\n",
-					".write\\\r\n",
-					".option(\"header\", \"true\")\\\r\n",
-					".option(\"overwriteSchema\", \"true\")\\\r\n",
-					".format(write_format)\\\r\n",
-					".mode(mode_)\\\r\n",
-					".save(file_path)\r\n",
-					"\r\n",
-					"#.partitionBy(partition_by)\\"
+					""
 				],
 				"execution_count": 190
 			},
