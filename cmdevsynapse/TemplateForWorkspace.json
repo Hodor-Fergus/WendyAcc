@@ -3658,7 +3658,7 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "4ff40771-8223-4fcc-8f56-919c711c8450"
+						"spark.autotune.trackingId": "e3173c2a-e837-4e3f-ad3d-c663b16a7a6c"
 					}
 				},
 				"metadata": {
@@ -3719,7 +3719,7 @@
 							""
 						],
 						"outputs": [],
-						"execution_count": 40
+						"execution_count": 1
 					},
 					{
 						"cell_type": "code",
@@ -3742,7 +3742,7 @@
 							"reference_table = spark.read.format(\"delta\").load(delta_table_path)"
 						],
 						"outputs": [],
-						"execution_count": 41
+						"execution_count": 2
 					},
 					{
 						"cell_type": "code",
@@ -3763,7 +3763,7 @@
 							"display(reference_table.limit(5))"
 						],
 						"outputs": [],
-						"execution_count": 42
+						"execution_count": 3
 					},
 					{
 						"cell_type": "code",
@@ -3787,7 +3787,7 @@
 							"display(geo_location.limit(5))"
 						],
 						"outputs": [],
-						"execution_count": 43
+						"execution_count": 4
 					},
 					{
 						"cell_type": "code",
@@ -3805,7 +3805,7 @@
 						},
 						"source": [
 							"# Reading the date file\r\n",
-							"date = spark.read.csv(\"abfss://output@rawdevstorage.dfs.core.windows.net/date_dimension.csv\", header=True, inferSchema=True)\r\n",
+							"date = spark.read.csv(\"abfss://output@rawdevstorage.dfs.core.windows.net/time_dimension.csv\", header=True, inferSchema=True)\r\n",
 							"\r\n",
 							"date = date.filter(col(\"datum_tekst_yyyymmdd\") >= \"2002-01-01\")\r\n",
 							"\r\n",
@@ -3813,7 +3813,7 @@
 							"display(date.limit(5))"
 						],
 						"outputs": [],
-						"execution_count": 44
+						"execution_count": 5
 					},
 					{
 						"cell_type": "code",
@@ -3852,7 +3852,7 @@
 							"display(markt_dimension.limit(5))"
 						],
 						"outputs": [],
-						"execution_count": 45
+						"execution_count": 6
 					},
 					{
 						"cell_type": "code",
@@ -3885,7 +3885,7 @@
 							"#.partitionBy(partition_by)\\"
 						],
 						"outputs": [],
-						"execution_count": 46
+						"execution_count": 7
 					},
 					{
 						"cell_type": "code",
@@ -3924,7 +3924,7 @@
 							"display(geo_location_dimension.limit(5))"
 						],
 						"outputs": [],
-						"execution_count": 47
+						"execution_count": 8
 					},
 					{
 						"cell_type": "code",
@@ -3957,7 +3957,7 @@
 							"#.partitionBy(partition_by)\\"
 						],
 						"outputs": [],
-						"execution_count": 48
+						"execution_count": 9
 					},
 					{
 						"cell_type": "code",
@@ -3988,10 +3988,10 @@
 							"date_dimension = date_dimension.filter(col(\"Date_Standard\").isNotNull())\r\n",
 							"\r\n",
 							"# Define the window specification for the grouping\r\n",
-							"date_dimension_window_spec = Window.orderBy(date_dimension[\"Date_Standard\"].desc())\r\n",
+							"#date_dimension_window_spec = Window.orderBy(date_dimension[\"Date_Standard\"].desc())\r\n",
 							"\r\n",
 							"# Add an auto-incrementing column to the DataFrame within the group\r\n",
-							"date_dimension = date_dimension.withColumn(\"Date_ID\", row_number().over(date_dimension_window_spec))\r\n",
+							"#date_dimension = date_dimension.withColumn(\"Date_ID\", row_number().over(date_dimension_window_spec))\r\n",
 							"\r\n",
 							"# Add new column\r\n",
 							"date_dimension = date_dimension.withColumn(\"Date\", concat(expr(\"substring(Date_Standard, 1, 4)\"), expr(\"substring(Date_Standard, 6, 2)\"), expr(\"substring(Date_Standard, 9, 2)\")))\r\n",
@@ -4004,16 +4004,16 @@
 							"# date_dimension = date_dimension.withColumn(\"Week_Number\", weekofyear(date_dimension[\"Date\"]))\r\n",
 							"\r\n",
 							"# joinigng the dataframe to get all the column for geo location dimension\r\n",
-							"date_dimension = date_dimension.join(date, date[\"datum_tekst_yyyymmdd\"] == date_dimension[\"Date_Standard\"], \"inner\")\r\n",
+							"date_dimension = date_dimension.join(date, date[\"datum\"] == date_dimension[\"Date_Standard\"], \"inner\")\r\n",
 							"\r\n",
 							"# Selecting specific columns\r\n",
-							"date_dimension = date_dimension.select('Date_ID','Date','Date_Standard','dag_naam','maand_naam','jaar','kwartaal')\r\n",
+							"date_dimension = date_dimension.select('date_ID','Date','Date_Standard','dag_naam','maand_naam','jaar','kwartaal')\r\n",
 							"\r\n",
 							"# Displaying top 5 rows\r\n",
 							"display(date_dimension.limit(5))"
 						],
 						"outputs": [],
-						"execution_count": 49
+						"execution_count": 11
 					},
 					{
 						"cell_type": "code",
@@ -4046,7 +4046,7 @@
 							"#.partitionBy(partition_by)\\"
 						],
 						"outputs": [],
-						"execution_count": 50
+						"execution_count": 12
 					},
 					{
 						"cell_type": "code",
@@ -4141,7 +4141,7 @@
 							"display(fact_table.limit(5))"
 						],
 						"outputs": [],
-						"execution_count": 51
+						"execution_count": 13
 					},
 					{
 						"cell_type": "code",
@@ -4174,7 +4174,7 @@
 							"#.partitionBy(partition_by)\\"
 						],
 						"outputs": [],
-						"execution_count": 52
+						"execution_count": 14
 					},
 					{
 						"cell_type": "code",
@@ -4244,7 +4244,7 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "5868b977-0807-4b00-9511-206b3a515227"
+						"spark.autotune.trackingId": "5ce33608-c390-4ed7-ad28-f4090bdea252"
 					}
 				},
 				"metadata": {
@@ -4269,8 +4269,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 10,
 						"cores": 4,
-						"memory": 28,
-						"automaticScaleJobs": false
+						"memory": 28
 					},
 					"sessionKeepAliveTimeout": 30
 				},
