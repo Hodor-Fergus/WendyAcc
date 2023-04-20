@@ -22,7 +22,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "f1f4b11e-959c-4cd2-9738-9d09d2c1ea7a"
+				"spark.autotune.trackingId": "0fb6df43-9483-40ea-8c33-2377e782bd0b"
 			}
 		},
 		"metadata": {
@@ -300,9 +300,28 @@
 					}
 				},
 				"source": [
-					""
+					"# Creating a group by for market dimensions\r\n",
+					"grouped_reference_table_geo_location_dimension = reference_table.groupby(['Leveringsadres_Postcode','Leveringsadres_Gemeente'])\r\n",
+					"geo_location_dimension = grouped_reference_table_geo_location_dimension.agg(total_count=('Trekkingsdatum', 'count'))\r\n",
+					"\r\n",
+					"# Restiing the index\r\n",
+					"geo_location_dimension = geo_location_dimension.head().reset_index()\r\n",
+					"\r\n",
+					"# Exclude the undefined/null value\r\n",
+					"geo_location_dimension = geo_location_dimension.dropna()\r\n",
+					"\r\n",
+					"# Doing a join operation to get a new data frame\r\n",
+					"geo_location_dimension = pd.merge(geo_location_dimension, geo_location, left_on=['Leveringsadres_Postcode'], right_on=['postcode'], how='outer')\r\n",
+					"\r\n",
+					"# Adding a Geo_ID based on dwh_id\r\n",
+					"geo_location_dimension['Geo_ID']=geo_location_dimension['dwh_id']\r\n",
+					"\r\n",
+					"# Selecting specific columns\r\n",
+					"geo_location_dimension = geo_location_dimension[['Geo_ID','Leveringsadres_Postcode','Leveringsadres_Gemeente','gewest','provincie']]\r\n",
+					"\r\n",
+					"geo_location_dimension.head()"
 				],
-				"execution_count": null
+				"execution_count": 33
 			},
 			{
 				"cell_type": "code",
@@ -318,55 +337,10 @@
 					}
 				},
 				"source": [
-					"# Creating a group by for market dimensions\r\n",
-					"grouped_reference_table_geo_location_dimension = reference_table.groupby(['Leveringsadres_Postcode','Leveringsadres_Gemeente'])\r\n",
-					"geo_location_dimension = grouped_reference_table_geo_location_dimension.agg(total_count=('Trekkingsdatum', 'count'))\r\n",
-					"\r\n",
-					"# Restiing the index\r\n",
-					"geo_location_dimension = geo_location_dimension.head().reset_index()\r\n",
-					"\r\n",
-					"# Exclude the undefined/null value\r\n",
-					"geo_location_dimension = geo_location_dimension.dropna()\r\n",
-					"\r\n",
-					""
+					"# Converting to spark dataframe\r\n",
+					"geo_location_dimension = spark.createDataFrame(geo_location_dimension)"
 				],
-				"execution_count": null
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"\r\n",
-					"\r\n",
-					"# Selecting specific columns\r\n",
-					"geo_location_dimension = geo_location_dimension.select('Leveringsadres_Postcode','Leveringsadres_Gemeente').distinct().orderBy(\"Leveringsadres_Postcode\")\r\n",
-					"\r\n",
-					"# Exclude the undefined/null value\r\n",
-					"geo_location_dimension = geo_location_dimension.filter(col(\"Leveringsadres_Postcode\").isNotNull())\r\n",
-					"\r\n",
-					"# joinigng the dataframe to get all the column for geo location dimension\r\n",
-					"geo_location_dimension = geo_location.join(geo_location_dimension, geo_location[\"postcode\"] == geo_location_dimension[\"Leveringsadres_Postcode\"], \"inner\")\r\n",
-					"\r\n",
-					"# Renaming the geo location column\r\n",
-					"geo_location_dimension = geo_location_dimension.withColumnRenamed(\"dwh_id\", \"Geo_ID\") \r\n",
-					"\r\n",
-					"# Selecting specific columns\r\n",
-					"geo_location_dimension = geo_location_dimension.select('Geo_ID','Leveringsadres_Postcode','Leveringsadres_Gemeente','gewest','provincie')\r\n",
-					"\r\n",
-					"display(geo_location_dimension.limit(5))"
-				],
-				"execution_count": 8
+				"execution_count": 34
 			},
 			{
 				"cell_type": "code",
@@ -383,7 +357,7 @@
 				},
 				"source": [
 					"# Writing the geo location dimension to delta file\r\n",
-					"file_path = 'abfss://goldlayer@rawdevstorage.dfs.core.windows.net/PySparkDimensions/Geo_Location_Dimension'\r\n",
+					"file_path = 'abfss://goldlayer@rawdevstorage.dfs.core.windows.net/PandasDimensions/Geo_Location_Dimension'\r\n",
 					"write_format=\"delta\"\r\n",
 					"#partition_by=[\"DM_Peildatum\"]\r\n",
 					"mode_ = \"overwrite\" #append\r\n",
@@ -398,7 +372,25 @@
 					"\r\n",
 					"#.partitionBy(partition_by)\\"
 				],
-				"execution_count": 9
+				"execution_count": 35
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					""
+				],
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
