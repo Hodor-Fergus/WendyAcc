@@ -1,7 +1,7 @@
 {
-	"name": "SparkSQL_Fact_Dimension_Creation_Copy1",
+	"name": "SparkSQL_Fact_Dimension_Creation",
 	"properties": {
-		"description": "SparkSQL_Fact_Dimension_Creation_Copy1",
+		"description": "SparkSQL_Fact_Dimension_Creation",
 		"folder": {
 			"name": "Master Pipeline Notebooks"
 		},
@@ -22,7 +22,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "3001526b-27fd-45e2-aa9a-f558e12f41d8"
+				"spark.autotune.trackingId": "596dad39-f5d7-4c93-b0cc-b3cff8c4efe9"
 			}
 		},
 		"metadata": {
