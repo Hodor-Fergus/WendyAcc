@@ -22,7 +22,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "b5dd6c91-0129-4823-99f1-4c4d423358cd"
+				"spark.autotune.trackingId": "352a3e6b-d895-4339-ae2c-4896f176dd7a"
 			}
 		},
 		"metadata": {
@@ -99,7 +99,7 @@
 				},
 				"source": [
 					"# Define the path to the Delta table\r\n",
-					"delta_table_path = 'abfss://output@rawdevstorage.dfs.core.windows.net/Electricity_Measurement_pyspark_join'\r\n",
+					"delta_table_path = 'abfss://output@rawdevstorage.dfs.core.windows.net/Electricity_Measurement_pandas_join'\r\n",
 					"\r\n",
 					"# Read Delta table into a DataFrame\r\n",
 					"reference_table = spark.read.format(\"delta\").load(delta_table_path)"
@@ -117,14 +117,33 @@
 						"transient": {
 							"deleting": false
 						}
+					}
+				},
+				"source": [
+					"# Convert to pandas data frame\r\n",
+					"reference_table = reference_table.select(\"*\").toPandas()"
+				],
+				"execution_count": 3
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
 					},
 					"collapsed": false
 				},
 				"source": [
 					"# Show the contents of the DataFrame\r\n",
-					"display(reference_table.limit(5))"
+					"reference_table.head(5)"
 				],
-				"execution_count": 3
+				"execution_count": 5
 			},
 			{
 				"cell_type": "code",
@@ -144,10 +163,13 @@
 					"# Reading the geo location file\r\n",
 					"geo_location = spark.read.csv(\"abfss://output@rawdevstorage.dfs.core.windows.net/geo_postcode.csv\", header=True, inferSchema=True)\r\n",
 					"\r\n",
+					"# Convert to pandas data frame\r\n",
+					"geo_location = geo_location.select(\"*\").toPandas()\r\n",
+					"\r\n",
 					"# Displaying a geo location file\r\n",
-					"display(geo_location.limit(5))"
+					"geo_location.head(5)"
 				],
-				"execution_count": 4
+				"execution_count": 6
 			},
 			{
 				"cell_type": "code",
@@ -169,10 +191,31 @@
 					"\r\n",
 					"date = date.filter(col(\"datum_tekst_yyyymmdd\") >= \"2002-01-01\")\r\n",
 					"\r\n",
+					"# Convert to pandas data frame\r\n",
+					"date = date.select(\"*\").toPandas()\r\n",
+					"\r\n",
 					"# Displaying a date file\r\n",
-					"display(date.limit(5))"
+					"date.head(5)"
 				],
-				"execution_count": 5
+				"execution_count": 7
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					""
+				],
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
