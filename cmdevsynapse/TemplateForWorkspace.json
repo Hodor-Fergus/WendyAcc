@@ -2799,7 +2799,7 @@
 				"nbformat": 4,
 				"nbformat_minor": 2,
 				"bigDataPool": {
-					"referenceName": "devpool",
+					"referenceName": "sanzpool",
 					"type": "BigDataPoolReference"
 				},
 				"sessionProperties": {
@@ -2813,7 +2813,7 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "3d0e7571-ee68-4445-92cd-ad95be4f0572"
+						"spark.autotune.trackingId": "1ec693f0-a71d-4f5f-955f-d516b0c19145"
 					}
 				},
 				"metadata": {
@@ -2827,16 +2827,16 @@
 						"name": "python"
 					},
 					"a365ComputeOptions": {
-						"id": "/subscriptions/87083017-2c2b-47c8-8ea7-b4d36686fc97/resourceGroups/Dev_ResourceGroup/providers/Microsoft.Synapse/workspaces/cmdevsynapse/bigDataPools/devpool",
-						"name": "devpool",
+						"id": "/subscriptions/87083017-2c2b-47c8-8ea7-b4d36686fc97/resourceGroups/Dev_ResourceGroup/providers/Microsoft.Synapse/workspaces/cmdevsynapse/bigDataPools/sanzpool",
+						"name": "sanzpool",
 						"type": "Spark",
-						"endpoint": "https://cmdevsynapse.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/devpool",
+						"endpoint": "https://cmdevsynapse.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sanzpool",
 						"auth": {
 							"type": "AAD",
 							"authResource": "https://dev.azuresynapse.net"
 						},
 						"sparkVersion": "3.3",
-						"nodeCount": 3,
+						"nodeCount": 10,
 						"cores": 4,
 						"memory": 28,
 						"automaticScaleJobs": false
@@ -2862,11 +2862,11 @@
 						},
 						"source": [
 							"# Getiing the parameter value from the pipeline \r\n",
-							"FolderName = \"2023_02\"\r\n",
+							"FolderName = \"2022_09\"\r\n",
 							"Mode = \"overwrite\""
 						],
 						"outputs": [],
-						"execution_count": 69
+						"execution_count": 1
 					},
 					{
 						"cell_type": "code",
@@ -2889,7 +2889,7 @@
 							"month = int(FolderName.split('_')[1])"
 						],
 						"outputs": [],
-						"execution_count": 70
+						"execution_count": 2
 					},
 					{
 						"cell_type": "code",
@@ -2907,7 +2907,7 @@
 							"spark.conf.set('fs.azure.sas.%s.%s.blob.core.windows.net' % (blob_container_name, blob_account_name),blob_sas_token)"
 						],
 						"outputs": [],
-						"execution_count": 71
+						"execution_count": 3
 					},
 					{
 						"cell_type": "code",
@@ -2938,7 +2938,7 @@
 							"amr_delimiter_type = (f_get_delimiter(amr_Filename))"
 						],
 						"outputs": [],
-						"execution_count": 72
+						"execution_count": 4
 					},
 					{
 						"cell_type": "code",
@@ -3077,7 +3077,7 @@
 							", 'MeasurementType']] #, 'MeasurementYear', 'MeasurementMonth'"
 						],
 						"outputs": [],
-						"execution_count": 73
+						"execution_count": 5
 					},
 					{
 						"cell_type": "code",
@@ -3098,7 +3098,7 @@
 							"selected_df1.columns"
 						],
 						"outputs": [],
-						"execution_count": 74
+						"execution_count": 6
 					},
 					{
 						"cell_type": "code",
@@ -3118,7 +3118,7 @@
 							"selected_df1.head()"
 						],
 						"outputs": [],
-						"execution_count": 75
+						"execution_count": 7
 					},
 					{
 						"cell_type": "code",
@@ -3149,7 +3149,7 @@
 							"amr_delimiter_type = (f_get_delimiter(amr_Filename))"
 						],
 						"outputs": [],
-						"execution_count": 76
+						"execution_count": 8
 					},
 					{
 						"cell_type": "code",
@@ -3282,7 +3282,7 @@
 							""
 						],
 						"outputs": [],
-						"execution_count": 77
+						"execution_count": 9
 					},
 					{
 						"cell_type": "code",
@@ -3303,7 +3303,7 @@
 							"selected_df2.columns"
 						],
 						"outputs": [],
-						"execution_count": 78
+						"execution_count": 10
 					},
 					{
 						"cell_type": "code",
@@ -3323,7 +3323,7 @@
 							"selected_df2.head()"
 						],
 						"outputs": [],
-						"execution_count": 79
+						"execution_count": 11
 					},
 					{
 						"cell_type": "code",
@@ -3344,7 +3344,7 @@
 							"print(selected_df2.shape[0]) #Digital Reading - 7005"
 						],
 						"outputs": [],
-						"execution_count": 80
+						"execution_count": 12
 					},
 					{
 						"cell_type": "code",
@@ -3366,7 +3366,7 @@
 							""
 						],
 						"outputs": [],
-						"execution_count": 81
+						"execution_count": 13
 					},
 					{
 						"cell_type": "code",
@@ -3389,7 +3389,7 @@
 							""
 						],
 						"outputs": [],
-						"execution_count": 82
+						"execution_count": 14
 					},
 					{
 						"cell_type": "code",
@@ -3411,7 +3411,7 @@
 							"count_group_by2.head() #Digital Reading Group By"
 						],
 						"outputs": [],
-						"execution_count": 83
+						"execution_count": 15
 					},
 					{
 						"cell_type": "code",
@@ -3431,7 +3431,7 @@
 							"df = pd.concat([selected_df2, selected_df1])"
 						],
 						"outputs": [],
-						"execution_count": 84
+						"execution_count": 16
 					},
 					{
 						"cell_type": "code",
@@ -3448,10 +3448,11 @@
 							"collapsed": false
 						},
 						"source": [
+							"df['Trekkingsdatum'] = pd.to_datetime(df['Trekkingsdatum'])\r\n",
 							"df.head(5)"
 						],
 						"outputs": [],
-						"execution_count": 85
+						"execution_count": 21
 					},
 					{
 						"cell_type": "code",
@@ -3470,7 +3471,7 @@
 							"df.dtypes"
 						],
 						"outputs": [],
-						"execution_count": 86
+						"execution_count": 22
 					},
 					{
 						"cell_type": "code",
@@ -3486,10 +3487,11 @@
 							}
 						},
 						"source": [
+							"\r\n",
 							"spark_df = spark.createDataFrame(df)"
 						],
 						"outputs": [],
-						"execution_count": 87
+						"execution_count": 23
 					},
 					{
 						"cell_type": "code",
@@ -3520,7 +3522,7 @@
 							".save(file_path)"
 						],
 						"outputs": [],
-						"execution_count": 88
+						"execution_count": 24
 					},
 					{
 						"cell_type": "code",
@@ -3542,7 +3544,7 @@
 							""
 						],
 						"outputs": [],
-						"execution_count": 89
+						"execution_count": 25
 					},
 					{
 						"cell_type": "code",
@@ -3579,7 +3581,7 @@
 							"# , 'DM_MeasurementType']] #, 'DM_MeasurementYear', 'DM_MeasurementMonth'"
 						],
 						"outputs": [],
-						"execution_count": 90
+						"execution_count": 26
 					},
 					{
 						"cell_type": "code",
@@ -3600,7 +3602,7 @@
 							""
 						],
 						"outputs": [],
-						"execution_count": 91
+						"execution_count": 27
 					},
 					{
 						"cell_type": "code",
@@ -3649,7 +3651,7 @@
 							"join_df['MeasurementType'] = (join_df['DM_MeasurementType'].combine_first(join_df['AM_MeasurementType']))"
 						],
 						"outputs": [],
-						"execution_count": 92
+						"execution_count": 28
 					},
 					{
 						"cell_type": "code",
@@ -3683,7 +3685,7 @@
 							"       'MeasurementType']]"
 						],
 						"outputs": [],
-						"execution_count": 93
+						"execution_count": 29
 					},
 					{
 						"cell_type": "code",
@@ -3703,7 +3705,7 @@
 							"join_df.head(5)"
 						],
 						"outputs": [],
-						"execution_count": 94
+						"execution_count": 30
 					},
 					{
 						"cell_type": "code",
@@ -3722,7 +3724,7 @@
 							"spark_join_df = spark.createDataFrame(join_df)"
 						],
 						"outputs": [],
-						"execution_count": 95
+						"execution_count": 31
 					},
 					{
 						"cell_type": "code",
@@ -3753,7 +3755,26 @@
 							".save(file_path)"
 						],
 						"outputs": [],
-						"execution_count": 96
+						"execution_count": 32
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							""
+						],
+						"outputs": [],
+						"execution_count": null
 					},
 					{
 						"cell_type": "code",
@@ -5897,7 +5918,7 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "f4713059-2709-425a-abdf-a305fc576742"
+						"spark.autotune.trackingId": "a6cd14cb-e361-4566-8e13-15863651ddd0"
 					}
 				},
 				"metadata": {
@@ -7714,6 +7735,631 @@
 						],
 						"outputs": [],
 						"execution_count": 147
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							""
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							""
+						],
+						"outputs": [],
+						"execution_count": null
+					}
+				]
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/SparkSQL_Fact_Dimension_Creation_Copy1')]",
+			"type": "Microsoft.Synapse/workspaces/notebooks",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"description": "SparkSQL_Fact_Dimension_Creation_Copy1",
+				"folder": {
+					"name": "Master Pipeline Notebooks"
+				},
+				"nbformat": 4,
+				"nbformat_minor": 2,
+				"bigDataPool": {
+					"referenceName": "devpool",
+					"type": "BigDataPoolReference"
+				},
+				"sessionProperties": {
+					"driverMemory": "28g",
+					"driverCores": 4,
+					"executorMemory": "28g",
+					"executorCores": 4,
+					"numExecutors": 2,
+					"runAsWorkspaceSystemIdentity": false,
+					"conf": {
+						"spark.dynamicAllocation.enabled": "false",
+						"spark.dynamicAllocation.minExecutors": "2",
+						"spark.dynamicAllocation.maxExecutors": "2",
+						"spark.autotune.trackingId": "65151f03-7bf5-46cc-ada1-2f9dbb3c7df4"
+					}
+				},
+				"metadata": {
+					"saveOutput": true,
+					"enableDebugMode": false,
+					"kernelspec": {
+						"name": "synapse_pyspark",
+						"display_name": "Synapse PySpark"
+					},
+					"language_info": {
+						"name": "python"
+					},
+					"a365ComputeOptions": {
+						"id": "/subscriptions/87083017-2c2b-47c8-8ea7-b4d36686fc97/resourceGroups/Dev_ResourceGroup/providers/Microsoft.Synapse/workspaces/cmdevsynapse/bigDataPools/devpool",
+						"name": "devpool",
+						"type": "Spark",
+						"endpoint": "https://cmdevsynapse.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/devpool",
+						"auth": {
+							"type": "AAD",
+							"authResource": "https://dev.azuresynapse.net"
+						},
+						"sparkVersion": "3.3",
+						"nodeCount": 3,
+						"cores": 4,
+						"memory": 28,
+						"automaticScaleJobs": false
+					},
+					"sessionKeepAliveTimeout": 30
+				},
+				"cells": [
+					{
+						"cell_type": "code",
+						"metadata": {
+							"microsoft": {
+								"language": "python"
+							}
+						},
+						"source": [
+							"%%pyspark\r\n",
+							"# Imporing the libraries\r\n",
+							"from pyspark.sql import SparkSession\r\n",
+							"from pyspark.sql.functions import lit,col,sum,mean,regexp_replace,to_date,count,row_number,unix_timestamp,date_format,quarter,expr,weekofyear,concat\r\n",
+							"from pyspark.sql.types import DateType,TimestampType\r\n",
+							"from pyspark.sql.window import Window\r\n",
+							"\r\n",
+							"# Setting the flag to handle the date formats\r\n",
+							"spark.sql(\"set spark.sql.legacy.timeParserPolicy=LEGACY\")\r\n",
+							"\r\n",
+							"# Creating a spark session and connection to blob storage account\r\n",
+							"blob_account_name = \"rawdevstorage\"\r\n",
+							"blob_container_name = \"output\"\r\n",
+							"sc = SparkSession.builder.getOrCreate()\r\n",
+							"token_library = sc._jvm.com.microsoft.azure.synapse.tokenlibrary.TokenLibrary\r\n",
+							"blob_sas_token = token_library.getConnectionString(\"cmdevsynapse-WorkspaceDefaultStorage\")\r\n",
+							"spark.conf.set(\r\n",
+							"    'fs.azure.sas.%s.%s.blob.core.windows.net' % (blob_container_name, blob_account_name),\r\n",
+							"    blob_sas_token)\r\n",
+							""
+						],
+						"outputs": [],
+						"execution_count": 1
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Define the path to the Delta table\r\n",
+							"delta_table_path = 'abfss://output@rawdevstorage.dfs.core.windows.net/Electricity_Measurement_pyspark_join'\r\n",
+							"\r\n",
+							"# Read Delta table into a DataFrame\r\n",
+							"reference_table = spark.read.format(\"delta\").load(delta_table_path)"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Create a temporary view: To run SQL queries on a PySpark DataFrame, you need to create a temporary view using the createOrReplaceTempView method.\r\n",
+							"reference_table.createOrReplaceTempView(\"reference_table\")"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							""
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"collapsed": false
+						},
+						"source": [
+							"# Show the contents of the DataFrame\r\n",
+							"display(reference_table.limit(5))"
+						],
+						"outputs": [],
+						"execution_count": 3
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"collapsed": false
+						},
+						"source": [
+							"# Reading the geo location file\r\n",
+							"geo_location = spark.read.csv(\"abfss://output@rawdevstorage.dfs.core.windows.net/geo_postcode.csv\", header=True, inferSchema=True)\r\n",
+							"\r\n",
+							"# Displaying a geo location file\r\n",
+							"display(geo_location.limit(5))"
+						],
+						"outputs": [],
+						"execution_count": 4
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"collapsed": false
+						},
+						"source": [
+							"# Reading the date file\r\n",
+							"date = spark.read.csv(\"abfss://output@rawdevstorage.dfs.core.windows.net/time_dimension.csv\", header=True, inferSchema=True)\r\n",
+							"\r\n",
+							"date = date.filter(col(\"datum_tekst_yyyymmdd\") >= \"2002-01-01\")\r\n",
+							"\r\n",
+							"# Displaying a date file\r\n",
+							"display(date.limit(5))"
+						],
+						"outputs": [],
+						"execution_count": 5
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"collapsed": false
+						},
+						"source": [
+							"# Creating a group by for market dimensions\r\n",
+							"grouped_reference_table_markt_dimension = reference_table.groupBy(\"Markt\")\r\n",
+							"markt_dimension = grouped_reference_table_markt_dimension.agg(count(\"Trekkingsdatum\"))\r\n",
+							"\r\n",
+							"# Selecting specific columns\r\n",
+							"markt_dimension = markt_dimension.select('Markt').distinct().orderBy(\"Markt\")\r\n",
+							"\r\n",
+							"# Exclude the undefined/null value\r\n",
+							"markt_dimension = markt_dimension.filter(col(\"Markt\").isNotNull())\r\n",
+							"\r\n",
+							"# Define the window specification for the grouping\r\n",
+							"markt_dimension_window_spec = Window.orderBy(markt_dimension[\"Markt\"].desc())\r\n",
+							"\r\n",
+							"# Add an auto-incrementing column to the DataFrame within the group\r\n",
+							"markt_dimension = markt_dimension.withColumn(\"Markt_ID\", row_number().over(markt_dimension_window_spec))\r\n",
+							"\r\n",
+							"# Selecting specific columns\r\n",
+							"markt_dimension = markt_dimension.select('Markt_ID','Markt')\r\n",
+							"\r\n",
+							"display(markt_dimension.limit(5))"
+						],
+						"outputs": [],
+						"execution_count": 6
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Writing the markt dimension to delta file\r\n",
+							"file_path = 'abfss://goldlayer@rawdevstorage.dfs.core.windows.net/PySparkDimensions/Markt_Dimension'\r\n",
+							"write_format=\"delta\"\r\n",
+							"#partition_by=[\"DM_Peildatum\"]\r\n",
+							"mode_ = \"overwrite\" #append\r\n",
+							"\r\n",
+							"markt_dimension\\\r\n",
+							".write\\\r\n",
+							".option(\"header\", \"true\")\\\r\n",
+							".option(\"overwriteSchema\", \"true\")\\\r\n",
+							".format(write_format)\\\r\n",
+							".mode(mode_)\\\r\n",
+							".save(file_path)\r\n",
+							"\r\n",
+							"#.partitionBy(partition_by)\\"
+						],
+						"outputs": [],
+						"execution_count": 7
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"collapsed": false
+						},
+						"source": [
+							"# Creating a group by for geo location dimensions\r\n",
+							"grouped_reference_table_geo_location_dimension = reference_table.groupBy(\"Leveringsadres_Postcode\",\"Leveringsadres_Gemeente\")\r\n",
+							"geo_location_dimension = grouped_reference_table_geo_location_dimension.agg(count(\"Trekkingsdatum\"))\r\n",
+							"\r\n",
+							"# Selecting specific columns\r\n",
+							"geo_location_dimension = geo_location_dimension.select('Leveringsadres_Postcode','Leveringsadres_Gemeente').distinct().orderBy(\"Leveringsadres_Postcode\")\r\n",
+							"\r\n",
+							"# Exclude the undefined/null value\r\n",
+							"geo_location_dimension = geo_location_dimension.filter(col(\"Leveringsadres_Postcode\").isNotNull())\r\n",
+							"\r\n",
+							"# joinigng the dataframe to get all the column for geo location dimension\r\n",
+							"geo_location_dimension = geo_location.join(geo_location_dimension, geo_location[\"postcode\"] == geo_location_dimension[\"Leveringsadres_Postcode\"], \"inner\")\r\n",
+							"\r\n",
+							"# Renaming the geo location column\r\n",
+							"geo_location_dimension = geo_location_dimension.withColumnRenamed(\"dwh_id\", \"Geo_ID\") \r\n",
+							"\r\n",
+							"# Selecting specific columns\r\n",
+							"geo_location_dimension = geo_location_dimension.select('Geo_ID','Leveringsadres_Postcode','Leveringsadres_Gemeente','gewest','provincie')\r\n",
+							"\r\n",
+							"display(geo_location_dimension.limit(5))"
+						],
+						"outputs": [],
+						"execution_count": 8
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Writing the geo location dimension to delta file\r\n",
+							"file_path = 'abfss://goldlayer@rawdevstorage.dfs.core.windows.net/PySparkDimensions/Geo_Location_Dimension'\r\n",
+							"write_format=\"delta\"\r\n",
+							"#partition_by=[\"DM_Peildatum\"]\r\n",
+							"mode_ = \"overwrite\" #append\r\n",
+							"\r\n",
+							"geo_location_dimension\\\r\n",
+							".write\\\r\n",
+							".option(\"header\", \"true\")\\\r\n",
+							".option(\"overwriteSchema\", \"true\")\\\r\n",
+							".format(write_format)\\\r\n",
+							".mode(mode_)\\\r\n",
+							".save(file_path)\r\n",
+							"\r\n",
+							"#.partitionBy(partition_by)\\"
+						],
+						"outputs": [],
+						"execution_count": 9
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"collapsed": false
+						},
+						"source": [
+							"# Creating a group by for date dimensions\r\n",
+							"grouped_reference_table_date_dimension = reference_table.groupBy(\"Trekkingsdatum\")\r\n",
+							"date_dimension_1 = grouped_reference_table_date_dimension.agg(count(\"Trekkingsdatum\"))\r\n",
+							"grouped_reference_table_date_dimension = reference_table.groupBy(\"Peildatum\")\r\n",
+							"date_dimension_2 = grouped_reference_table_date_dimension.agg(count(\"Trekkingsdatum\"))\r\n",
+							"date_dimension = date_dimension_1.union(date_dimension_2).distinct()\r\n",
+							"\r\n",
+							"# Renaming the date location column\r\n",
+							"date_dimension = date_dimension.withColumnRenamed(\"Trekkingsdatum\", \"Date_Standard\")\r\n",
+							"\r\n",
+							"# Exclude the undefined/null value\r\n",
+							"date_dimension = date_dimension.filter(col(\"Date_Standard\").isNotNull())\r\n",
+							"\r\n",
+							"# Define the window specification for the grouping\r\n",
+							"#date_dimension_window_spec = Window.orderBy(date_dimension[\"Date_Standard\"].desc())\r\n",
+							"\r\n",
+							"# Add an auto-incrementing column to the DataFrame within the group\r\n",
+							"#date_dimension = date_dimension.withColumn(\"Date_ID\", row_number().over(date_dimension_window_spec))\r\n",
+							"\r\n",
+							"# Add new column\r\n",
+							"date_dimension = date_dimension.withColumn(\"Date\", concat(expr(\"substring(Date_Standard, 1, 4)\"), expr(\"substring(Date_Standard, 6, 2)\"), expr(\"substring(Date_Standard, 9, 2)\")))\r\n",
+							"\r\n",
+							"# date_dimension = date_dimension.withColumn(\"Day\", date_format(date_dimension[\"Date\"], \"d\").cast(\"integer\"))\r\n",
+							"# date_dimension = date_dimension.withColumn(\"Month\", date_format(date_dimension[\"Date\"], \"M\").cast(\"integer\"))\r\n",
+							"# date_dimension = date_dimension.withColumn(\"Year\", date_format(date_dimension[\"Date\"], \"y\").cast(\"integer\"))\r\n",
+							"# date_dimension = date_dimension.withColumn(\"Quarter\", quarter(date_dimension[\"Date\"]))\r\n",
+							"# date_dimension = date_dimension.withColumn(\"Day_Of_Year\", expr(\"dayofyear(Date)\"))\r\n",
+							"# date_dimension = date_dimension.withColumn(\"Week_Number\", weekofyear(date_dimension[\"Date\"]))\r\n",
+							"\r\n",
+							"# joinigng the dataframe to get all the column for geo location dimension\r\n",
+							"date_dimension = date_dimension.join(date, date[\"datum\"] == date_dimension[\"Date_Standard\"], \"inner\")\r\n",
+							"\r\n",
+							"# Selecting specific columns\r\n",
+							"date_dimension = date_dimension.select('date_ID','Date','Date_Standard','dag_naam','maand_naam','jaar','kwartaal')\r\n",
+							"\r\n",
+							"# Displaying top 5 rows\r\n",
+							"display(date_dimension.limit(5))"
+						],
+						"outputs": [],
+						"execution_count": 11
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Writing the date dimension to delta file\r\n",
+							"file_path = 'abfss://goldlayer@rawdevstorage.dfs.core.windows.net/PySparkDimensions/Date_Dimension'\r\n",
+							"write_format=\"delta\"\r\n",
+							"#partition_by=[\"DM_Peildatum\"]\r\n",
+							"mode_ = \"overwrite\" #append\r\n",
+							"\r\n",
+							"date_dimension\\\r\n",
+							".write\\\r\n",
+							".option(\"header\", \"true\")\\\r\n",
+							".option(\"overwriteSchema\", \"true\")\\\r\n",
+							".format(write_format)\\\r\n",
+							".mode(mode_)\\\r\n",
+							".save(file_path)\r\n",
+							"\r\n",
+							"#.partitionBy(partition_by)\\"
+						],
+						"outputs": [],
+						"execution_count": 12
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"collapsed": false
+						},
+						"source": [
+							"# Create a Fact delta_table_path by joining the reference table with dimensions\r\n",
+							"fact_table = reference_table.join(geo_location_dimension, reference_table[\"Leveringsadres_Postcode\"] == geo_location_dimension[\"Leveringsadres_Postcode\"], \"inner\")\r\n",
+							"fact_table = fact_table.join(markt_dimension, fact_table[\"Markt\"] == markt_dimension[\"Markt\"], \"inner\")\r\n",
+							"fact_table = fact_table.join(date_dimension, fact_table[\"Peildatum\"] == date_dimension[\"Date_Standard\"], \"inner\")\r\n",
+							"\r\n",
+							"# Renaming the date column\r\n",
+							"fact_table = fact_table.withColumnRenamed(\"Date_ID\", \"Peildatum_ID\") \r\n",
+							"\r\n",
+							"# Selecting Specific columns\r\n",
+							"fact_table = fact_table.select('Trekkingsdatum',\r\n",
+							" 'Peildatum_ID',\r\n",
+							" 'Markt_ID',\r\n",
+							" 'Geo_ID',\r\n",
+							" 'WerkelijkVerbruik_RM_2017',\r\n",
+							" 'BenaderendVerbruik_VM_2017',\r\n",
+							" 'BenaderendVerbruik_VM_2017_Norm',\r\n",
+							" 'AantalToegangspunten_2017',\r\n",
+							" 'WerkelijkVerbruik_RM_2018',\r\n",
+							" 'BenaderendVerbruik_VM_2018',\r\n",
+							" 'BenaderendVerbruik_VM_2018_Norm',\r\n",
+							" 'AantalToegangspunten_2018',\r\n",
+							" 'WerkelijkVerbruik_RM_2019',\r\n",
+							" 'BenaderendVerbruik_VM_2019',\r\n",
+							" 'BenaderendVerbruik_VM_2019_Norm',\r\n",
+							" 'AantalToegangspunten_2019',\r\n",
+							" 'WerkelijkVerbruik_RM_2020',\r\n",
+							" 'BenaderendVerbruik_VM_2020',\r\n",
+							" 'BenaderendVerbruik_VM_2020_Norm',\r\n",
+							" 'AantalToegangspunten_2020',\r\n",
+							" 'WerkelijkVerbruik_RM_2021',\r\n",
+							" 'BenaderendVerbruik_VM_2021',\r\n",
+							" 'BenaderendVerbruik_VM_2021_Norm',\r\n",
+							" 'AantalToegangspunten_2021',\r\n",
+							" 'Gemiddeld_WerkelijkVerbruik',\r\n",
+							" 'Gemiddeld_BenaderendVerbruik',\r\n",
+							" 'Gemiddeld_BenaderendVerbruik_Norm',\r\n",
+							" 'Total_AantalToegangspunten')\r\n",
+							"\r\n",
+							"# Creating Trekkingsdatum_ID\r\n",
+							"fact_table = fact_table.join(date_dimension, fact_table[\"Trekkingsdatum\"] == date_dimension[\"Date_Standard\"], \"inner\")\r\n",
+							"\r\n",
+							"# Renaming the date column\r\n",
+							"fact_table = fact_table.withColumnRenamed(\"Date_ID\", \"Trekkingsdatum_ID\") \r\n",
+							"\r\n",
+							"# Selecting Specific columns\r\n",
+							"fact_table = fact_table.select('Trekkingsdatum_ID',\r\n",
+							" 'Peildatum_ID',\r\n",
+							" 'Markt_ID',\r\n",
+							" 'Geo_ID',\r\n",
+							" 'WerkelijkVerbruik_RM_2017',\r\n",
+							" 'BenaderendVerbruik_VM_2017',\r\n",
+							" 'BenaderendVerbruik_VM_2017_Norm',\r\n",
+							" 'AantalToegangspunten_2017',\r\n",
+							" 'WerkelijkVerbruik_RM_2018',\r\n",
+							" 'BenaderendVerbruik_VM_2018',\r\n",
+							" 'BenaderendVerbruik_VM_2018_Norm',\r\n",
+							" 'AantalToegangspunten_2018',\r\n",
+							" 'WerkelijkVerbruik_RM_2019',\r\n",
+							" 'BenaderendVerbruik_VM_2019',\r\n",
+							" 'BenaderendVerbruik_VM_2019_Norm',\r\n",
+							" 'AantalToegangspunten_2019',\r\n",
+							" 'WerkelijkVerbruik_RM_2020',\r\n",
+							" 'BenaderendVerbruik_VM_2020',\r\n",
+							" 'BenaderendVerbruik_VM_2020_Norm',\r\n",
+							" 'AantalToegangspunten_2020',\r\n",
+							" 'WerkelijkVerbruik_RM_2021',\r\n",
+							" 'BenaderendVerbruik_VM_2021',\r\n",
+							" 'BenaderendVerbruik_VM_2021_Norm',\r\n",
+							" 'AantalToegangspunten_2021',\r\n",
+							" 'Gemiddeld_WerkelijkVerbruik',\r\n",
+							" 'Gemiddeld_BenaderendVerbruik',\r\n",
+							" 'Gemiddeld_BenaderendVerbruik_Norm',\r\n",
+							"'Total_AantalToegangspunten')\r\n",
+							"\r\n",
+							"\r\n",
+							"display(fact_table.limit(5))"
+						],
+						"outputs": [],
+						"execution_count": 13
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Writing the fact table to delta file\r\n",
+							"file_path = 'abfss://goldlayer@rawdevstorage.dfs.core.windows.net/PySparkDimensions/Fact_Table'\r\n",
+							"write_format=\"delta\"\r\n",
+							"#partition_by=[\"DM_Peildatum\"]\r\n",
+							"mode_ = \"overwrite\" #append\r\n",
+							"\r\n",
+							"fact_table\\\r\n",
+							".write\\\r\n",
+							".option(\"header\", \"true\")\\\r\n",
+							".option(\"overwriteSchema\", \"true\")\\\r\n",
+							".format(write_format)\\\r\n",
+							".mode(mode_)\\\r\n",
+							".save(file_path)\r\n",
+							"\r\n",
+							"#.partitionBy(partition_by)\\"
+						],
+						"outputs": [],
+						"execution_count": 14
 					},
 					{
 						"cell_type": "code",
