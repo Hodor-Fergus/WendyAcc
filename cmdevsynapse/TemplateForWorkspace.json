@@ -242,6 +242,43 @@
 								}
 							]
 						}
+					},
+					{
+						"name": "Load Fact and Dimension Table",
+						"description": "Load Fact and Dimension Table",
+						"type": "SynapseNotebook",
+						"dependsOn": [
+							{
+								"activity": "ForEach Container",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": "Pandas_Fact_Dimension_Creation",
+								"type": "NotebookReference"
+							},
+							"snapshot": true,
+							"sparkPool": {
+								"referenceName": "devpool",
+								"type": "BigDataPoolReference"
+							},
+							"executorSize": "Small",
+							"conf": {
+								"spark.dynamicAllocation.enabled": false
+							},
+							"driverSize": "Small"
+						}
 					}
 				],
 				"policy": {
@@ -258,8 +295,9 @@
 			},
 			"dependsOn": [
 				"[concat(variables('workspaceId'), '/datasets/ADLS_Container_rawdata')]",
-				"[concat(variables('workspaceId'), '/notebooks/Pandas_Load_Data_From_Blob_To_Synapse_SQL_Pool')]",
-				"[concat(variables('workspaceId'), '/bigDataPools/devpool')]"
+				"[concat(variables('workspaceId'), '/notebooks/Pandas_Fact_Dimension_Creation')]",
+				"[concat(variables('workspaceId'), '/bigDataPools/devpool')]",
+				"[concat(variables('workspaceId'), '/notebooks/Pandas_Load_Data_From_Blob_To_Synapse_SQL_Pool')]"
 			]
 		},
 		{
