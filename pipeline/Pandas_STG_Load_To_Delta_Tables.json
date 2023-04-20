@@ -90,7 +90,7 @@
 								},
 								"snapshot": true,
 								"sparkPool": {
-									"referenceName": "devpool",
+									"referenceName": "sanzpool",
 									"type": "BigDataPoolReference"
 								},
 								"executorSize": "Small",
@@ -148,7 +148,7 @@
 					},
 					"snapshot": true,
 					"sparkPool": {
-						"referenceName": "devpool",
+						"referenceName": "sanzpool",
 						"type": "BigDataPoolReference"
 					},
 					"executorSize": "Small",
