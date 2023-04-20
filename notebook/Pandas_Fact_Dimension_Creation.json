@@ -22,7 +22,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "352a3e6b-d895-4339-ae2c-4896f176dd7a"
+				"spark.autotune.trackingId": "b0cb2c5a-a501-4560-8d42-4efd00352a18"
 			}
 		},
 		"metadata": {
@@ -67,6 +67,8 @@
 					"from pyspark.sql.functions import lit,col,sum,mean,regexp_replace,to_date,count,row_number,unix_timestamp,date_format,quarter,expr,weekofyear,concat\r\n",
 					"from pyspark.sql.types import DateType,TimestampType\r\n",
 					"from pyspark.sql.window import Window\r\n",
+					"import pandas as pd\r\n",
+					"import numpy as np\r\n",
 					"\r\n",
 					"# Setting the flag to handle the date formats\r\n",
 					"spark.sql(\"set spark.sql.legacy.timeParserPolicy=LEGACY\")\r\n",
@@ -82,7 +84,7 @@
 					"    blob_sas_token)\r\n",
 					""
 				],
-				"execution_count": 1
+				"execution_count": 20
 			},
 			{
 				"cell_type": "code",
@@ -213,9 +215,25 @@
 					}
 				},
 				"source": [
-					""
+					"# Creating a group by for market dimensions\r\n",
+					"grouped_reference_table_markt_dimension = reference_table.groupby(['Markt'])\r\n",
+					"markt_dimension = grouped_reference_table_markt_dimension.agg(total_count=('Trekkingsdatum', 'count'))\r\n",
+					"\r\n",
+					"# Restiing the index\r\n",
+					"markt_dimension = markt_dimension.head().reset_index()\r\n",
+					"\r\n",
+					"# Exclude the undefined/null value\r\n",
+					"markt_dimension = markt_dimension.dropna()\r\n",
+					"\r\n",
+					"# Add an auto-incrementing column to the DataFrame within the group\r\n",
+					"markt_dimension['Markt_ID'] = np.arange(1,markt_dimension.shape[0]+1)\r\n",
+					"\r\n",
+					"# Selecting specific columns\r\n",
+					"markt_dimension = markt_dimension[['Markt_ID','Markt']]\r\n",
+					"\r\n",
+					"markt_dimension.head()"
 				],
-				"execution_count": null
+				"execution_count": 23
 			},
 			{
 				"cell_type": "code",
@@ -228,32 +246,13 @@
 						"transient": {
 							"deleting": false
 						}
-					},
-					"collapsed": false
+					}
 				},
 				"source": [
-					"# Creating a group by for market dimensions\r\n",
-					"grouped_reference_table_markt_dimension = reference_table.groupBy(\"Markt\")\r\n",
-					"markt_dimension = grouped_reference_table_markt_dimension.agg(count(\"Trekkingsdatum\"))\r\n",
-					"\r\n",
-					"# Selecting specific columns\r\n",
-					"markt_dimension = markt_dimension.select('Markt').distinct().orderBy(\"Markt\")\r\n",
-					"\r\n",
-					"# Exclude the undefined/null value\r\n",
-					"markt_dimension = markt_dimension.filter(col(\"Markt\").isNotNull())\r\n",
-					"\r\n",
-					"# Define the window specification for the grouping\r\n",
-					"markt_dimension_window_spec = Window.orderBy(markt_dimension[\"Markt\"].desc())\r\n",
-					"\r\n",
-					"# Add an auto-incrementing column to the DataFrame within the group\r\n",
-					"markt_dimension = markt_dimension.withColumn(\"Markt_ID\", row_number().over(markt_dimension_window_spec))\r\n",
-					"\r\n",
-					"# Selecting specific columns\r\n",
-					"markt_dimension = markt_dimension.select('Markt_ID','Markt')\r\n",
-					"\r\n",
-					"display(markt_dimension.limit(5))"
+					"# Converting to spark dataframe\r\n",
+					"markt_dimension = spark.createDataFrame(markt_dimension)"
 				],
-				"execution_count": 6
+				"execution_count": 28
 			},
 			{
 				"cell_type": "code",
@@ -270,7 +269,7 @@
 				},
 				"source": [
 					"# Writing the markt dimension to delta file\r\n",
-					"file_path = 'abfss://goldlayer@rawdevstorage.dfs.core.windows.net/PySparkDimensions/Markt_Dimension'\r\n",
+					"file_path = 'abfss://goldlayer@rawdevstorage.dfs.core.windows.net/PandasDimensions/Markt_Dimension'\r\n",
 					"write_format=\"delta\"\r\n",
 					"#partition_by=[\"DM_Peildatum\"]\r\n",
 					"mode_ = \"overwrite\" #append\r\n",
@@ -285,7 +284,25 @@
 					"\r\n",
 					"#.partitionBy(partition_by)\\"
 				],
-				"execution_count": 7
+				"execution_count": 29
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					""
+				],
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
