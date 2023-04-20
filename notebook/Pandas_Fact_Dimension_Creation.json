@@ -8,7 +8,7 @@
 		"nbformat": 4,
 		"nbformat_minor": 2,
 		"bigDataPool": {
-			"referenceName": "sanzpool",
+			"referenceName": "devpool",
 			"type": "BigDataPoolReference"
 		},
 		"sessionProperties": {
@@ -22,7 +22,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "1253c56c-c2e2-4a46-a2e8-fef933d62cde"
+				"spark.autotune.trackingId": "0527a2cd-251d-4658-ae51-9c7840daed2c"
 			}
 		},
 		"metadata": {
@@ -36,16 +36,16 @@
 				"name": "python"
 			},
 			"a365ComputeOptions": {
-				"id": "/subscriptions/87083017-2c2b-47c8-8ea7-b4d36686fc97/resourceGroups/Dev_ResourceGroup/providers/Microsoft.Synapse/workspaces/cmdevsynapse/bigDataPools/sanzpool",
-				"name": "sanzpool",
+				"id": "/subscriptions/87083017-2c2b-47c8-8ea7-b4d36686fc97/resourceGroups/Dev_ResourceGroup/providers/Microsoft.Synapse/workspaces/cmdevsynapse/bigDataPools/devpool",
+				"name": "devpool",
 				"type": "Spark",
-				"endpoint": "https://cmdevsynapse.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sanzpool",
+				"endpoint": "https://cmdevsynapse.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/devpool",
 				"auth": {
 					"type": "AAD",
 					"authResource": "https://dev.azuresynapse.net"
 				},
 				"sparkVersion": "3.3",
-				"nodeCount": 10,
+				"nodeCount": 3,
 				"cores": 4,
 				"memory": 28,
 				"automaticScaleJobs": false
@@ -84,7 +84,7 @@
 					"    blob_sas_token)\r\n",
 					""
 				],
-				"execution_count": 131
+				"execution_count": 86
 			},
 			{
 				"cell_type": "code",
@@ -106,7 +106,7 @@
 					"# Read Delta table into a DataFrame\r\n",
 					"reference_table = spark.read.format(\"delta\").load(delta_table_path)"
 				],
-				"execution_count": 132
+				"execution_count": 87
 			},
 			{
 				"cell_type": "code",
@@ -128,7 +128,7 @@
 					"# Show the contents of the DataFrame\r\n",
 					"reference_table.head(5)"
 				],
-				"execution_count": 133
+				"execution_count": 88
 			},
 			{
 				"cell_type": "code",
@@ -154,7 +154,7 @@
 					"# Displaying a geo location file\r\n",
 					"geo_location.head(5)"
 				],
-				"execution_count": 134
+				"execution_count": 89
 			},
 			{
 				"cell_type": "code",
@@ -182,7 +182,7 @@
 					"# Displaying a date file\r\n",
 					"date.head(5)"
 				],
-				"execution_count": 135
+				"execution_count": 90
 			},
 			{
 				"cell_type": "code",
@@ -216,7 +216,7 @@
 					"\r\n",
 					"markt_dimension.head()"
 				],
-				"execution_count": 136
+				"execution_count": 91
 			},
 			{
 				"cell_type": "code",
@@ -235,7 +235,7 @@
 					"# Converting to spark dataframe\r\n",
 					"markt_dimension_sparkdf = spark.createDataFrame(markt_dimension)"
 				],
-				"execution_count": 137
+				"execution_count": 92
 			},
 			{
 				"cell_type": "code",
@@ -267,7 +267,7 @@
 					"\r\n",
 					"#.partitionBy(partition_by)\\"
 				],
-				"execution_count": 138
+				"execution_count": 93
 			},
 			{
 				"cell_type": "code",
@@ -304,7 +304,7 @@
 					"\r\n",
 					"geo_location_dimension.head()"
 				],
-				"execution_count": 139
+				"execution_count": 94
 			},
 			{
 				"cell_type": "code",
@@ -323,7 +323,7 @@
 					"# Converting to spark dataframe\r\n",
 					"geo_location_dimension_sparkdf = spark.createDataFrame(geo_location_dimension)"
 				],
-				"execution_count": 140
+				"execution_count": 95
 			},
 			{
 				"cell_type": "code",
@@ -355,7 +355,7 @@
 					"\r\n",
 					"#.partitionBy(partition_by)\\"
 				],
-				"execution_count": 141
+				"execution_count": 96
 			},
 			{
 				"cell_type": "code",
@@ -374,13 +374,18 @@
 					"# Creating a group by for market dimensions\r\n",
 					"grouped_reference_table_date_dimension = reference_table.groupby(['Trekkingsdatum'])\r\n",
 					"date_dimension_1 = grouped_reference_table_date_dimension.agg(total_count=('Trekkingsdatum', 'count'))\r\n",
+					"date_dimension_1 = date_dimension_1.head().reset_index()\r\n",
+					"date_dimension_1['Date_Standard'] = date_dimension_1['Trekkingsdatum']\r\n",
+					"date_dimension_1 = date_dimension_1[['Date_Standard','total_count']]\r\n",
+					"\r\n",
 					"grouped_reference_table_date_dimension = reference_table.groupby(['Peildatum'])\r\n",
 					"date_dimension_2 = grouped_reference_table_date_dimension.agg(total_count=('Trekkingsdatum', 'count'))\r\n",
+					"date_dimension_2 = date_dimension_2.head().reset_index()\r\n",
+					"date_dimension_2['Date_Standard'] = date_dimension_2['Peildatum']\r\n",
+					"date_dimension_2 = date_dimension_2[['Date_Standard','total_count']]\r\n",
+					"\r\n",
 					"date_dimension = pd.concat([date_dimension_1, date_dimension_2])\r\n",
 					"\r\n",
-					"# Restiing the index\r\n",
-					"date_dimension = date_dimension.head().reset_index()\r\n",
-					"date_dimension['Date_Standard'] = date_dimension['index']\r\n",
 					"\r\n",
 					"# Convert the date to single format\r\n",
 					"date_dimension['Date_Standard'] = pd.to_datetime(date_dimension['Date_Standard'])\r\n",
@@ -400,10 +405,9 @@
 					"# Selecting specific columns\r\n",
 					"date_dimension = date_dimension[['date_ID','Date','Date_Standard','dag_naam','maand_naam','jaar','kwartaal']]\r\n",
 					"\r\n",
-					"date_dimension.head()\r\n",
-					""
+					"date_dimension.head()"
 				],
-				"execution_count": 142
+				"execution_count": 97
 			},
 			{
 				"cell_type": "code",
@@ -422,7 +426,7 @@
 					"# Converting to spark dataframe\r\n",
 					"date_dimension_sparkdf = spark.createDataFrame(date_dimension)"
 				],
-				"execution_count": 143
+				"execution_count": 98
 			},
 			{
 				"cell_type": "code",
@@ -454,7 +458,7 @@
 					"\r\n",
 					"#.partitionBy(partition_by)\\"
 				],
-				"execution_count": 144
+				"execution_count": 99
 			},
 			{
 				"cell_type": "code",
@@ -476,6 +480,7 @@
 					"\r\n",
 					"# converting to standard date format\r\n",
 					"fact_table['Peildatum'] = pd.to_datetime(fact_table['Peildatum'])\r\n",
+					"date_dimension['Date_Standard'] = pd.to_datetime(date_dimension['Date_Standard'])\r\n",
 					"\r\n",
 					"fact_table = pd.merge(fact_table, date_dimension, left_on=['Peildatum'], right_on=['Date_Standard'], how='inner')\r\n",
 					"\r\n",
@@ -553,7 +558,7 @@
 					"\r\n",
 					"fact_table.head()"
 				],
-				"execution_count": 145
+				"execution_count": 101
 			},
 			{
 				"cell_type": "code",
@@ -572,7 +577,7 @@
 					"# Converting to spark dataframe\r\n",
 					"fact_table = spark.createDataFrame(fact_table)"
 				],
-				"execution_count": 146
+				"execution_count": 102
 			},
 			{
 				"cell_type": "code",
@@ -604,25 +609,7 @@
 					"\r\n",
 					"#.partitionBy(partition_by)\\"
 				],
-				"execution_count": 147
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					""
-				],
-				"execution_count": null
+				"execution_count": 103
 			},
 			{
 				"cell_type": "code",
