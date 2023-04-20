@@ -22,7 +22,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "944b1b46-c8e0-4f1b-b517-81a3811d6626"
+				"spark.autotune.trackingId": "bd922283-71de-43e8-b70a-2d748a17ce13"
 			}
 		},
 		"metadata": {
@@ -422,7 +422,7 @@
 					"# Converting to spark dataframe\r\n",
 					"date_dimension = spark.createDataFrame(date_dimension)"
 				],
-				"execution_count": 51
+				"execution_count": 77
 			},
 			{
 				"cell_type": "code",
@@ -454,7 +454,7 @@
 					"\r\n",
 					"#.partitionBy(partition_by)\\"
 				],
-				"execution_count": 52
+				"execution_count": 78
 			},
 			{
 				"cell_type": "code",
