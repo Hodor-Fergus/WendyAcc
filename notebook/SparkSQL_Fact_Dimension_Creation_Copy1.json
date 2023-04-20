@@ -22,7 +22,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "659f69c4-7d10-4200-bda1-8c3cc37dc811"
+				"spark.autotune.trackingId": "1e2be09c-b6e3-4ee0-a739-5814b2f3582f"
 			}
 		},
 		"metadata": {
@@ -82,7 +82,7 @@
 					"    blob_sas_token)\r\n",
 					""
 				],
-				"execution_count": 149
+				"execution_count": 150
 			},
 			{
 				"cell_type": "code",
@@ -103,6 +103,43 @@
 					"\r\n",
 					"# Read Delta table into a DataFrame\r\n",
 					"reference_table = spark.read.format(\"delta\").load(delta_table_path)"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Create a temporary view: To run SQL queries on a PySpark DataFrame, you need to create a temporary view using the createOrReplaceTempView method.\r\n",
+					"reference_table.createOrReplaceTempView(\"reference_table\")"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					""
 				],
 				"execution_count": null
 			},
