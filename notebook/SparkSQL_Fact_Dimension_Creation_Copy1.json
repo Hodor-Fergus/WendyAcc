@@ -22,7 +22,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "ab977292-09f2-430f-902f-1f2cd9a8e027"
+				"spark.autotune.trackingId": "3001526b-27fd-45e2-aa9a-f558e12f41d8"
 			}
 		},
 		"metadata": {
@@ -582,12 +582,50 @@
 						"transient": {
 							"deleting": false
 						}
-					}
+					},
+					"microsoft": {
+						"language": "sparksql"
+					},
+					"collapsed": false
 				},
 				"source": [
-					""
+					"%%sql\r\n",
+					"SELECT DISTINCT tdd.date_ID as Trekkingsdatum_ID\r\n",
+					",pdd.date_ID as Peildatum_ID\r\n",
+					",md.Markt_ID\r\n",
+					",gd.Geo_ID\r\n",
+					",rt.WerkelijkVerbruik_RM_2017\r\n",
+					",rt.BenaderendVerbruik_VM_2017\r\n",
+					",rt.BenaderendVerbruik_VM_2017_Norm\r\n",
+					",rt.AantalToegangspunten_2017\r\n",
+					",rt.WerkelijkVerbruik_RM_2018\r\n",
+					",rt.BenaderendVerbruik_VM_2018\r\n",
+					",rt.BenaderendVerbruik_VM_2018_Norm\r\n",
+					",rt.AantalToegangspunten_2018\r\n",
+					",rt.WerkelijkVerbruik_RM_2019\r\n",
+					",rt.BenaderendVerbruik_VM_2019\r\n",
+					",rt.BenaderendVerbruik_VM_2019_Norm\r\n",
+					",rt.AantalToegangspunten_2019\r\n",
+					",rt.WerkelijkVerbruik_RM_2020\r\n",
+					",rt.BenaderendVerbruik_VM_2020\r\n",
+					",rt.BenaderendVerbruik_VM_2020_Norm\r\n",
+					",rt.AantalToegangspunten_2020\r\n",
+					",rt.WerkelijkVerbruik_RM_2021\r\n",
+					",rt.BenaderendVerbruik_VM_2021\r\n",
+					",rt.BenaderendVerbruik_VM_2021_Norm\r\n",
+					",rt.AantalToegangspunten_2021\r\n",
+					",rt.Gemiddeld_WerkelijkVerbruik\r\n",
+					",rt.Gemiddeld_BenaderendVerbruik\r\n",
+					",rt.Gemiddeld_BenaderendVerbruik_Norm\r\n",
+					",rt.Total_AantalToegangspunten\r\n",
+					" FROM reference_table rt\r\n",
+					" JOIN markt_dimension md on rt.Markt=md.Markt\r\n",
+					" JOIN geo_location_dimension gd on rt.Leveringsadres_Postcode=gd.Leveringsadres_Postcode\r\n",
+					" JOIN date_dimension tdd on rt.Trekkingsdatum=tdd.Date_Standard\r\n",
+					" JOIN date_dimension pdd on rt.Trekkingsdatum=pdd.Date_Standard\r\n",
+					" LIMIT 5"
 				],
-				"execution_count": null
+				"execution_count": 76
 			},
 			{
 				"cell_type": "code",
@@ -604,84 +642,45 @@
 					"collapsed": false
 				},
 				"source": [
-					"# Create a Fact delta_table_path by joining the reference table with dimensions\r\n",
-					"fact_table = reference_table.join(geo_location_dimension, reference_table[\"Leveringsadres_Postcode\"] == geo_location_dimension[\"Leveringsadres_Postcode\"], \"inner\")\r\n",
-					"fact_table = fact_table.join(markt_dimension, fact_table[\"Markt\"] == markt_dimension[\"Markt\"], \"inner\")\r\n",
-					"fact_table = fact_table.join(date_dimension, fact_table[\"Peildatum\"] == date_dimension[\"Date_Standard\"], \"inner\")\r\n",
+					"query = 'SELECT DISTINCT tdd.date_ID as Trekkingsdatum_ID\\\r\n",
+					",pdd.date_ID as Peildatum_ID\\\r\n",
+					",md.Markt_ID\\\r\n",
+					",gd.Geo_ID\\\r\n",
+					",rt.WerkelijkVerbruik_RM_2017\\\r\n",
+					",rt.BenaderendVerbruik_VM_2017\\\r\n",
+					",rt.BenaderendVerbruik_VM_2017_Norm\\\r\n",
+					",rt.AantalToegangspunten_2017\\\r\n",
+					",rt.WerkelijkVerbruik_RM_2018\\\r\n",
+					",rt.BenaderendVerbruik_VM_2018\\\r\n",
+					",rt.BenaderendVerbruik_VM_2018_Norm\\\r\n",
+					",rt.AantalToegangspunten_2018\\\r\n",
+					",rt.WerkelijkVerbruik_RM_2019\\\r\n",
+					",rt.BenaderendVerbruik_VM_2019\\\r\n",
+					",rt.BenaderendVerbruik_VM_2019_Norm\\\r\n",
+					",rt.AantalToegangspunten_2019\\\r\n",
+					",rt.WerkelijkVerbruik_RM_2020\\\r\n",
+					",rt.BenaderendVerbruik_VM_2020\\\r\n",
+					",rt.BenaderendVerbruik_VM_2020_Norm\\\r\n",
+					",rt.AantalToegangspunten_2020\\\r\n",
+					",rt.WerkelijkVerbruik_RM_2021\\\r\n",
+					",rt.BenaderendVerbruik_VM_2021\\\r\n",
+					",rt.BenaderendVerbruik_VM_2021_Norm\\\r\n",
+					",rt.AantalToegangspunten_2021\\\r\n",
+					",rt.Gemiddeld_WerkelijkVerbruik\\\r\n",
+					",rt.Gemiddeld_BenaderendVerbruik\\\r\n",
+					",rt.Gemiddeld_BenaderendVerbruik_Norm\\\r\n",
+					",rt.Total_AantalToegangspunten\\\r\n",
+					" FROM reference_table rt\\\r\n",
+					" JOIN markt_dimension md on rt.Markt=md.Markt\\\r\n",
+					" JOIN geo_location_dimension gd on rt.Leveringsadres_Postcode=gd.Leveringsadres_Postcode\\\r\n",
+					" JOIN date_dimension tdd on rt.Trekkingsdatum=tdd.Date_Standard\\\r\n",
+					" JOIN date_dimension pdd on rt.Trekkingsdatum=pdd.Date_Standard'\r\n",
 					"\r\n",
-					"# Renaming the date column\r\n",
-					"fact_table = fact_table.withColumnRenamed(\"Date_ID\", \"Peildatum_ID\") \r\n",
-					"\r\n",
-					"# Selecting Specific columns\r\n",
-					"fact_table = fact_table.select('Trekkingsdatum',\r\n",
-					" 'Peildatum_ID',\r\n",
-					" 'Markt_ID',\r\n",
-					" 'Geo_ID',\r\n",
-					" 'WerkelijkVerbruik_RM_2017',\r\n",
-					" 'BenaderendVerbruik_VM_2017',\r\n",
-					" 'BenaderendVerbruik_VM_2017_Norm',\r\n",
-					" 'AantalToegangspunten_2017',\r\n",
-					" 'WerkelijkVerbruik_RM_2018',\r\n",
-					" 'BenaderendVerbruik_VM_2018',\r\n",
-					" 'BenaderendVerbruik_VM_2018_Norm',\r\n",
-					" 'AantalToegangspunten_2018',\r\n",
-					" 'WerkelijkVerbruik_RM_2019',\r\n",
-					" 'BenaderendVerbruik_VM_2019',\r\n",
-					" 'BenaderendVerbruik_VM_2019_Norm',\r\n",
-					" 'AantalToegangspunten_2019',\r\n",
-					" 'WerkelijkVerbruik_RM_2020',\r\n",
-					" 'BenaderendVerbruik_VM_2020',\r\n",
-					" 'BenaderendVerbruik_VM_2020_Norm',\r\n",
-					" 'AantalToegangspunten_2020',\r\n",
-					" 'WerkelijkVerbruik_RM_2021',\r\n",
-					" 'BenaderendVerbruik_VM_2021',\r\n",
-					" 'BenaderendVerbruik_VM_2021_Norm',\r\n",
-					" 'AantalToegangspunten_2021',\r\n",
-					" 'Gemiddeld_WerkelijkVerbruik',\r\n",
-					" 'Gemiddeld_BenaderendVerbruik',\r\n",
-					" 'Gemiddeld_BenaderendVerbruik_Norm',\r\n",
-					" 'Total_AantalToegangspunten')\r\n",
-					"\r\n",
-					"# Creating Trekkingsdatum_ID\r\n",
-					"fact_table = fact_table.join(date_dimension, fact_table[\"Trekkingsdatum\"] == date_dimension[\"Date_Standard\"], \"inner\")\r\n",
-					"\r\n",
-					"# Renaming the date column\r\n",
-					"fact_table = fact_table.withColumnRenamed(\"Date_ID\", \"Trekkingsdatum_ID\") \r\n",
-					"\r\n",
-					"# Selecting Specific columns\r\n",
-					"fact_table = fact_table.select('Trekkingsdatum_ID',\r\n",
-					" 'Peildatum_ID',\r\n",
-					" 'Markt_ID',\r\n",
-					" 'Geo_ID',\r\n",
-					" 'WerkelijkVerbruik_RM_2017',\r\n",
-					" 'BenaderendVerbruik_VM_2017',\r\n",
-					" 'BenaderendVerbruik_VM_2017_Norm',\r\n",
-					" 'AantalToegangspunten_2017',\r\n",
-					" 'WerkelijkVerbruik_RM_2018',\r\n",
-					" 'BenaderendVerbruik_VM_2018',\r\n",
-					" 'BenaderendVerbruik_VM_2018_Norm',\r\n",
-					" 'AantalToegangspunten_2018',\r\n",
-					" 'WerkelijkVerbruik_RM_2019',\r\n",
-					" 'BenaderendVerbruik_VM_2019',\r\n",
-					" 'BenaderendVerbruik_VM_2019_Norm',\r\n",
-					" 'AantalToegangspunten_2019',\r\n",
-					" 'WerkelijkVerbruik_RM_2020',\r\n",
-					" 'BenaderendVerbruik_VM_2020',\r\n",
-					" 'BenaderendVerbruik_VM_2020_Norm',\r\n",
-					" 'AantalToegangspunten_2020',\r\n",
-					" 'WerkelijkVerbruik_RM_2021',\r\n",
-					" 'BenaderendVerbruik_VM_2021',\r\n",
-					" 'BenaderendVerbruik_VM_2021_Norm',\r\n",
-					" 'AantalToegangspunten_2021',\r\n",
-					" 'Gemiddeld_WerkelijkVerbruik',\r\n",
-					" 'Gemiddeld_BenaderendVerbruik',\r\n",
-					" 'Gemiddeld_BenaderendVerbruik_Norm',\r\n",
-					"'Total_AantalToegangspunten')\r\n",
-					"\r\n",
-					"\r\n",
+					"fact_table = spark.sql(query)\r\n",
+					"fact_table.createOrReplaceTempView(\"fact_table\")\r\n",
 					"display(fact_table.limit(5))"
 				],
-				"execution_count": 13
+				"execution_count": 78
 			},
 			{
 				"cell_type": "code",
@@ -698,7 +697,7 @@
 				},
 				"source": [
 					"# Writing the fact table to delta file\r\n",
-					"file_path = 'abfss://goldlayer@rawdevstorage.dfs.core.windows.net/PySparkDimensions/Fact_Table'\r\n",
+					"file_path = 'abfss://goldlayer@rawdevstorage.dfs.core.windows.net/SparkSQLDimensions/Fact_Table'\r\n",
 					"write_format=\"delta\"\r\n",
 					"#partition_by=[\"DM_Peildatum\"]\r\n",
 					"mode_ = \"overwrite\" #append\r\n",
@@ -713,25 +712,7 @@
 					"\r\n",
 					"#.partitionBy(partition_by)\\"
 				],
-				"execution_count": 14
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					""
-				],
-				"execution_count": null
+				"execution_count": 79
 			},
 			{
 				"cell_type": "code",
