@@ -22,7 +22,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "b0cb2c5a-a501-4560-8d42-4efd00352a18"
+				"spark.autotune.trackingId": "f1f4b11e-959c-4cd2-9738-9d09d2c1ea7a"
 			}
 		},
 		"metadata": {
@@ -315,13 +315,39 @@
 						"transient": {
 							"deleting": false
 						}
+					}
+				},
+				"source": [
+					"# Creating a group by for market dimensions\r\n",
+					"grouped_reference_table_geo_location_dimension = reference_table.groupby(['Leveringsadres_Postcode','Leveringsadres_Gemeente'])\r\n",
+					"geo_location_dimension = grouped_reference_table_geo_location_dimension.agg(total_count=('Trekkingsdatum', 'count'))\r\n",
+					"\r\n",
+					"# Restiing the index\r\n",
+					"geo_location_dimension = geo_location_dimension.head().reset_index()\r\n",
+					"\r\n",
+					"# Exclude the undefined/null value\r\n",
+					"geo_location_dimension = geo_location_dimension.dropna()\r\n",
+					"\r\n",
+					""
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
 					},
 					"collapsed": false
 				},
 				"source": [
-					"# Creating a group by for geo location dimensions\r\n",
-					"grouped_reference_table_geo_location_dimension = reference_table.groupBy(\"Leveringsadres_Postcode\",\"Leveringsadres_Gemeente\")\r\n",
-					"geo_location_dimension = grouped_reference_table_geo_location_dimension.agg(count(\"Trekkingsdatum\"))\r\n",
+					"\r\n",
 					"\r\n",
 					"# Selecting specific columns\r\n",
 					"geo_location_dimension = geo_location_dimension.select('Leveringsadres_Postcode','Leveringsadres_Gemeente').distinct().orderBy(\"Leveringsadres_Postcode\")\r\n",
