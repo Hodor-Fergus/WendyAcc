@@ -22,7 +22,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "cd11e94e-7d2c-411f-8d3e-7f29922643e4"
+				"spark.autotune.trackingId": "b604534a-692b-4ccd-af5b-6879c6062fee"
 			}
 		},
 		"metadata": {
@@ -731,7 +731,7 @@
 					"selected_df2 = selected_df2.add_prefix('DM_')\r\n",
 					""
 				],
-				"execution_count": null
+				"execution_count": 25
 			},
 			{
 				"cell_type": "code",
@@ -767,7 +767,7 @@
 					"# , 'AM_Gemiddeld_WerkelijkVerbruik','AM_Gemiddeld_BenaderendVerbruik','AM_Gemiddeld_BenaderendVerbruik_Norm','AM_Total_AantalToegangspunten'\r\n",
 					"# , 'DM_MeasurementType']] #, 'DM_MeasurementYear', 'DM_MeasurementMonth'"
 				],
-				"execution_count": null
+				"execution_count": 26
 			},
 			{
 				"cell_type": "code",
@@ -787,7 +787,7 @@
 					"join_df.shape[0]\r\n",
 					""
 				],
-				"execution_count": null
+				"execution_count": 27
 			},
 			{
 				"cell_type": "code",
@@ -835,7 +835,7 @@
 					"join_df['Total_AantalToegangspunten'] = (join_df['DM_Total_AantalToegangspunten'].combine_first(join_df['AM_Total_AantalToegangspunten']))\r\n",
 					"join_df['MeasurementType'] = (join_df['DM_MeasurementType'].combine_first(join_df['AM_MeasurementType']))"
 				],
-				"execution_count": null
+				"execution_count": 28
 			},
 			{
 				"cell_type": "code",
@@ -868,7 +868,7 @@
 					"       'Gemiddeld_BenaderendVerbruik_Norm', 'Total_AantalToegangspunten',\r\n",
 					"       'MeasurementType']]"
 				],
-				"execution_count": null
+				"execution_count": 29
 			},
 			{
 				"cell_type": "code",
@@ -887,7 +887,7 @@
 					"# Displaying the top 5 rows\r\n",
 					"join_df.head(5)"
 				],
-				"execution_count": null
+				"execution_count": 30
 			},
 			{
 				"cell_type": "code",
@@ -905,7 +905,7 @@
 				"source": [
 					"spark_join_df = spark.createDataFrame(join_df)"
 				],
-				"execution_count": null
+				"execution_count": 31
 			},
 			{
 				"cell_type": "code",
@@ -935,7 +935,7 @@
 					".mode(mode_)\\\r\n",
 					".save(file_path)"
 				],
-				"execution_count": null
+				"execution_count": 32
 			},
 			{
 				"cell_type": "code",
