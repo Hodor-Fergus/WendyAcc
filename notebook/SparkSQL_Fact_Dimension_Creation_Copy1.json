@@ -22,7 +22,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "cba26ab7-d7ac-43cc-bdc2-037d0a644c9b"
+				"spark.autotune.trackingId": "7b263dda-443d-4775-ac6b-6df507c1ba01"
 			}
 		},
 		"metadata": {
@@ -82,7 +82,7 @@
 					"    blob_sas_token)\r\n",
 					""
 				],
-				"execution_count": 1
+				"execution_count": 34
 			},
 			{
 				"cell_type": "code",
@@ -104,7 +104,7 @@
 					"# Read Delta table into a DataFrame\r\n",
 					"reference_table = spark.read.format(\"delta\").load(delta_table_path)"
 				],
-				"execution_count": 6
+				"execution_count": 35
 			},
 			{
 				"cell_type": "code",
@@ -123,7 +123,7 @@
 					"# Create a temporary view: To run SQL queries on a PySpark DataFrame, you need to create a temporary view using the createOrReplaceTempView method.\r\n",
 					"reference_table.createOrReplaceTempView(\"reference_table\")"
 				],
-				"execution_count": 7
+				"execution_count": 36
 			},
 			{
 				"cell_type": "code",
@@ -148,7 +148,7 @@
 					"FROM reference_table\r\n",
 					"LIMIT 5"
 				],
-				"execution_count": 8
+				"execution_count": 37
 			},
 			{
 				"cell_type": "code",
@@ -171,7 +171,7 @@
 					"# Create a temporary view: To run SQL queries on a PySpark DataFrame, you need to create a temporary view using the createOrReplaceTempView method.\r\n",
 					"geo_location.createOrReplaceTempView(\"geo_location\")"
 				],
-				"execution_count": 9
+				"execution_count": 38
 			},
 			{
 				"cell_type": "code",
@@ -196,7 +196,7 @@
 					"FROM geo_location\r\n",
 					"LIMIT 5"
 				],
-				"execution_count": 10
+				"execution_count": 39
 			},
 			{
 				"cell_type": "code",
@@ -221,7 +221,7 @@
 					"# Create a temporary view: To run SQL queries on a PySpark DataFrame, you need to create a temporary view using the createOrReplaceTempView method.\r\n",
 					"date.createOrReplaceTempView(\"date\")"
 				],
-				"execution_count": 11
+				"execution_count": 40
 			},
 			{
 				"cell_type": "code",
@@ -246,7 +246,205 @@
 					"FROM date\r\n",
 					"LIMIT 5"
 				],
-				"execution_count": 12
+				"execution_count": 41
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"microsoft": {
+						"language": "sparksql"
+					},
+					"collapsed": false
+				},
+				"source": [
+					"%%sql\r\n",
+					"with cte_group as (\r\n",
+					"SELECT Markt, COUNT(1) as CAST\r\n",
+					"FROM reference_table\r\n",
+					"WHERE Markt IS NOT NULL\r\n",
+					"GROUP BY Markt\r\n",
+					")\r\n",
+					"SELECT ROW_NUMBER() OVER (ORDER BY Markt) AS Markt_ID\r\n",
+					",Markt\r\n",
+					"FROM cte_group"
+				],
+				"execution_count": 42
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"query = 'with cte_group as (\\\r\n",
+					"SELECT Markt, COUNT(1) as CAST\\\r\n",
+					" FROM reference_table\\\r\n",
+					" WHERE Markt IS NOT NULL\\\r\n",
+					" GROUP BY Markt\\\r\n",
+					")\\\r\n",
+					"SELECT ROW_NUMBER() OVER (ORDER BY Markt) AS Markt_ID\\\r\n",
+					",Markt\\\r\n",
+					" FROM cte_group'\r\n",
+					"\r\n",
+					"markt_dimension = spark.sql(query)\r\n",
+					"markt_dimension.createOrReplaceTempView(\"markt_dimension\")\r\n",
+					"display(markt_dimension.limit(5))"
+				],
+				"execution_count": 43
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Writing the markt dimension to delta file\r\n",
+					"file_path = 'abfss://goldlayer@rawdevstorage.dfs.core.windows.net/SparkSQLDimensions/Markt_Dimension'\r\n",
+					"write_format=\"delta\"\r\n",
+					"#partition_by=[\"DM_Peildatum\"]\r\n",
+					"mode_ = \"overwrite\" #append\r\n",
+					"\r\n",
+					"markt_dimension\\\r\n",
+					".write\\\r\n",
+					".option(\"header\", \"true\")\\\r\n",
+					".option(\"overwriteSchema\", \"true\")\\\r\n",
+					".format(write_format)\\\r\n",
+					".mode(mode_)\\\r\n",
+					".save(file_path)\r\n",
+					"\r\n",
+					"#.partitionBy(partition_by)\\"
+				],
+				"execution_count": 44
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"microsoft": {
+						"language": "sparksql"
+					},
+					"collapsed": false
+				},
+				"source": [
+					"%%sql\r\n",
+					"with cte_group as (\r\n",
+					"SELECT Leveringsadres_Postcode, Leveringsadres_Gemeente, COUNT(1) as CAST\r\n",
+					" FROM reference_table\r\n",
+					" WHERE Leveringsadres_Postcode IS NOT NULL AND Leveringsadres_Gemeente IS NOT NULL\r\n",
+					" GROUP BY Leveringsadres_Postcode, Leveringsadres_Gemeente\r\n",
+					")\r\n",
+					"SELECT dwh_id as Geo_ID\r\n",
+					",Leveringsadres_Postcode\r\n",
+					",Leveringsadres_Gemeente\r\n",
+					",gewest\r\n",
+					",provincie\r\n",
+					" FROM cte_group cg\r\n",
+					" JOIN geo_location g on cg.Leveringsadres_Postcode=g.postcode\r\n",
+					" LIMIT 5"
+				],
+				"execution_count": 45
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"query = 'with cte_group as (\\\r\n",
+					"SELECT Leveringsadres_Postcode, Leveringsadres_Gemeente, COUNT(1) as CAST\\\r\n",
+					" FROM reference_table\\\r\n",
+					" WHERE Leveringsadres_Postcode IS NOT NULL AND Leveringsadres_Gemeente IS NOT NULL\\\r\n",
+					" GROUP BY Leveringsadres_Postcode, Leveringsadres_Gemeente\\\r\n",
+					")\\\r\n",
+					"SELECT dwh_id as Geo_ID\\\r\n",
+					",Leveringsadres_Postcode\\\r\n",
+					",Leveringsadres_Gemeente\\\r\n",
+					",gewest\\\r\n",
+					",provincie\\\r\n",
+					" FROM cte_group cg\\\r\n",
+					" JOIN geo_location g on cg.Leveringsadres_Postcode=g.postcode'\r\n",
+					"\r\n",
+					" \r\n",
+					"geo_location_dimension = spark.sql(query)\r\n",
+					"geo_location_dimension.createOrReplaceTempView(\"geo_location_dimension\")\r\n",
+					"display(geo_location_dimension.limit(5))"
+				],
+				"execution_count": 46
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Writing the geo location dimension to delta file\r\n",
+					"file_path = 'abfss://goldlayer@rawdevstorage.dfs.core.windows.net/SparkSQLDimensions/Geo_Location_Dimension'\r\n",
+					"write_format=\"delta\"\r\n",
+					"#partition_by=[\"DM_Peildatum\"]\r\n",
+					"mode_ = \"overwrite\" #append\r\n",
+					"\r\n",
+					"geo_location_dimension\\\r\n",
+					".write\\\r\n",
+					".option(\"header\", \"true\")\\\r\n",
+					".option(\"overwriteSchema\", \"true\")\\\r\n",
+					".format(write_format)\\\r\n",
+					".mode(mode_)\\\r\n",
+					".save(file_path)\r\n",
+					"\r\n",
+					"#.partitionBy(partition_by)\\"
+				],
+				"execution_count": 47
 			},
 			{
 				"cell_type": "code",
@@ -265,146 +463,6 @@
 					""
 				],
 				"execution_count": null
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"# Creating a group by for market dimensions\r\n",
-					"grouped_reference_table_markt_dimension = reference_table.groupBy(\"Markt\")\r\n",
-					"markt_dimension = grouped_reference_table_markt_dimension.agg(count(\"Trekkingsdatum\"))\r\n",
-					"\r\n",
-					"# Selecting specific columns\r\n",
-					"markt_dimension = markt_dimension.select('Markt').distinct().orderBy(\"Markt\")\r\n",
-					"\r\n",
-					"# Exclude the undefined/null value\r\n",
-					"markt_dimension = markt_dimension.filter(col(\"Markt\").isNotNull())\r\n",
-					"\r\n",
-					"# Define the window specification for the grouping\r\n",
-					"markt_dimension_window_spec = Window.orderBy(markt_dimension[\"Markt\"].desc())\r\n",
-					"\r\n",
-					"# Add an auto-incrementing column to the DataFrame within the group\r\n",
-					"markt_dimension = markt_dimension.withColumn(\"Markt_ID\", row_number().over(markt_dimension_window_spec))\r\n",
-					"\r\n",
-					"# Selecting specific columns\r\n",
-					"markt_dimension = markt_dimension.select('Markt_ID','Markt')\r\n",
-					"\r\n",
-					"display(markt_dimension.limit(5))"
-				],
-				"execution_count": 6
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"# Writing the markt dimension to delta file\r\n",
-					"file_path = 'abfss://goldlayer@rawdevstorage.dfs.core.windows.net/PySparkDimensions/Markt_Dimension'\r\n",
-					"write_format=\"delta\"\r\n",
-					"#partition_by=[\"DM_Peildatum\"]\r\n",
-					"mode_ = \"overwrite\" #append\r\n",
-					"\r\n",
-					"markt_dimension\\\r\n",
-					".write\\\r\n",
-					".option(\"header\", \"true\")\\\r\n",
-					".option(\"overwriteSchema\", \"true\")\\\r\n",
-					".format(write_format)\\\r\n",
-					".mode(mode_)\\\r\n",
-					".save(file_path)\r\n",
-					"\r\n",
-					"#.partitionBy(partition_by)\\"
-				],
-				"execution_count": 7
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"# Creating a group by for geo location dimensions\r\n",
-					"grouped_reference_table_geo_location_dimension = reference_table.groupBy(\"Leveringsadres_Postcode\",\"Leveringsadres_Gemeente\")\r\n",
-					"geo_location_dimension = grouped_reference_table_geo_location_dimension.agg(count(\"Trekkingsdatum\"))\r\n",
-					"\r\n",
-					"# Selecting specific columns\r\n",
-					"geo_location_dimension = geo_location_dimension.select('Leveringsadres_Postcode','Leveringsadres_Gemeente').distinct().orderBy(\"Leveringsadres_Postcode\")\r\n",
-					"\r\n",
-					"# Exclude the undefined/null value\r\n",
-					"geo_location_dimension = geo_location_dimension.filter(col(\"Leveringsadres_Postcode\").isNotNull())\r\n",
-					"\r\n",
-					"# joinigng the dataframe to get all the column for geo location dimension\r\n",
-					"geo_location_dimension = geo_location.join(geo_location_dimension, geo_location[\"postcode\"] == geo_location_dimension[\"Leveringsadres_Postcode\"], \"inner\")\r\n",
-					"\r\n",
-					"# Renaming the geo location column\r\n",
-					"geo_location_dimension = geo_location_dimension.withColumnRenamed(\"dwh_id\", \"Geo_ID\") \r\n",
-					"\r\n",
-					"# Selecting specific columns\r\n",
-					"geo_location_dimension = geo_location_dimension.select('Geo_ID','Leveringsadres_Postcode','Leveringsadres_Gemeente','gewest','provincie')\r\n",
-					"\r\n",
-					"display(geo_location_dimension.limit(5))"
-				],
-				"execution_count": 8
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"# Writing the geo location dimension to delta file\r\n",
-					"file_path = 'abfss://goldlayer@rawdevstorage.dfs.core.windows.net/PySparkDimensions/Geo_Location_Dimension'\r\n",
-					"write_format=\"delta\"\r\n",
-					"#partition_by=[\"DM_Peildatum\"]\r\n",
-					"mode_ = \"overwrite\" #append\r\n",
-					"\r\n",
-					"geo_location_dimension\\\r\n",
-					".write\\\r\n",
-					".option(\"header\", \"true\")\\\r\n",
-					".option(\"overwriteSchema\", \"true\")\\\r\n",
-					".format(write_format)\\\r\n",
-					".mode(mode_)\\\r\n",
-					".save(file_path)\r\n",
-					"\r\n",
-					"#.partitionBy(partition_by)\\"
-				],
-				"execution_count": 9
 			},
 			{
 				"cell_type": "code",
