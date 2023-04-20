@@ -608,6 +608,43 @@
 								}
 							]
 						}
+					},
+					{
+						"name": "Load Fact and Dimension Table",
+						"description": "Load Fact and Dimension Table",
+						"type": "SynapseNotebook",
+						"dependsOn": [
+							{
+								"activity": "ForEach Container",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": "SparkSQL_Fact_Dimension_Creation",
+								"type": "NotebookReference"
+							},
+							"snapshot": true,
+							"sparkPool": {
+								"referenceName": "devpool",
+								"type": "BigDataPoolReference"
+							},
+							"executorSize": "Small",
+							"conf": {
+								"spark.dynamicAllocation.enabled": false
+							},
+							"driverSize": "Small"
+						}
 					}
 				],
 				"policy": {
@@ -624,8 +661,9 @@
 			},
 			"dependsOn": [
 				"[concat(variables('workspaceId'), '/datasets/ADLS_Container_rawdata')]",
-				"[concat(variables('workspaceId'), '/notebooks/SparkSQL_Load_Data_From_Blob_To_Synapse_SQL_Pool')]",
-				"[concat(variables('workspaceId'), '/bigDataPools/devpool')]"
+				"[concat(variables('workspaceId'), '/notebooks/SparkSQL_Fact_Dimension_Creation')]",
+				"[concat(variables('workspaceId'), '/bigDataPools/devpool')]",
+				"[concat(variables('workspaceId'), '/notebooks/SparkSQL_Load_Data_From_Blob_To_Synapse_SQL_Pool')]"
 			]
 		},
 		{
@@ -7779,11 +7817,11 @@
 			"dependsOn": []
 		},
 		{
-			"name": "[concat(parameters('workspaceName'), '/SparkSQL_Fact_Dimension_Creation_Copy1')]",
+			"name": "[concat(parameters('workspaceName'), '/SparkSQL_Fact_Dimension_Creation')]",
 			"type": "Microsoft.Synapse/workspaces/notebooks",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
-				"description": "SparkSQL_Fact_Dimension_Creation_Copy1",
+				"description": "SparkSQL_Fact_Dimension_Creation",
 				"folder": {
 					"name": "Master Pipeline Notebooks"
 				},
@@ -7804,7 +7842,7 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "05d8fa98-b010-46c3-8bb4-7a6c6fa12e36"
+						"spark.autotune.trackingId": "596dad39-f5d7-4c93-b0cc-b3cff8c4efe9"
 					}
 				},
 				"metadata": {
