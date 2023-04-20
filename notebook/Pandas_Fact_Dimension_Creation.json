@@ -1,7 +1,7 @@
 {
-	"name": "PySpark_Fact_Dimension_Creation",
+	"name": "Pandas_Fact_Dimension_Creation",
 	"properties": {
-		"description": "PySpark_Fact_Dimension_Creation",
+		"description": "Pandas_Fact_Dimension_Creation",
 		"folder": {
 			"name": "Master Pipeline Notebooks"
 		},
@@ -22,7 +22,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "bb3a9862-cab9-4f3e-ad1f-9c836cb32230"
+				"spark.autotune.trackingId": "b5dd6c91-0129-4823-99f1-4c4d423358cd"
 			}
 		},
 		"metadata": {
