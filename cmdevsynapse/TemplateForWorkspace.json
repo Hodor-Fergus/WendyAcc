@@ -212,7 +212,7 @@
 										},
 										"snapshot": true,
 										"sparkPool": {
-											"referenceName": "devpool",
+											"referenceName": "sanzpool",
 											"type": "BigDataPoolReference"
 										},
 										"executorSize": "Small",
@@ -270,7 +270,7 @@
 							},
 							"snapshot": true,
 							"sparkPool": {
-								"referenceName": "devpool",
+								"referenceName": "sanzpool",
 								"type": "BigDataPoolReference"
 							},
 							"executorSize": "Small",
@@ -296,7 +296,7 @@
 			"dependsOn": [
 				"[concat(variables('workspaceId'), '/datasets/ADLS_Container_rawdata')]",
 				"[concat(variables('workspaceId'), '/notebooks/Pandas_Fact_Dimension_Creation')]",
-				"[concat(variables('workspaceId'), '/bigDataPools/devpool')]",
+				"[concat(variables('workspaceId'), '/bigDataPools/sanzpool')]",
 				"[concat(variables('workspaceId'), '/notebooks/Pandas_Load_Data_From_Blob_To_Synapse_SQL_Pool')]"
 			]
 		},
