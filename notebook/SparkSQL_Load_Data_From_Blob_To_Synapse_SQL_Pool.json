@@ -22,7 +22,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "fd6d14ab-2208-4820-8054-65f4188d8c88"
+				"spark.autotune.trackingId": "253d1fc1-3f9e-4a9b-a17f-5bbd97d434b8"
 			}
 		},
 		"metadata": {
@@ -74,7 +74,7 @@
 					"FolderName = \"2022_10\"\r\n",
 					"Mode = \"overwrite\""
 				],
-				"execution_count": 1
+				"execution_count": 45
 			},
 			{
 				"cell_type": "code",
@@ -95,7 +95,7 @@
 					"year = FolderName.split('_')[0]\r\n",
 					"month = FolderName.split('_')[1]"
 				],
-				"execution_count": 2
+				"execution_count": 46
 			},
 			{
 				"cell_type": "code",
@@ -111,7 +111,7 @@
 					"blob_sas_token = token_library.getConnectionString(\"cmdevsynapse-WorkspaceDefaultStorage\")\r\n",
 					"spark.conf.set('fs.azure.sas.%s.%s.blob.core.windows.net' % (blob_container_name, blob_account_name),blob_sas_token)"
 				],
-				"execution_count": 3
+				"execution_count": 47
 			},
 			{
 				"cell_type": "code",
@@ -129,7 +129,7 @@
 				"source": [
 					"spark.sql(\"set spark.sql.legacy.timeParserPolicy=LEGACY\")"
 				],
-				"execution_count": 4
+				"execution_count": 48
 			},
 			{
 				"cell_type": "code",
@@ -166,7 +166,7 @@
 					"# Create a temporary view: To run SQL queries on a PySpark DataFrame, you need to create a temporary view using the createOrReplaceTempView method.\r\n",
 					"df1.createOrReplaceTempView(\"AMR_Measurement_Reading\")"
 				],
-				"execution_count": 5
+				"execution_count": 49
 			},
 			{
 				"cell_type": "code",
@@ -207,7 +207,7 @@
 					"# Display the result: To display the result of the SQL query, you can use the show method.\r\n",
 					"display(selected_df1.limit(5))"
 				],
-				"execution_count": 6
+				"execution_count": 50
 			},
 			{
 				"cell_type": "code",
@@ -244,7 +244,7 @@
 					"# Create a temporary view: To run SQL queries on a PySpark DataFrame, you need to create a temporary view using the createOrReplaceTempView method.\r\n",
 					"df2.createOrReplaceTempView(\"DM_Measurement_Reading\")"
 				],
-				"execution_count": 7
+				"execution_count": 51
 			},
 			{
 				"cell_type": "code",
@@ -285,7 +285,7 @@
 					"# Display the result: To display the result of the SQL query, you can use the show method.\r\n",
 					"display(selected_df2.limit(5))"
 				],
-				"execution_count": 8
+				"execution_count": 52
 			},
 			{
 				"cell_type": "code",
@@ -376,7 +376,7 @@
 					"FROM cte_union\r\n",
 					"LIMIT 5"
 				],
-				"execution_count": 9
+				"execution_count": 53
 			},
 			{
 				"cell_type": "code",
@@ -464,7 +464,7 @@
 					"union_df.createOrReplaceTempView(\"Measurement_Reading_union\")\r\n",
 					"display(union_df.limit(5))"
 				],
-				"execution_count": 10
+				"execution_count": 54
 			},
 			{
 				"cell_type": "code",
@@ -622,7 +622,7 @@
 					"FROM CTE_AMR\r\n",
 					"LIMIT 5"
 				],
-				"execution_count": 11
+				"execution_count": 55
 			},
 			{
 				"cell_type": "code",
@@ -780,7 +780,7 @@
 					"FROM CTE_JOIN\r\n",
 					"LIMIT 5"
 				],
-				"execution_count": 42
+				"execution_count": 56
 			},
 			{
 				"cell_type": "code",
@@ -798,7 +798,7 @@
 				},
 				"source": [
 					"query =\"with cte_AMR as (\\\r\n",
-					"SELECT Distinct Trekkingsdatum\\\r\n",
+					"SELECT Distinct COALESCE(TO_DATE(Trekkingsdatum, 'dd/MMM/yy') ,TO_DATE(Trekkingsdatum, 'MM/dd/yy'),TO_DATE(Trekkingsdatum, 'dd-MMM-yy'),Trekkingsdatum) as Trekkingsdatum\\\r\n",
 					",COALESCE(TO_DATE(Peildatum, 'dd/MMM/yy') ,TO_DATE(Peildatum, 'MM/dd/yy'),TO_DATE(Peildatum, 'dd-MMM-yy'),Peildatum) as Peildatum\\\r\n",
 					", Markt\\\r\n",
 					", CAST(Leveringsadres_Postcode as INT) Leveringsadres_Postcode\\\r\n",
@@ -830,7 +830,7 @@
 					",'Analogue' as MeasurementType \\\r\n",
 					"FROM AMR_Measurement_Reading)\\\r\n",
 					",cte_DM as (\\\r\n",
-					"SELECT Distinct Trekkingsdatum\\\r\n",
+					"SELECT Distinct COALESCE(TO_DATE(Trekkingsdatum, 'dd/MMM/yy') ,TO_DATE(Trekkingsdatum, 'MM/dd/yy'),TO_DATE(Trekkingsdatum, 'dd-MMM-yy'),Trekkingsdatum) as Trekkingsdatum\\\r\n",
 					",COALESCE(TO_DATE(Peildatum, 'dd/MMM/yy') ,TO_DATE(Peildatum, 'MM/dd/yy'),TO_DATE(Peildatum, 'dd-MMM-yy'),Peildatum) as Peildatum\\\r\n",
 					", Markt\\\r\n",
 					", CAST(Leveringsadres_Postcode as INT) Leveringsadres_Postcode\\\r\n",
@@ -931,9 +931,61 @@
 					"\r\n",
 					"join_df = selected_df2 = spark.sql(query)\r\n",
 					"join_df.createOrReplaceTempView(\"Measurement_Reading_join\")\r\n",
+					""
+				],
+				"execution_count": 57
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"query = 'Select  COALESCE(DM_Trekkingsdatum,AMR_Trekkingsdatum) as Trekkingsdatum\\\r\n",
+					",COALESCE(DM_Peildatum,AMR_Peildatum) as Peildatum\\\r\n",
+					",COALESCE(DM_Markt,AMR_Markt) as Markt\\\r\n",
+					",COALESCE(DM_Leveringsadres_Postcode,AMR_Leveringsadres_Postcode) as Leveringsadres_Postcode\\\r\n",
+					",COALESCE(DM_Leveringsadres_Gemeente,AMR_Leveringsadres_Gemeente) as Leveringsadres_Gemeente\\\r\n",
+					",COALESCE(DM_WerkelijkVerbruik_RM_2017,AMR_WerkelijkVerbruik_RM_2017) as WerkelijkVerbruik_RM_2017\\\r\n",
+					",COALESCE(DM_BenaderendVerbruik_VM_2017,AMR_BenaderendVerbruik_VM_2017) as BenaderendVerbruik_VM_2017\\\r\n",
+					",COALESCE(DM_BenaderendVerbruik_VM_2017_Norm,AMR_BenaderendVerbruik_VM_2017_Norm) as BenaderendVerbruik_VM_2017_Norm\\\r\n",
+					",COALESCE(DM_AantalToegangspunten_2017,AMR_AantalToegangspunten_2017) as AantalToegangspunten_2017\\\r\n",
+					",COALESCE(DM_WerkelijkVerbruik_RM_2018,AMR_WerkelijkVerbruik_RM_2018) as WerkelijkVerbruik_RM_2018\\\r\n",
+					",COALESCE(DM_BenaderendVerbruik_VM_2018,AMR_BenaderendVerbruik_VM_2018) as BenaderendVerbruik_VM_2018\\\r\n",
+					",COALESCE(DM_BenaderendVerbruik_VM_2018_Norm,AMR_BenaderendVerbruik_VM_2018_Norm) as BenaderendVerbruik_VM_2018_Norm\\\r\n",
+					",COALESCE(DM_AantalToegangspunten_2018,AMR_AantalToegangspunten_2018) as AantalToegangspunten_2018\\\r\n",
+					",COALESCE(DM_WerkelijkVerbruik_RM_2019,AMR_WerkelijkVerbruik_RM_2019) as WerkelijkVerbruik_RM_2019\\\r\n",
+					",COALESCE(DM_BenaderendVerbruik_VM_2019,AMR_BenaderendVerbruik_VM_2019) as BenaderendVerbruik_VM_2019\\\r\n",
+					",COALESCE(DM_BenaderendVerbruik_VM_2019_Norm,AMR_BenaderendVerbruik_VM_2019_Norm) as BenaderendVerbruik_VM_2019_Norm\\\r\n",
+					",COALESCE(DM_AantalToegangspunten_2019,AMR_AantalToegangspunten_2019) as AantalToegangspunten_2019\\\r\n",
+					",COALESCE(DM_WerkelijkVerbruik_RM_2020,AMR_WerkelijkVerbruik_RM_2020) as WerkelijkVerbruik_RM_2020\\\r\n",
+					",COALESCE(DM_BenaderendVerbruik_VM_2020,AMR_BenaderendVerbruik_VM_2020) as BenaderendVerbruik_VM_2020\\\r\n",
+					",COALESCE(DM_BenaderendVerbruik_VM_2020_Norm,AMR_BenaderendVerbruik_VM_2020_Norm) as BenaderendVerbruik_VM_2020_Norm\\\r\n",
+					",COALESCE(DM_AantalToegangspunten_2020,AMR_AantalToegangspunten_2020) as AantalToegangspunten_2020\\\r\n",
+					",COALESCE(DM_WerkelijkVerbruik_RM_2021,AMR_WerkelijkVerbruik_RM_2021) as WerkelijkVerbruik_RM_2021\\\r\n",
+					",COALESCE(DM_BenaderendVerbruik_VM_2021,AMR_BenaderendVerbruik_VM_2021) as BenaderendVerbruik_VM_2021\\\r\n",
+					",COALESCE(DM_BenaderendVerbruik_VM_2021_Norm,AMR_BenaderendVerbruik_VM_2021_Norm) as BenaderendVerbruik_VM_2021_Norm\\\r\n",
+					",COALESCE(DM_AantalToegangspunten_2021,AMR_AantalToegangspunten_2021) as AantalToegangspunten_2021\\\r\n",
+					",COALESCE(DM_Gemiddeld_WerkelijkVerbruik,AMR_Gemiddeld_WerkelijkVerbruik) as Gemiddeld_WerkelijkVerbruik\\\r\n",
+					",COALESCE(DM_Gemiddeld_BenaderendVerbruik,AMR_Gemiddeld_BenaderendVerbruik) as Gemiddeld_BenaderendVerbruik\\\r\n",
+					",COALESCE(DM_Gemiddeld_BenaderendVerbruik_Norm,AMR_Gemiddeld_BenaderendVerbruik_Norm) as Gemiddeld_BenaderendVerbruik_Norm\\\r\n",
+					",COALESCE(DM_Total_AantalToegangspunten,AMR_Total_AantalToegangspunten) as Total_AantalToegangspunten\\\r\n",
+					",COALESCE(DM_MeasurementType,AMR_MeasurementType) as MeasurementType\\\r\n",
+					" FROM Measurement_Reading_join'\r\n",
+					"join_df = selected_df2 = spark.sql(query)\r\n",
+					"join_df.createOrReplaceTempView(\"Measurement_Reading_join\")\r\n",
 					"display(join_df.limit(5))"
 				],
-				"execution_count": 76
+				"execution_count": 58
 			},
 			{
 				"cell_type": "code",
@@ -957,7 +1009,7 @@
 					"SELECT COUNT(*) as CT_Union FROM Measurement_Reading_union;\r\n",
 					"SELECT COUNT(*) as CT_Join FROM Measurement_Reading_join;"
 				],
-				"execution_count": 80
+				"execution_count": 59
 			},
 			{
 				"cell_type": "code",
@@ -980,7 +1032,7 @@
 					"%%sql\r\n",
 					"SELECT Peildatum,Markt,Leveringsadres_Postcode,COUNT(*) as Count_Union FROM Measurement_Reading_union GROUP BY Peildatum,Markt,Leveringsadres_Postcode;"
 				],
-				"execution_count": 82
+				"execution_count": 60
 			},
 			{
 				"cell_type": "code",
@@ -1001,11 +1053,11 @@
 				},
 				"source": [
 					"%%sql\r\n",
-					"SELECT AMR_Peildatum,AMR_Markt,AMR_Leveringsadres_Postcode,DM_Peildatum,DM_Markt,DM_Leveringsadres_Postcode,COUNT(*) as Count_Join \r\n",
+					"SELECT Peildatum,Markt,Leveringsadres_Postcode,COUNT(*) as Count_Join \r\n",
 					"FROM Measurement_Reading_join \r\n",
-					"GROUP BY AMR_Peildatum,AMR_Markt,AMR_Leveringsadres_Postcode,DM_Peildatum,DM_Markt,DM_Leveringsadres_Postcode;"
+					"GROUP BY Peildatum,Markt,Leveringsadres_Postcode;"
 				],
-				"execution_count": 83
+				"execution_count": 62
 			},
 			{
 				"cell_type": "code",
@@ -1035,7 +1087,7 @@
 					".mode(mode_)\\\r\n",
 					".save(file_path)"
 				],
-				"execution_count": 85
+				"execution_count": 63
 			},
 			{
 				"cell_type": "code",
@@ -1053,7 +1105,7 @@
 				"source": [
 					"file_path = 'abfss://output@rawdevstorage.dfs.core.windows.net/Electricity_Measurement_sparksql_join'\r\n",
 					"write_format=\"delta\"\r\n",
-					"partition_by=[\"DM_Peildatum\"]\r\n",
+					"partition_by=[\"Peildatum\"]\r\n",
 					"mode_ = Mode #overwrite #append\r\n",
 					"\r\n",
 					"join_df\\\r\n",
@@ -1065,7 +1117,7 @@
 					".mode(mode_)\\\r\n",
 					".save(file_path)"
 				],
-				"execution_count": 86
+				"execution_count": 64
 			},
 			{
 				"cell_type": "code",
