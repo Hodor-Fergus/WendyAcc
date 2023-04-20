@@ -2775,7 +2775,7 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "4ddd7f87-80f4-48ef-9c00-9ada3653adc6"
+						"spark.autotune.trackingId": "78b657fb-5e7a-41c1-8454-6efc65e42bd7"
 					}
 				},
 				"metadata": {
@@ -2800,7 +2800,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 4,
-						"memory": 28
+						"memory": 28,
+						"automaticScaleJobs": false
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -2827,7 +2828,7 @@
 							"Mode = \"overwrite\""
 						],
 						"outputs": [],
-						"execution_count": 23
+						"execution_count": 1
 					},
 					{
 						"cell_type": "code",
@@ -2850,10 +2851,11 @@
 							"month = int(FolderName.split('_')[1])"
 						],
 						"outputs": [],
-						"execution_count": 24
+						"execution_count": 2
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"from pyspark.sql import SparkSession\r\n",
 							"from pyspark.sql.functions import lit,col\r\n",
@@ -2867,7 +2869,7 @@
 							"spark.conf.set('fs.azure.sas.%s.%s.blob.core.windows.net' % (blob_container_name, blob_account_name),blob_sas_token)"
 						],
 						"outputs": [],
-						"execution_count": 25
+						"execution_count": 3
 					},
 					{
 						"cell_type": "code",
@@ -2898,7 +2900,7 @@
 							"amr_delimiter_type = (f_get_delimiter(amr_Filename))"
 						],
 						"outputs": [],
-						"execution_count": 26
+						"execution_count": 4
 					},
 					{
 						"cell_type": "code",
@@ -3026,7 +3028,7 @@
 							", 'MeasurementType']] #, 'MeasurementYear', 'MeasurementMonth'"
 						],
 						"outputs": [],
-						"execution_count": 27
+						"execution_count": 5
 					},
 					{
 						"cell_type": "code",
@@ -3047,7 +3049,7 @@
 							"selected_df1.columns"
 						],
 						"outputs": [],
-						"execution_count": 28
+						"execution_count": 6
 					},
 					{
 						"cell_type": "code",
@@ -3067,7 +3069,7 @@
 							"selected_df1.head()"
 						],
 						"outputs": [],
-						"execution_count": 29
+						"execution_count": 7
 					},
 					{
 						"cell_type": "code",
@@ -3098,7 +3100,7 @@
 							"amr_delimiter_type = (f_get_delimiter(amr_Filename))"
 						],
 						"outputs": [],
-						"execution_count": 30
+						"execution_count": 8
 					},
 					{
 						"cell_type": "code",
@@ -3219,7 +3221,7 @@
 							", 'MeasurementType']] #, 'MeasurementYear', 'MeasurementMonth'"
 						],
 						"outputs": [],
-						"execution_count": 31
+						"execution_count": 9
 					},
 					{
 						"cell_type": "code",
@@ -3240,7 +3242,7 @@
 							"selected_df2.columns"
 						],
 						"outputs": [],
-						"execution_count": 32
+						"execution_count": 10
 					},
 					{
 						"cell_type": "code",
@@ -3260,7 +3262,7 @@
 							"selected_df2.head()"
 						],
 						"outputs": [],
-						"execution_count": 33
+						"execution_count": 11
 					},
 					{
 						"cell_type": "code",
@@ -3281,7 +3283,7 @@
 							"print(selected_df2.shape[0]) #Digital Reading - 7005"
 						],
 						"outputs": [],
-						"execution_count": 34
+						"execution_count": 12
 					},
 					{
 						"cell_type": "code",
@@ -3303,7 +3305,7 @@
 							""
 						],
 						"outputs": [],
-						"execution_count": 35
+						"execution_count": 13
 					},
 					{
 						"cell_type": "code",
@@ -3326,7 +3328,7 @@
 							""
 						],
 						"outputs": [],
-						"execution_count": 36
+						"execution_count": 14
 					},
 					{
 						"cell_type": "code",
@@ -3348,7 +3350,7 @@
 							"count_group_by2.head() #Digital Reading Group By"
 						],
 						"outputs": [],
-						"execution_count": 37
+						"execution_count": 15
 					},
 					{
 						"cell_type": "code",
@@ -3368,7 +3370,7 @@
 							"df = pd.concat([selected_df2, selected_df1])"
 						],
 						"outputs": [],
-						"execution_count": 38
+						"execution_count": 16
 					},
 					{
 						"cell_type": "code",
@@ -3388,7 +3390,7 @@
 							"df.head(5)"
 						],
 						"outputs": [],
-						"execution_count": 39
+						"execution_count": 17
 					},
 					{
 						"cell_type": "code",
@@ -3407,7 +3409,7 @@
 							"df.dtypes"
 						],
 						"outputs": [],
-						"execution_count": 40
+						"execution_count": 18
 					},
 					{
 						"cell_type": "code",
@@ -3426,7 +3428,7 @@
 							"spark_df = spark.createDataFrame(df)"
 						],
 						"outputs": [],
-						"execution_count": 41
+						"execution_count": 19
 					},
 					{
 						"cell_type": "code",
@@ -3457,7 +3459,7 @@
 							".save(file_path)"
 						],
 						"outputs": [],
-						"execution_count": 42
+						"execution_count": 20
 					},
 					{
 						"cell_type": "code",
@@ -3479,7 +3481,7 @@
 							""
 						],
 						"outputs": [],
-						"execution_count": 43
+						"execution_count": 21
 					},
 					{
 						"cell_type": "code",
@@ -3516,7 +3518,7 @@
 							"# , 'DM_MeasurementType']] #, 'DM_MeasurementYear', 'DM_MeasurementMonth'"
 						],
 						"outputs": [],
-						"execution_count": 44
+						"execution_count": 22
 					},
 					{
 						"cell_type": "code",
@@ -3537,7 +3539,90 @@
 							""
 						],
 						"outputs": [],
-						"execution_count": 45
+						"execution_count": 23
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Doing a coalesce for all the columns\r\n",
+							"join_df['Trekkingsdatum'] = (join_df['DM_Trekkingsdatum'].combine_first(join_df['AM_Trekkingsdatum']))\r\n",
+							"join_df['Peildatum'] = (join_df['DM_Peildatum'].combine_first(join_df['AM_Peildatum']))\r\n",
+							"join_df['Markt'] = (join_df['DM_Markt'].combine_first(join_df['AM_Markt']))\r\n",
+							"join_df['Leveringsadres_Postcode'] = (join_df['DM_Leveringsadres_Postcode'].combine_first(join_df['AM_Leveringsadres_Postcode']))\r\n",
+							"join_df['Leveringsadres_Gemeente'] = (join_df['DM_Leveringsadres_Gemeente'].combine_first(join_df['AM_Leveringsadres_Gemeente']))\r\n",
+							"join_df['WerkelijkVerbruik_RM_2017'] = (join_df['DM_WerkelijkVerbruik_RM_2017'].combine_first(join_df['AM_WerkelijkVerbruik_RM_2017']))\r\n",
+							"join_df['BenaderendVerbruik_VM_2017'] = (join_df['DM_BenaderendVerbruik_VM_2017'].combine_first(join_df['AM_BenaderendVerbruik_VM_2017']))\r\n",
+							"join_df['BenaderendVerbruik_VM_2017_Norm'] = (join_df['DM_BenaderendVerbruik_VM_2017_Norm'].combine_first(join_df['AM_BenaderendVerbruik_VM_2017_Norm']))\r\n",
+							"join_df['AantalToegangspunten_2017'] = (join_df['DM_AantalToegangspunten_2017'].combine_first(join_df['AM_AantalToegangspunten_2017']))\r\n",
+							"join_df['WerkelijkVerbruik_RM_2018'] = (join_df['DM_WerkelijkVerbruik_RM_2018'].combine_first(join_df['AM_WerkelijkVerbruik_RM_2018']))\r\n",
+							"join_df['BenaderendVerbruik_VM_2018'] = (join_df['DM_BenaderendVerbruik_VM_2018'].combine_first(join_df['AM_BenaderendVerbruik_VM_2018']))\r\n",
+							"join_df['BenaderendVerbruik_VM_2018_Norm'] = (join_df['DM_BenaderendVerbruik_VM_2018_Norm'].combine_first(join_df['AM_BenaderendVerbruik_VM_2018_Norm']))\r\n",
+							"join_df['AantalToegangspunten_2018'] = (join_df['DM_AantalToegangspunten_2018'].combine_first(join_df['AM_AantalToegangspunten_2018']))\r\n",
+							"join_df['WerkelijkVerbruik_RM_2019'] = (join_df['DM_WerkelijkVerbruik_RM_2019'].combine_first(join_df['AM_WerkelijkVerbruik_RM_2019']))\r\n",
+							"join_df['BenaderendVerbruik_VM_2019'] = (join_df['DM_BenaderendVerbruik_VM_2019'].combine_first(join_df['AM_BenaderendVerbruik_VM_2019']))\r\n",
+							"join_df['BenaderendVerbruik_VM_2019_Norm'] = (join_df['DM_BenaderendVerbruik_VM_2019_Norm'].combine_first(join_df['AM_BenaderendVerbruik_VM_2019_Norm']))\r\n",
+							"join_df['AantalToegangspunten_2019'] = (join_df['DM_AantalToegangspunten_2019'].combine_first(join_df['AM_AantalToegangspunten_2019']))\r\n",
+							"join_df['WerkelijkVerbruik_RM_2020'] = (join_df['DM_WerkelijkVerbruik_RM_2020'].combine_first(join_df['AM_WerkelijkVerbruik_RM_2020']))\r\n",
+							"join_df['BenaderendVerbruik_VM_2020'] = (join_df['DM_BenaderendVerbruik_VM_2020'].combine_first(join_df['AM_BenaderendVerbruik_VM_2020']))\r\n",
+							"join_df['BenaderendVerbruik_VM_2020_Norm'] = (join_df['DM_BenaderendVerbruik_VM_2020_Norm'].combine_first(join_df['AM_BenaderendVerbruik_VM_2020_Norm']))\r\n",
+							"join_df['AantalToegangspunten_2020'] = (join_df['DM_AantalToegangspunten_2020'].combine_first(join_df['AM_AantalToegangspunten_2020']))\r\n",
+							"join_df['WerkelijkVerbruik_RM_2021'] = (join_df['DM_WerkelijkVerbruik_RM_2021'].combine_first(join_df['AM_WerkelijkVerbruik_RM_2021']))\r\n",
+							"join_df['BenaderendVerbruik_VM_2021'] = (join_df['DM_BenaderendVerbruik_VM_2021'].combine_first(join_df['AM_BenaderendVerbruik_VM_2021']))\r\n",
+							"join_df['BenaderendVerbruik_VM_2021_Norm'] = (join_df['DM_BenaderendVerbruik_VM_2021_Norm'].combine_first(join_df['AM_BenaderendVerbruik_VM_2021_Norm']))\r\n",
+							"join_df['AantalToegangspunten_2021'] = (join_df['DM_AantalToegangspunten_2021'].combine_first(join_df['AM_AantalToegangspunten_2021']))\r\n",
+							"join_df['Gemiddeld_WerkelijkVerbruik'] = (join_df['DM_Gemiddeld_WerkelijkVerbruik'].combine_first(join_df['AM_Gemiddeld_WerkelijkVerbruik']))\r\n",
+							"join_df['Gemiddeld_BenaderendVerbruik'] = (join_df['DM_Gemiddeld_BenaderendVerbruik'].combine_first(join_df['AM_Gemiddeld_BenaderendVerbruik']))\r\n",
+							"join_df['Gemiddeld_BenaderendVerbruik_Norm'] = (join_df['DM_Gemiddeld_BenaderendVerbruik_Norm'].combine_first(join_df['AM_Gemiddeld_BenaderendVerbruik_Norm']))\r\n",
+							"join_df['Total_AantalToegangspunten'] = (join_df['DM_Total_AantalToegangspunten'].combine_first(join_df['AM_Total_AantalToegangspunten']))\r\n",
+							"join_df['MeasurementType'] = (join_df['DM_MeasurementType'].combine_first(join_df['AM_MeasurementType']))"
+						],
+						"outputs": [],
+						"execution_count": 32
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Selecting a required column\r\n",
+							"join_df = join_df[['Trekkingsdatum', 'Peildatum', 'Markt',\r\n",
+							"       'Leveringsadres_Postcode', 'Leveringsadres_Gemeente',\r\n",
+							"       'WerkelijkVerbruik_RM_2017', 'BenaderendVerbruik_VM_2017',\r\n",
+							"       'BenaderendVerbruik_VM_2017_Norm', 'AantalToegangspunten_2017',\r\n",
+							"       'WerkelijkVerbruik_RM_2018', 'BenaderendVerbruik_VM_2018',\r\n",
+							"       'BenaderendVerbruik_VM_2018_Norm', 'AantalToegangspunten_2018',\r\n",
+							"       'WerkelijkVerbruik_RM_2019', 'BenaderendVerbruik_VM_2019',\r\n",
+							"       'BenaderendVerbruik_VM_2019_Norm', 'AantalToegangspunten_2019',\r\n",
+							"       'WerkelijkVerbruik_RM_2020', 'BenaderendVerbruik_VM_2020',\r\n",
+							"       'BenaderendVerbruik_VM_2020_Norm', 'AantalToegangspunten_2020',\r\n",
+							"       'WerkelijkVerbruik_RM_2021', 'BenaderendVerbruik_VM_2021',\r\n",
+							"       'BenaderendVerbruik_VM_2021_Norm', 'AantalToegangspunten_2021',\r\n",
+							"       'Gemiddeld_WerkelijkVerbruik', 'Gemiddeld_BenaderendVerbruik',\r\n",
+							"       'Gemiddeld_BenaderendVerbruik_Norm', 'Total_AantalToegangspunten',\r\n",
+							"       'MeasurementType']]"
+						],
+						"outputs": [],
+						"execution_count": 34
 					},
 					{
 						"cell_type": "code",
@@ -3557,7 +3642,7 @@
 							"join_df.head(5)"
 						],
 						"outputs": [],
-						"execution_count": 46
+						"execution_count": 36
 					},
 					{
 						"cell_type": "code",
@@ -3576,7 +3661,7 @@
 							"spark_join_df = spark.createDataFrame(join_df)"
 						],
 						"outputs": [],
-						"execution_count": 47
+						"execution_count": 37
 					},
 					{
 						"cell_type": "code",
@@ -3594,7 +3679,7 @@
 						"source": [
 							"file_path = 'abfss://output@rawdevstorage.dfs.core.windows.net/Electricity_Measurement_pandas_join'\r\n",
 							"write_format=\"delta\"\r\n",
-							"partition_by=[\"DM_Peildatum\"]\r\n",
+							"partition_by=[\"Peildatum\"]\r\n",
 							"mode_ = Mode #overwrite #append\r\n",
 							"\r\n",
 							"spark_join_df\\\r\n",
@@ -3607,7 +3692,7 @@
 							".save(file_path)"
 						],
 						"outputs": [],
-						"execution_count": 48
+						"execution_count": 39
 					},
 					{
 						"cell_type": "code",
@@ -3658,7 +3743,7 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "e3173c2a-e837-4e3f-ad3d-c663b16a7a6c"
+						"spark.autotune.trackingId": "464dcbc8-69d3-4660-a93d-1bc8b31690c7"
 					}
 				},
 				"metadata": {
@@ -3683,8 +3768,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 10,
 						"cores": 4,
-						"memory": 28,
-						"automaticScaleJobs": false
+						"memory": 28
 					},
 					"sessionKeepAliveTimeout": 30
 				},
