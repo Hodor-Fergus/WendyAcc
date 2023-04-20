@@ -22,7 +22,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "0fb6df43-9483-40ea-8c33-2377e782bd0b"
+				"spark.autotune.trackingId": "944b1b46-c8e0-4f1b-b517-81a3811d6626"
 			}
 		},
 		"metadata": {
@@ -84,7 +84,7 @@
 					"    blob_sas_token)\r\n",
 					""
 				],
-				"execution_count": 20
+				"execution_count": 57
 			},
 			{
 				"cell_type": "code",
@@ -106,7 +106,7 @@
 					"# Read Delta table into a DataFrame\r\n",
 					"reference_table = spark.read.format(\"delta\").load(delta_table_path)"
 				],
-				"execution_count": 2
+				"execution_count": 58
 			},
 			{
 				"cell_type": "code",
@@ -123,29 +123,12 @@
 				},
 				"source": [
 					"# Convert to pandas data frame\r\n",
-					"reference_table = reference_table.select(\"*\").toPandas()"
-				],
-				"execution_count": 3
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
+					"reference_table = reference_table.select(\"*\").toPandas()\r\n",
+					"\r\n",
 					"# Show the contents of the DataFrame\r\n",
 					"reference_table.head(5)"
 				],
-				"execution_count": 5
+				"execution_count": 59
 			},
 			{
 				"cell_type": "code",
@@ -199,7 +182,7 @@
 					"# Displaying a date file\r\n",
 					"date.head(5)"
 				],
-				"execution_count": 7
+				"execution_count": 60
 			},
 			{
 				"cell_type": "code",
@@ -233,7 +216,7 @@
 					"\r\n",
 					"markt_dimension.head()"
 				],
-				"execution_count": 23
+				"execution_count": 61
 			},
 			{
 				"cell_type": "code",
@@ -252,7 +235,7 @@
 					"# Converting to spark dataframe\r\n",
 					"markt_dimension = spark.createDataFrame(markt_dimension)"
 				],
-				"execution_count": 28
+				"execution_count": 62
 			},
 			{
 				"cell_type": "code",
@@ -284,7 +267,7 @@
 					"\r\n",
 					"#.partitionBy(partition_by)\\"
 				],
-				"execution_count": 29
+				"execution_count": 63
 			},
 			{
 				"cell_type": "code",
@@ -311,7 +294,7 @@
 					"geo_location_dimension = geo_location_dimension.dropna()\r\n",
 					"\r\n",
 					"# Doing a join operation to get a new data frame\r\n",
-					"geo_location_dimension = pd.merge(geo_location_dimension, geo_location, left_on=['Leveringsadres_Postcode'], right_on=['postcode'], how='outer')\r\n",
+					"geo_location_dimension = pd.merge(geo_location_dimension, geo_location, left_on=['Leveringsadres_Postcode'], right_on=['postcode'], how='inner')\r\n",
 					"\r\n",
 					"# Adding a Geo_ID based on dwh_id\r\n",
 					"geo_location_dimension['Geo_ID']=geo_location_dimension['dwh_id']\r\n",
@@ -321,7 +304,7 @@
 					"\r\n",
 					"geo_location_dimension.head()"
 				],
-				"execution_count": 33
+				"execution_count": 64
 			},
 			{
 				"cell_type": "code",
@@ -340,7 +323,7 @@
 					"# Converting to spark dataframe\r\n",
 					"geo_location_dimension = spark.createDataFrame(geo_location_dimension)"
 				],
-				"execution_count": 34
+				"execution_count": 65
 			},
 			{
 				"cell_type": "code",
@@ -372,7 +355,106 @@
 					"\r\n",
 					"#.partitionBy(partition_by)\\"
 				],
-				"execution_count": 35
+				"execution_count": 66
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Creating a group by for market dimensions\r\n",
+					"grouped_reference_table_date_dimension = reference_table.groupby(['Trekkingsdatum'])\r\n",
+					"date_dimension_1 = grouped_reference_table_date_dimension.agg(total_count=('Trekkingsdatum', 'count'))\r\n",
+					"grouped_reference_table_date_dimension = reference_table.groupby(['Peildatum'])\r\n",
+					"date_dimension_2 = grouped_reference_table_date_dimension.agg(total_count=('Trekkingsdatum', 'count'))\r\n",
+					"date_dimension = pd.concat([date_dimension_1, date_dimension_2])\r\n",
+					"\r\n",
+					"# Restiing the index\r\n",
+					"date_dimension = date_dimension.head().reset_index()\r\n",
+					"date_dimension['Date_Standard'] = date_dimension['index']\r\n",
+					"\r\n",
+					"# Convert the date to single format\r\n",
+					"date_dimension['Date_Standard'] = pd.to_datetime(date_dimension['Date_Standard'])\r\n",
+					"date['datum'] = pd.to_datetime(date['datum'])\r\n",
+					"\r\n",
+					"# Exclude the undefined/null value\r\n",
+					"date_dimension = date_dimension.dropna()\r\n",
+					"\r\n",
+					"# creating new columns\r\n",
+					"date_dimension['Date'] = date_dimension['Date_Standard'].apply(lambda x: x.strftime('%Y%m%d')).astype(str)\r\n",
+					"\r\n",
+					"\r\n",
+					"\r\n",
+					"# Doing a join operation to get a new data frame\r\n",
+					"date_dimension = pd.merge(date_dimension, date, left_on=['Date_Standard'], right_on=['datum'], how='inner')\r\n",
+					"\r\n",
+					"# Selecting specific columns\r\n",
+					"date_dimension = date_dimension[['date_ID','Date','Date_Standard','dag_naam','maand_naam','jaar','kwartaal']]\r\n",
+					"\r\n",
+					"date_dimension.head()\r\n",
+					""
+				],
+				"execution_count": 76
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Converting to spark dataframe\r\n",
+					"date_dimension = spark.createDataFrame(date_dimension)"
+				],
+				"execution_count": 51
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Writing the date dimension to delta file\r\n",
+					"file_path = 'abfss://goldlayer@rawdevstorage.dfs.core.windows.net/PandasDimensions/Date_Dimension'\r\n",
+					"write_format=\"delta\"\r\n",
+					"#partition_by=[\"DM_Peildatum\"]\r\n",
+					"mode_ = \"overwrite\" #append\r\n",
+					"\r\n",
+					"date_dimension\\\r\n",
+					".write\\\r\n",
+					".option(\"header\", \"true\")\\\r\n",
+					".option(\"overwriteSchema\", \"true\")\\\r\n",
+					".format(write_format)\\\r\n",
+					".mode(mode_)\\\r\n",
+					".save(file_path)\r\n",
+					"\r\n",
+					"#.partitionBy(partition_by)\\"
+				],
+				"execution_count": 52
 			},
 			{
 				"cell_type": "code",
@@ -391,93 +473,6 @@
 					""
 				],
 				"execution_count": null
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"# Creating a group by for date dimensions\r\n",
-					"grouped_reference_table_date_dimension = reference_table.groupBy(\"Trekkingsdatum\")\r\n",
-					"date_dimension_1 = grouped_reference_table_date_dimension.agg(count(\"Trekkingsdatum\"))\r\n",
-					"grouped_reference_table_date_dimension = reference_table.groupBy(\"Peildatum\")\r\n",
-					"date_dimension_2 = grouped_reference_table_date_dimension.agg(count(\"Trekkingsdatum\"))\r\n",
-					"date_dimension = date_dimension_1.union(date_dimension_2).distinct()\r\n",
-					"\r\n",
-					"# Renaming the date location column\r\n",
-					"date_dimension = date_dimension.withColumnRenamed(\"Trekkingsdatum\", \"Date_Standard\")\r\n",
-					"\r\n",
-					"# Exclude the undefined/null value\r\n",
-					"date_dimension = date_dimension.filter(col(\"Date_Standard\").isNotNull())\r\n",
-					"\r\n",
-					"# Define the window specification for the grouping\r\n",
-					"#date_dimension_window_spec = Window.orderBy(date_dimension[\"Date_Standard\"].desc())\r\n",
-					"\r\n",
-					"# Add an auto-incrementing column to the DataFrame within the group\r\n",
-					"#date_dimension = date_dimension.withColumn(\"Date_ID\", row_number().over(date_dimension_window_spec))\r\n",
-					"\r\n",
-					"# Add new column\r\n",
-					"date_dimension = date_dimension.withColumn(\"Date\", concat(expr(\"substring(Date_Standard, 1, 4)\"), expr(\"substring(Date_Standard, 6, 2)\"), expr(\"substring(Date_Standard, 9, 2)\")))\r\n",
-					"\r\n",
-					"# date_dimension = date_dimension.withColumn(\"Day\", date_format(date_dimension[\"Date\"], \"d\").cast(\"integer\"))\r\n",
-					"# date_dimension = date_dimension.withColumn(\"Month\", date_format(date_dimension[\"Date\"], \"M\").cast(\"integer\"))\r\n",
-					"# date_dimension = date_dimension.withColumn(\"Year\", date_format(date_dimension[\"Date\"], \"y\").cast(\"integer\"))\r\n",
-					"# date_dimension = date_dimension.withColumn(\"Quarter\", quarter(date_dimension[\"Date\"]))\r\n",
-					"# date_dimension = date_dimension.withColumn(\"Day_Of_Year\", expr(\"dayofyear(Date)\"))\r\n",
-					"# date_dimension = date_dimension.withColumn(\"Week_Number\", weekofyear(date_dimension[\"Date\"]))\r\n",
-					"\r\n",
-					"# joinigng the dataframe to get all the column for geo location dimension\r\n",
-					"date_dimension = date_dimension.join(date, date[\"datum\"] == date_dimension[\"Date_Standard\"], \"inner\")\r\n",
-					"\r\n",
-					"# Selecting specific columns\r\n",
-					"date_dimension = date_dimension.select('date_ID','Date','Date_Standard','dag_naam','maand_naam','jaar','kwartaal')\r\n",
-					"\r\n",
-					"# Displaying top 5 rows\r\n",
-					"display(date_dimension.limit(5))"
-				],
-				"execution_count": 11
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"# Writing the date dimension to delta file\r\n",
-					"file_path = 'abfss://goldlayer@rawdevstorage.dfs.core.windows.net/PySparkDimensions/Date_Dimension'\r\n",
-					"write_format=\"delta\"\r\n",
-					"#partition_by=[\"DM_Peildatum\"]\r\n",
-					"mode_ = \"overwrite\" #append\r\n",
-					"\r\n",
-					"date_dimension\\\r\n",
-					".write\\\r\n",
-					".option(\"header\", \"true\")\\\r\n",
-					".option(\"overwriteSchema\", \"true\")\\\r\n",
-					".format(write_format)\\\r\n",
-					".mode(mode_)\\\r\n",
-					".save(file_path)\r\n",
-					"\r\n",
-					"#.partitionBy(partition_by)\\"
-				],
-				"execution_count": 12
 			},
 			{
 				"cell_type": "code",
